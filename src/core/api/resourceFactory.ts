@@ -1,0 +1,133 @@
+import {
+  queryOptions,
+  useQuery,
+  useMutation,
+  useQueryClient,
+  useInfiniteQuery,
+  InfiniteData
+} from "@tanstack/react-query";
+import { api } from "./api";
+import { queryProfiles, QueryProfileName } from "./queryConfig";
+import { keyFactory, queryKeyUtils } from "./keyFactory";
+import { entities, EntityName, BaseEntity } from "./entityRegistry";
+import { retryConfig } from "./errorHandling";
+
+type ListParams = Record<string, string | number | boolean | undefined>;
+
+function buildUrl(baseUrl: string, params?: ListParams) {
+  if (!params) return baseUrl;
+  const qs = new URLSearchParams();
+  Object.entries(params).forEach(([k, v]) => v !== undefined && qs.append(k, String(v)));
+  return `${baseUrl}?${qs.toString()}`;
+}
+
+export function makeResource<N extends EntityName>(name: N) {
+  const def = entities[name];
+
+  function useList<T = unknown>(params?: ListParams, profile: QueryProfileName = "list") {
+    const prof = queryProfiles[profile];
+    const url = buildUrl(def.baseUrl, params);
+
+    const opts = queryOptions({
+      queryKey: keyFactory.list(def.entity, params),
+      queryFn: () => api<T>(url),
+      ...prof,
+      placeholderData: (prev) => prev,
+      ...(def.selectList && { select: def.selectList as any }),
+    });
+    return useQuery(opts);
+  }
+
+  function useDetail<T = unknown>(id: string | number, profile: QueryProfileName = "detail") {
+    const prof = queryProfiles[profile];
+    const url = `${def.baseUrl}/${id}`;
+
+    const opts = queryOptions({
+      queryKey: keyFactory.detail(def.entity, id),
+      queryFn: () => api<T>(url),
+      enabled: !!id,
+      ...prof,
+      ...(def.selectDetail && { select: def.selectDetail as any }),
+    });
+    return useQuery(opts);
+  }
+
+  function useCreate<TBody extends object, TResp = unknown>(invalidateTags: string[] = def.tags) {
+    const qc = useQueryClient();
+    return useMutation({
+      mutationFn: (body: TBody) =>
+        api<TResp>(def.baseUrl, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }),
+      onSuccess: () => invalidateTags.forEach(tag => qc.invalidateQueries({ queryKey: [tag] })),
+    });
+  }
+
+  function useUpdate<TBody extends object, TResp = unknown>(
+    invalidate: (vars: { id: string | number; body: TBody }) => string[] = () => def.tags
+  ) {
+    const qc = useQueryClient();
+    return useMutation({
+      mutationFn: ({ id, body }: { id: string | number; body: TBody }) =>
+        api<TResp>(`${def.baseUrl}/${id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }),
+
+      onMutate: async (vars) => {
+        await qc.cancelQueries({ queryKey: [def.entity] });
+
+        const prevList = qc.getQueriesData<any>([def.entity]);
+        const prevDetail = qc.getQueryData<any>(keyFactory.detail(def.entity, vars.id));
+
+        qc.setQueriesData<any>([def.entity], (old: any) => {
+          if (!old) return old;
+          return old.map((item: any) => item.id === vars.id ? { ...item, ...vars.body } : item);
+        });
+
+        qc.setQueryData<any>(keyFactory.detail(def.entity, vars.id), (old: any) => {
+          if (!old) return old;
+          return { ...old, ...vars.body };
+        });
+
+        return { prevList, prevDetail };
+      },
+
+      onError: (_err, vars, ctx) => {
+        ctx?.prevList?.forEach(([key, data]) => qc.setQueryData(key, data));
+        if (ctx?.prevDetail) {
+          qc.setQueryData(keyFactory.detail(def.entity, vars.id), ctx.prevDetail);
+        }
+      },
+
+      onSettled: (_data, _error, vars) => {
+        invalidate(vars).forEach(tag => qc.invalidateQueries({ queryKey: [tag] }));
+      },
+    });
+  }
+
+  function useDelete<TResp = unknown>(invalidateTags: string[] = def.tags) {
+    const qc = useQueryClient();
+    return useMutation({
+      mutationFn: (id: string | number) =>
+        api<TResp>(`${def.baseUrl}/${id}`, { method: "DELETE" }),
+
+      onMutate: async (id) => {
+        await qc.cancelQueries({ queryKey: [def.entity] });
+
+        const prevList = qc.getQueriesData<any>([def.entity]);
+        qc.setQueriesData<any>([def.entity], (old: any) => {
+          if (!old) return old;
+          return old.filter((item: any) => item.id !== id);
+        });
+
+        return { prevList };
+      },
+
+      onError: (_err, _id, ctx) => {
+        ctx?.prevList?.forEach(([key, data]) => qc.setQueryData(key, data));
+      },
+
+      onSettled: () => {
+        invalidateTags.forEach(tag => qc.invalidateQueries({ queryKey: [tag] }));
+      },
+    });
+  }
+
+  return { useList, useDetail, useCreate, useUpdate, useDelete };
+}

@@ -1,0 +1,294 @@
+// Prisma schema for Edtech - English Learning Platform
+// Database: PostgreSQL
+// Method: Jewish-style story embedding (truyện chêm)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User roles enum
+enum UserRole {
+  student
+  coach
+  admin
+}
+
+// Learning levels enum
+enum LearningLevel {
+  beginner
+  intermediate
+  advanced
+}
+
+// Story types for embedding method
+enum StoryType {
+  original      // Original story
+  chemdanhtu    // Noun embedding
+  chemdongtu    // Verb embedding
+  chemtinhtu    // Adjective embedding
+  custom        // Custom embedding
+}
+
+// Story chunk types
+enum ChunkType {
+  normal   // Regular text
+  chem     // Embedded English words
+  explain  // Explanation/translation
+}
+
+// Audio types
+enum AudioType {
+  original     // Original dialogue audio
+  chem         // Story with embedded words audio
+  vocab        // Vocabulary pronunciation
+  user_record  // User's recorded audio
+}
+
+// Question types for quizzes
+enum QuestionType {
+  MCQ          // Multiple choice
+  fill_blank   // Fill in the blanks
+  drag_drop    // Drag and drop
+  short_answer // Short answer
+}
+
+// Vocabulary learning status
+enum VocabStatus {
+  new
+  reviewing
+  mastered
+}
+
+// === CORE ENTITIES ===
+
+model User {
+  id           Int      @id @default(autoincrement())
+  name         String
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  role         UserRole @default(student)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  userResults            UserResult[]
+  userVocabularyProgress UserVocabularyProgress[]
+  feedbacks              Feedback[]
+  reflections            Reflection[]
+  audioRecordings        Audio[]
+
+  @@map("users")
+}
+
+model Lesson {
+  id          Int            @id @default(autoincrement())
+  title       String
+  description String?        @db.Text
+  objective   String?
+  level       LearningLevel  @default(intermediate)
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
+
+  // Relations
+  stories       Story[]
+  vocabularies  Vocabulary[]
+  grammarPoints GrammarPoint[]
+  audios        Audio[]
+  quizzes       Quiz[]
+  userResults   UserResult[]
+  feedbacks     Feedback[]
+  reflections   Reflection[]
+
+  @@map("lessons")
+}
+
+// === STORY & CONTENT ENTITIES ===
+
+model Story {
+  id         Int       @id @default(autoincrement())
+  lessonId   Int       @map("lesson_id")
+  title      String
+  content    String    @db.Text
+  storyType  StoryType @default(original) @map("story_type")
+  chemRatio  Float?    @map("chem_ratio") // Percentage of English words embedded
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  lesson Lesson        @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  chunks StoryChunk[]
+  audios Audio[]
+
+  @@map("stories")
+}
+
+model StoryChunk {
+  id         Int       @id @default(autoincrement())
+  storyId    Int       @map("story_id")
+  chunkOrder Int       @map("chunk_order")
+  chunkText  String    @db.Text @map("chunk_text")
+  type       ChunkType
+
+  // Relations
+  story Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  @@map("story_chunks")
+}
+
+model Vocabulary {
+  id       Int    @id @default(autoincrement())
+  lessonId Int    @map("lesson_id")
+  word     String
+  meaning  String
+  example  String?
+  audioUrl String? @map("audio_url")
+
+  // Relations
+  lesson                 Lesson                   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  userVocabularyProgress UserVocabularyProgress[]
+
+  @@map("vocabularies")
+}
+
+model GrammarPoint {
+  id          Int    @id @default(autoincrement())
+  lessonId    Int    @map("lesson_id")
+  point       String
+  explanation String @db.Text
+
+  // Relations
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@map("grammar_points")
+}
+
+// === AUDIO ENTITIES ===
+
+model Audio {
+  id        Int       @id @default(autoincrement())
+  storyId   Int?      @map("story_id")
+  lessonId  Int?      @map("lesson_id")
+  userId    Int?      @map("user_id") // For user recordings
+  type      AudioType
+  url       String
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  story  Story? @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  lesson Lesson? @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("audios")
+}
+
+// === QUIZ & ASSESSMENT ENTITIES ===
+
+model Quiz {
+  id          Int    @id @default(autoincrement())
+  lessonId    Int    @map("lesson_id")
+  title       String
+  description String?
+
+  // Relations
+  lesson      Lesson       @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  questions   Question[]
+  userResults UserResult[]
+
+  @@map("quizzes")
+}
+
+model Question {
+  id           Int          @id @default(autoincrement())
+  quizId       Int          @map("quiz_id")
+  questionText String       @db.Text @map("question_text")
+  type         QuestionType
+  order        Int
+
+  // Relations
+  quiz    Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  answers Answer[]
+
+  @@map("questions")
+}
+
+model Answer {
+  id         Int     @id @default(autoincrement())
+  questionId Int     @map("question_id")
+  answerText String  @db.Text @map("answer_text")
+  isCorrect  Boolean @map("is_correct")
+
+  // Relations
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@map("answers")
+}
+
+// === USER PROGRESS & RESULTS ===
+
+model UserResult {
+  id         Int       @id @default(autoincrement())
+  userId     Int       @map("user_id")
+  lessonId   Int       @map("lesson_id")
+  quizId     Int?      @map("quiz_id")
+  score      Float
+  recordUrl  String?   @map("record_url") // URL to user's speaking recording
+  startedAt  DateTime  @map("started_at")
+  finishedAt DateTime? @map("finished_at")
+
+  // Relations
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson Lesson  @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  quiz   Quiz?   @relation(fields: [quizId], references: [id], onDelete: SetNull)
+
+  @@map("user_results")
+}
+
+model UserVocabularyProgress {
+  id           Int         @id @default(autoincrement())
+  userId       Int         @map("user_id")
+  vocabularyId Int         @map("vocabulary_id")
+  status       VocabStatus @default(new)
+  lastReviewed DateTime?   @map("last_reviewed")
+
+  // Relations
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vocabulary Vocabulary @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, vocabularyId])
+  @@map("user_vocabulary_progress")
+}
+
+// === FEEDBACK & REFLECTION ===
+
+model Feedback {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  lessonId  Int      @map("lesson_id")
+  content   String   @db.Text
+  rate      Int      @db.SmallInt // Rating 1-5
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@map("feedbacks")
+}
+
+model Reflection {
+  id        Int      @id @default(autoincrement())
+  lessonId  Int      @map("lesson_id")
+  userId    Int      @map("user_id")
+  content   String   @db.Text // User's creative dialogue or reflection
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("reflections")
+}
