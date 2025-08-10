@@ -1,27 +1,79 @@
+// src/app/api/lessons/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { Prisma, LearningLevel } from "@prisma/client";
+import { caslGuard, RequiredRule } from "@/core/auth/casl.guard";
+import jwt from "jsonwebtoken";
+import { prisma } from "@/core/prisma";
 
-const prisma = new PrismaClient();
+type JwtPayload = {
+  userId: string;
+  email: string;
+  role: string;
+  tenantId?: string;
+};
 
-// GET /api/lessons - Lấy danh sách lessons
+async function getUserFromRequest(request: NextRequest) {
+  try {
+    const authHeader = request.headers.get("authorization");
+    if (!authHeader?.startsWith("Bearer ")) return null;
+
+    const token = authHeader.substring(7);
+    const decoded = jwt.verify(
+        token,
+        process.env.JWT_SECRET || "fallback-secret"
+    ) as JwtPayload;
+
+    return {
+      sub: decoded.userId,
+      tenantId: decoded.tenantId,
+      roles: [decoded.role],
+    };
+  } catch {
+    return null;
+  }
+}
+
+// GET /api/lessons
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const search = searchParams.get("search") || "";
-    const level = searchParams.get("level") || "";
+    // Auth + casl
+    const user = await getUserFromRequest(request);
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    // Build where clause
-    const where: any = {};
+    const rules: RequiredRule[] = [{ action: "read", subject: "Lesson" }];
+    const { allowed, error } = caslGuard(rules, user);
+    if (!allowed) return NextResponse.json({ error: error || "Forbidden" }, { status: 403 });
+
+    // Params
+    const { searchParams } = new URL(request.url);
+    const search = (searchParams.get("search") || "").trim();
+    const levelRaw = (searchParams.get("level") || "").trim();
+
+    // Build where with Prisma type
+    let where: Prisma.LessonWhereInput = {
+      // multi-tenant guard
+      ...(user.tenantId ? { tenantId: user.tenantId } : {}),
+    };
 
     if (search) {
-      where.OR = [
-        { title: { contains: search, mode: "insensitive" } },
-        { description: { contains: search, mode: "insensitive" } },
-      ];
+      where = {
+        ...where,
+        title: { contains: search, mode: "insensitive" },
+      };
     }
 
-    if (level) {
-      where.level = level;
+    if (levelRaw) {
+      // Validate levelRaw against enum values
+      const allowedLevels = Object.values(LearningLevel) as string[];
+      if (!allowedLevels.includes(levelRaw)) {
+        return NextResponse.json({ error: `Invalid level: ${levelRaw}` }, { status: 400 });
+      }
+
+      // Filter via relation Course.level (schema: Course.level exists)
+      where = {
+        ...where,
+        course: { level: levelRaw as LearningLevel },
+      };
     }
 
     const lessons = await prisma.lesson.findMany({
@@ -29,11 +81,15 @@ export async function GET(request: NextRequest) {
       select: {
         id: true,
         title: true,
-        description: true,
-        objective: true,
-        level: true,
+        status: true,
+        order: true,
+        unitId: true,
+        courseId: true,
         createdAt: true,
         updatedAt: true,
+        course: {
+          select: { id: true, level: true, title: true },
+        },
         _count: {
           select: {
             stories: true,
@@ -48,49 +104,94 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json(lessons);
-  } catch (error) {
-    console.error("Error fetching lessons:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch lessons" },
-      { status: 500 }
-    );
+  } catch (err) {
+    console.error("Error fetching lessons:", err);
+    return NextResponse.json({ error: "Failed to fetch lessons" }, { status: 500 });
   }
 }
 
-// POST /api/lessons - Tạo lesson mới
+// POST /api/lessons
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { title, description, objective, level = "intermediate" } = body;
+    const user = await getUserFromRequest(request);
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    if (!title) {
-      return NextResponse.json({ error: "Title is required" }, { status: 400 });
+    const rules: RequiredRule[] = [{ action: "create", subject: "Lesson" }];
+    const { allowed, error } = caslGuard(rules, user);
+    if (!allowed) return NextResponse.json({ error: error || "Forbidden" }, { status: 403 });
+
+    const body = await request.json();
+    const {
+      title,
+      unitId,
+      courseId,
+      order,
+      status = "draft", // per schema default
+    } = body ?? {};
+
+    // Basic validation
+    if (!title) return NextResponse.json({ error: "Title is required" }, { status: 400 });
+    if (!unitId) return NextResponse.json({ error: "unitId is required" }, { status: 400 });
+    if (!courseId) return NextResponse.json({ error: "courseId is required" }, { status: 400 });
+    if (typeof order !== "number") {
+      return NextResponse.json({ error: "order (number) is required" }, { status: 400 });
+    }
+    if (!user.tenantId) {
+      return NextResponse.json({ error: "tenantId (from token) is required" }, { status: 400 });
+    }
+
+    // Ensure unit & course exist and belong to same tenant
+    const [unit, course] = await Promise.all([
+      prisma.unit.findUnique({
+        where: { id: unitId },
+        select: { tenantId: true, courseId: true },
+      }),
+      prisma.course.findUnique({
+        where: { id: courseId },
+        select: { tenantId: true, id: true },
+      }),
+    ]);
+
+    if (!unit) return NextResponse.json({ error: "Unit not found" }, { status: 404 });
+    if (!course) return NextResponse.json({ error: "Course not found" }, { status: 404 });
+
+    if (unit.tenantId !== user.tenantId || course.tenantId !== user.tenantId) {
+      return NextResponse.json({ error: "Tenant mismatch" }, { status: 403 });
+    }
+
+    if (unit.courseId !== courseId) {
+      return NextResponse.json(
+          { error: "unitId does not belong to the provided courseId" },
+          { status: 400 }
+      );
     }
 
     const lesson = await prisma.lesson.create({
       data: {
         title,
-        description,
-        objective,
-        level,
+        unitId,
+        courseId,
+        order,
+        tenantId: user.tenantId,
+        status,
+        createdBy: user.sub,
       },
       select: {
         id: true,
         title: true,
-        description: true,
-        objective: true,
-        level: true,
+        status: true,
+        order: true,
+        unitId: true,
+        courseId: true,
         createdAt: true,
         updatedAt: true,
+        course: { select: { id: true, level: true, title: true } },
       },
     });
 
     return NextResponse.json(lesson, { status: 201 });
-  } catch (error) {
-    console.error("Error creating lesson:", error);
-    return NextResponse.json(
-      { error: "Failed to create lesson" },
-      { status: 500 }
-    );
+  } catch (err) {
+    console.error("Error creating lesson:", err);
+    return NextResponse.json({ error: "Failed to create lesson" }, { status: 500 });
   }
 }

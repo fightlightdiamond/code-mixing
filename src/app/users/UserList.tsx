@@ -12,16 +12,21 @@ import {
   useUsersFilterActions,
   useUsersModal,
 } from "@/features/users/state";
-import { useState } from "react";
+import Can from "@/shared/components/Can";
+import { useAbility } from "@/core/auth/AbilityProvider";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function UserList() {
   const { search, page, pageSize, sortBy } = useUsersFilters();
   const { setSearch, setPage, setPageSize, setSortBy, reset } =
     useUsersFilterActions();
   const { modalOpen, selectedId, openModal, closeModal } = useUsersModal();
+  const { isAuthenticated } = useAuth();
+
+  const ability = useAbility();
 
   // TanStack Query with Zustand state
-  const q = useQuery(buildUsersListQuery({ search }));
+  const q = useQuery(buildUsersListQuery({ search }, isAuthenticated));
 
   // Mutations
   const createUser = useCreateUser();
@@ -65,21 +70,23 @@ export default function UserList() {
           Reset Filters
         </button>
 
-        <button
-          onClick={() =>
-            createUser.mutate({
-              name: "New User",
-              email: `user${Date.now()}@example.com`,
-            })
-          }
-          disabled={createUser.isPending}
-        >
-          {createUser.isPending ? "Creating..." : "Add User"}
-        </button>
+        <Can I="create" a="User">
+          <button
+            onClick={() =>
+              createUser.mutate({
+                name: "New User",
+                email: `user${Date.now()}@example.com`,
+              })
+            }
+            disabled={createUser.isPending}
+          >
+            {createUser.isPending ? "Creating..." : "Add User"}
+          </button>
+        </Can>
       </div>
 
       {/* Results */}
-      {q.isPending ? (
+      {q.isPending || !isAuthenticated ? (
         <p>Loading users...</p>
       ) : q.isError ? (
         <p style={{ color: "red" }}>Error: {(q.error as Error).message}</p>
@@ -106,7 +113,7 @@ export default function UserList() {
                 }}
               >
                 <span style={{ minWidth: 180, flex: 1 }}>
-                  {u.label ?? `${u.name} <${u.email}>`}
+                  {`${u.name} <${u.email}>`}
                 </span>
 
                 <button
@@ -116,26 +123,38 @@ export default function UserList() {
                   View
                 </button>
 
-                <button
-                  onClick={() =>
-                    updateUser.mutate({
-                      id: u.id,
-                      data: { name: u.name + "!" },
-                    })
-                  }
-                  disabled={updateUser.isPending}
-                  style={{ fontSize: 12 }}
-                >
-                  {updateUser.isPending ? "..." : "Update"}
-                </button>
+                <Can I="update" a="User">
+                  <button
+                    onClick={() => {
+                      // Double-check ability before calling mutation
+                      if (ability.can("update", "User")) {
+                        updateUser.mutate({
+                          id: u.id,
+                          data: { name: u.name + "!" },
+                        });
+                      }
+                    }}
+                    disabled={updateUser.isPending}
+                    style={{ fontSize: 12 }}
+                  >
+                    {updateUser.isPending ? "..." : "Update"}
+                  </button>
+                </Can>
 
-                <button
-                  onClick={() => deleteUser.mutate(u.id)}
-                  disabled={deleteUser.isPending}
-                  style={{ fontSize: 12, color: "red" }}
-                >
-                  {deleteUser.isPending ? "..." : "Delete"}
-                </button>
+                <Can I="delete" a="User">
+                  <button
+                    onClick={() => {
+                      // Double-check ability before calling mutation
+                      if (ability.can("delete", "User")) {
+                        deleteUser.mutate(u.id);
+                      }
+                    }}
+                    disabled={deleteUser.isPending}
+                    style={{ fontSize: 12, color: "red" }}
+                  >
+                    {deleteUser.isPending ? "..." : "Delete"}
+                  </button>
+                </Can>
               </li>
             ))}
           </ul>

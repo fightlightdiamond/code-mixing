@@ -1,16 +1,82 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/core/prisma";
+import jwt from "jsonwebtoken";
+import { caslGuard } from "@/core/auth/casl.guard";
+import { log } from "@/lib/logger";
+import type { JWTPayload, ApiResponse, User, DatabaseWhereClause, RequiredRule } from "@/types/api";
+import bcrypt from "bcryptjs";
 
-const prisma = new PrismaClient();
+// Helper function to get user from request
+async function getUserFromRequest(request: NextRequest) {
+  try {
+    // Get token from Authorization header
+    const authHeader = request.headers.get("authorization");
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return null;
+    }
+
+    const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+
+    // Verify token
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET || "fallback-secret"
+    ) as JWTPayload;
+
+    return {
+      sub: decoded.userId,
+      tenantId: decoded.tenantId,
+      roles: [decoded.role],
+    };
+  } catch (error) {
+    return null;
+  }
+}
 
 // GET /api/users - Lấy danh sách users với search
 export async function GET(request: NextRequest) {
+  const startTime = Date.now();
+  const requestStartTime = Date.now();
+  log.api('Users API request started', '/api/users');
+  
   try {
+    // Get user from request
+    const authStartTime = Date.now();
+    const user = await getUserFromRequest(request);
+    log.performance('User authentication completed', Date.now() - authStartTime, {
+      endpoint: '/api/users',
+      userId: user?.sub
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Define the rules required to access this endpoint
+    const rules: RequiredRule[] = [{ action: "read", subject: "User" }];
+
+    // Check if user has required permissions
+    const caslStartTime = Date.now();
+    const { allowed, error } = caslGuard(rules, user);
+    log.performance('CASL authorization completed', Date.now() - caslStartTime, {
+      endpoint: '/api/users',
+      userId: user.sub,
+      allowed: true
+    });
+
+    if (!allowed) {
+      return NextResponse.json(
+        { error: error || "Forbidden" },
+        { status: 403 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search") || "";
+    log.debug('Processing search parameters', { search, endpoint: '/api/users' });
 
-    // Build where clause for search
-    const where = search
+    // Build where clause with proper typing
+    const where: DatabaseWhereClause = search
       ? {
           OR: [
             { name: { contains: search, mode: "insensitive" as const } },
@@ -20,6 +86,9 @@ export async function GET(request: NextRequest) {
       : {};
 
     // Get users
+    log.db('Starting users database query', undefined, { where });
+    const dbStartTime = Date.now();
+    
     const users = await prisma.user.findMany({
       where,
       select: {
@@ -30,10 +99,31 @@ export async function GET(request: NextRequest) {
         createdAt: true,
       },
       orderBy: { name: "asc" },
-      take: 50, // Limit to 50 users for now
     });
-
-    return NextResponse.json(users);
+    
+    log.performance('Database query completed', Date.now() - dbStartTime, {
+      endpoint: '/api/users',
+      recordCount: users.length
+    });
+    
+    log.info('Users query completed successfully', {
+      count: users.length,
+      endpoint: '/api/users'
+    });
+    
+    log.performance('Total API request completed', Date.now() - requestStartTime, {
+      endpoint: '/api/users'
+    });
+    
+    const response: ApiResponse<User[]> = {
+      data: users as User[],
+      success: true,
+      meta: {
+        total: users.length
+      }
+    };
+    
+    return NextResponse.json(response);
   } catch (error) {
     console.error("Error fetching users:", error);
     return NextResponse.json(
@@ -46,6 +136,26 @@ export async function GET(request: NextRequest) {
 // POST /api/users - Tạo user mới
 export async function POST(request: NextRequest) {
   try {
+    // Get user from request
+    const user = await getUserFromRequest(request);
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Define the rules required to create a user
+    const rules: RequiredRule[] = [{ action: "create", subject: "User" }];
+
+    // Check if user has required permissions
+    const { allowed, error } = caslGuard(rules, user);
+
+    if (!allowed) {
+      return NextResponse.json(
+        { error: error || "Forbidden" },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
     const { name, email, role = "student" } = body;
 
@@ -70,10 +180,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Create user with default password hash
-    const bcrypt = require("bcryptjs");
     const passwordHash = await bcrypt.hash("defaultpassword", 10);
 
-    const user = await prisma.user.create({
+    const userRecord = await prisma.user.create({
       data: {
         name,
         email,
@@ -89,7 +198,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return NextResponse.json(user, { status: 201 });
+    return NextResponse.json(userRecord, { status: 201 });
   } catch (error) {
     console.error("Error creating user:", error);
     return NextResponse.json(

@@ -1,34 +1,51 @@
 import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from "@/core/prisma";
+import { log } from "@/lib/logger";
+import type { JWTPayload, ApiResponse, User } from "@/types/api";
 
 export async function GET(request: NextRequest) {
+  const requestStartTime = Date.now();
+  log.api('Auth me request started', '/api/auth/me');
+  
   try {
     // Get token from Authorization header
     const authHeader = request.headers.get('authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      log.warn('Missing or invalid authorization header', { endpoint: '/api/auth/me' });
       return NextResponse.json(
-        { message: 'Token không hợp lệ' },
+        { message: 'Token không hợp lệ', success: false },
         { status: 401 }
       );
     }
 
     const token = authHeader.substring(7); // Remove 'Bearer ' prefix
 
-    // Verify token
-    let decoded: any;
+    // Verify token with proper typing
+    let decoded: JWTPayload;
+    const authStartTime = Date.now();
+    
     try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret');
+      decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret') as JWTPayload;
+      log.performance('JWT verification completed', Date.now() - authStartTime, {
+        endpoint: '/api/auth/me',
+        userId: decoded.userId
+      });
     } catch (error) {
+      log.warn('Invalid or expired JWT token', { 
+        endpoint: '/api/auth/me',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
       return NextResponse.json(
-        { message: 'Token không hợp lệ hoặc đã hết hạn' },
+        { message: 'Token không hợp lệ hoặc đã hết hạn', success: false },
         { status: 401 }
       );
     }
 
     // Get user from database
+    log.db('Fetching user profile', `SELECT user WHERE id = ${decoded.userId}`);
+    const dbStartTime = Date.now();
+    
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
       select: {
@@ -40,23 +57,45 @@ export async function GET(request: NextRequest) {
         updatedAt: true,
       },
     });
+    
+    log.performance('User profile query completed', Date.now() - dbStartTime, {
+      endpoint: '/api/auth/me',
+      userId: decoded.userId,
+      found: !!user
+    });
 
     if (!user) {
+      log.warn('User not found in database', {
+        endpoint: '/api/auth/me',
+        userId: decoded.userId
+      });
       return NextResponse.json(
-        { message: 'Người dùng không tồn tại' },
+        { message: 'Người dùng không tồn tại', success: false },
         { status: 404 }
       );
     }
 
-    return NextResponse.json(user);
+    log.performance('Total auth/me request completed', Date.now() - requestStartTime, {
+      endpoint: '/api/auth/me',
+      userId: decoded.userId
+    });
+    
+    const response: ApiResponse<User> = {
+      data: user as User,
+      success: true
+    };
+
+    return NextResponse.json(response);
 
   } catch (error) {
-    console.error('Auth verification error:', error);
+    log.error('Auth verification error', {
+      endpoint: '/api/auth/me',
+      duration: Date.now() - requestStartTime
+    }, error instanceof Error ? error : new Error(String(error)));
+    
     return NextResponse.json(
-      { message: 'Lỗi server. Vui lòng thử lại sau.' },
+      { message: 'Lỗi server. Vui lòng thử lại sau.', success: false },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }

@@ -1,13 +1,12 @@
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { getQueryClient } from "@/app/get-query-client";
 import AdminUserList from "./AdminUserList";
-import { buildUsersListQuery } from "@/features/users/hooks";
+import { handleAdminPageSSR } from "../ssr-utils";
+import { log } from "@/lib/logger";
+import type { QueryParams } from "@/types/api";
 
 interface AdminUsersPageProps {
-  searchParams: Promise<{
-    search?: string;
-    page?: string;
-    pageSize?: string;
+  searchParams: Promise<QueryParams & {
     role?: string;
   }>;
 }
@@ -17,19 +16,26 @@ export default async function AdminUsersPage({
 }: AdminUsersPageProps) {
   const qc = getQueryClient();
 
-  // Parse search params for prefetching
+  // Parse search params with proper typing
   const params = await searchParams;
   const search = params.search || "";
-  const page = params.page ? parseInt(params.page, 10) : 1;
-  const pageSize = params.pageSize ? parseInt(params.pageSize, 10) : 20;
+  const page = params.page ? parseInt(params.page.toString(), 10) : 1;
+  const pageSize = params.pageSize ? parseInt(params.pageSize.toString(), 10) : 20;
   const role = params.role || "";
 
-  // Prefetch users data
-  try {
-    await qc.prefetchQuery(buildUsersListQuery({ search }));
-  } catch (error) {
-    console.error("Failed to prefetch users:", error);
-  }
+  // Use centralized SSR handling for authenticated routes
+  handleAdminPageSSR({
+    routeName: 'admin/users',
+    skipPrefetch: true,
+    logPerformance: true
+  });
+  
+  log.ssr('Admin users page rendering', 'admin/users', {
+    search,
+    page,
+    pageSize,
+    role
+  });
 
   return (
     <div>

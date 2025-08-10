@@ -1,50 +1,101 @@
-# Next.js + TanStack Query + Zustand Starter
+# English Learning Platform - EdTech Application
 
-A modern Next.js application with optimized state management using TanStack Query v5 for server state and Zustand for client/UI state.
+A comprehensive English learning platform built with Next.js, featuring story-based learning with embedded vocabulary (Jewish-style story embedding method), role-based access control, and multi-tenancy support.
 
-## 🚀 Features
+## 🚀 Overview
 
-- **Next.js 15** with App Router
-- **TanStack Query v5** for server state management
-- **Zustand** for client/UI state management
-- **TypeScript** for type safety
-- **Prisma** for database management
-- **URL synchronization** for shareable filters
-- **Optimistic updates** and error handling
-- **Performance optimized** with shallow selectors
+This is an advanced EdTech application designed for English language learning through interactive stories. The platform uses a unique "Jewish-style story embedding" method (truyện chêm) where English vocabulary is naturally integrated into Vietnamese stories to enhance learning retention.
+
+## ✨ Key Features
+
+### 🎓 Learning Features
+- **Story-based Learning**: Interactive stories with embedded English vocabulary
+- **Multi-level Content**: Beginner, Intermediate, and Advanced levels
+- **Audio Integration**: Native pronunciation and user recording capabilities
+- **Interactive Exercises**: Multiple choice, fill-in-the-blank, drag-and-drop
+- **Progress Tracking**: Comprehensive user progress monitoring
+- **Vocabulary Management**: Spaced repetition system for vocabulary retention
+- **Quiz System**: Adaptive quizzes with detailed results
+
+### 🔐 Technical Features
+- **Next.js 15** with App Router and React 19
+- **CASL Authorization** - Fine-grained permission system
+- **Multi-tenancy** - Support for multiple organizations
+- **TanStack Query v5** - Server state management
+- **Zustand** - Client state management
+- **Prisma ORM** - Database management with PostgreSQL
+- **NextAuth.js** - Authentication system
+- **TypeScript** - Full type safety
+- **Storybook** - Component documentation
+- **Jest** - Testing framework
+
+### 🎨 UI/UX Features
+- **TailwindCSS** - Modern styling
+- **Radix UI** - Accessible component library
+- **Framer Motion** - Smooth animations
+- **Responsive Design** - Mobile-first approach
+- **Dark/Light Mode** support
 
 ## 🏗️ Architecture
-
-### State Management Philosophy
-
-- **Server State** (TanStack Query): API calls, caching, background sync
-- **Client State** (Zustand): UI interactions, filters, modals, forms
-- **Clear separation**: No server data in Zustand, no UI state in Query
 
 ### Project Structure
 
 ```
 src/
-├── app/                    # Next.js App Router pages
-├── core/
-│   ├── api/               # API client and utilities
-│   └── state/             # Zustand store factory and utilities
-├── features/              # Feature-based organization
-│   ├── users/
-│   │   ├── state.ts       # UI state (Zustand)
-│   │   └── hooks.ts       # Server state (TanStack Query)
-│   └── products/
-│       ├── state.ts
-│       └── hooks.ts
-└── components/            # Reusable UI components
+├── app/                    # Next.js App Router
+│   ├── admin/             # Admin dashboard
+│   ├── api/               # API routes
+│   │   ├── auth/          # Authentication endpoints
+│   │   ├── lessons/       # Lesson management
+│   │   ├── stories/       # Story management
+│   │   ├── users/         # User management
+│   │   └── vocabularies/  # Vocabulary management
+│   ├── dashboard/         # User dashboard
+│   ├── login/            # Authentication pages
+│   └── users/            # User management pages
+├── core/                  # Core business logic
+│   ├── api/              # API client and utilities
+│   ├── auth/             # CASL authorization system
+│   │   ├── ability.ts    # Permission definitions
+│   │   ├── subjects.ts   # CASL subjects and actions
+│   │   └── AbilityProvider.tsx # React provider
+│   └── state/            # Global state management
+├── features/             # Feature modules
+│   ├── auth/             # Authentication features
+│   ├── lessons/          # Lesson management
+│   ├── stories/          # Story management
+│   ├── users/            # User management
+│   ├── vocabularies/     # Vocabulary features
+│   └── quizzes/          # Quiz system
+├── components/           # Reusable UI components
+├── shared/              # Shared utilities
+│   └── components/      # Shared components (Can.tsx)
+└── stories/             # Storybook stories
+
+prisma/
+├── schema.prisma        # Database schema
+└── seed.ts             # Database seeding
 ```
+
+### Database Schema
+
+The application uses a comprehensive PostgreSQL schema with the following main entities:
+
+- **Multi-tenancy**: `Tenant`, `Role`, `UserToRole`
+- **Core Entities**: `User`, `Course`, `Unit`, `Lesson`
+- **Content**: `Story`, `StoryVersion`, `StoryChunk`, `Vocabulary`
+- **Media**: `Audio`, `AudioAsset`
+- **Assessment**: `Exercise`, `Question`, `Quiz`, `QuizResult`
+- **Progress**: `UserProgress`, `UserVocabularyProgress`
+- **System**: `Tag`, `Approval`, `RemixJob`
 
 ## 🛠️ Getting Started
 
 ### Prerequisites
 
 - Node.js 18+
-- PostgreSQL (or use Docker)
+- PostgreSQL 14+
+- npm or yarn
 
 ### Installation
 
@@ -56,21 +107,27 @@ cd my-app
 npm install
 ```
 
-2. **Set up the database:**
+2. **Set up environment variables:**
 
 ```bash
-# Copy environment variables
 cp .env.example .env
+# Edit .env with your database URL and other configurations
+```
 
-# Update DATABASE_URL in .env with your PostgreSQL connection string
+3. **Set up the database:**
 
-# Generate Prisma client and push schema
+```bash
+# Generate Prisma client
 npm run db:generate
+
+# Push schema to database
 npm run db:push
+
+# Seed initial data
 npm run db:seed
 ```
 
-3. **Start the development server:**
+4. **Start the development server:**
 
 ```bash
 npm run dev
@@ -78,54 +135,129 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) to see the application.
 
-## 📖 State Management Guide
+### Available Scripts
 
-### When to use Zustand vs TanStack Query
+```bash
+# Development
+npm run dev              # Start development server with Turbopack
+npm run build            # Build for production
+npm run start            # Start production server
 
-**Use Zustand for:**
+# Database
+npm run db:generate      # Generate Prisma client
+npm run db:push          # Push schema changes
+npm run db:migrate       # Run migrations
+npm run db:seed          # Seed database
+npm run db:studio        # Open Prisma Studio
+npm run db:reset         # Reset database and reseed
 
-- Form inputs and validation state
-- UI interactions (modals, dropdowns, tabs)
-- Client-side filters and pagination
-- User preferences and settings
-- Component-specific state
+# Testing
+npm run test             # Run tests
+npm run test:watch       # Run tests in watch mode
+npm run test:coverage    # Run tests with coverage
 
-**Use TanStack Query for:**
+# Documentation
+npm run storybook        # Start Storybook
+npm run build-storybook  # Build Storybook
 
-- API data fetching and caching
-- Server state synchronization
-- Background refetching
-- Optimistic updates
-- Error handling and retries
-
-### Example Usage
-
-```typescript
-// Feature UI state (Zustand)
-const { search, page, setSearch, setPage } = useUsersFilters();
-
-// Server data (TanStack Query)
-const q = useQuery(buildUsersListQuery({ search, page }));
-
-// URL synchronization
-useEffect(() => {
-  syncToURL({ search, page });
-}, [search, page]);
+# Code Quality
+npm run lint             # Run ESLint
 ```
 
-For detailed documentation, see [State Management Guide](./docs/STATE_MANAGEMENT.md).
+## 🔐 CASL Authorization System
 
-## Learn More
+The application implements a comprehensive role-based access control system using CASL:
 
-To learn more about Next.js, take a look at the following resources:
+### User Roles
+- `student` - Regular learners
+- `coach` - Learning coaches
+- `admin` - System administrators
+- `super_admin` - Super administrators
+- `org_admin` - Organization administrators
+- `curriculum_lead` - Curriculum designers
+- `content_creator` - Content creators
+- `instructor` - Instructors
+- `voice_artist` - Audio content creators
+- `qa` - Quality assurance
+- `guest` - Guest users
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Subjects and Actions
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Defined in `src/core/auth/subjects.ts`:
 
-## Deploy on Vercel
+**Actions**: `manage`, `create`, `read`, `update`, `delete`, `publish`, `approve`, `assign`, `grade`, `remix`, `export`
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+**Subjects**: `Tenant`, `User`, `Role`, `Course`, `Unit`, `Lesson`, `Story`, `StoryVersion`, `Quiz`, `Question`, etc.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Usage Examples
+
+```jsx
+// UI Guards
+<Can I="create" a="Lesson">
+  <button>Create New Lesson</button>
+</Can>
+
+<Can I="update" a={{ __type: 'Story', id: storyId }}>
+  <EditButton />
+</Can>
+
+// Programmatic checks
+const ability = useAbility();
+if (ability.can('publish', { __type: 'Story', id })) {
+  publishStory(id);
+}
+```
+
+## 📚 Learning Method: Jewish-Style Story Embedding
+
+The platform uses a unique learning methodology where English vocabulary is naturally embedded within Vietnamese stories:
+
+1. **Original Stories** - Base Vietnamese stories
+2. **Vocabulary Embedding** - Strategic placement of English words
+3. **Audio Integration** - Native pronunciation support
+4. **Interactive Exercises** - Reinforcement activities
+5. **Progress Tracking** - Spaced repetition system
+
+## 🎯 User Roles and Permissions
+
+### Students
+- Access assigned courses and lessons
+- Complete exercises and quizzes
+- Track learning progress
+- Record and practice pronunciation
+
+### Content Creators
+- Create and edit stories
+- Manage vocabulary lists
+- Design exercises and quizzes
+- Upload audio content
+
+### Administrators
+- Manage users and roles
+- Oversee content approval
+- Monitor system analytics
+- Configure tenant settings
+
+## 🚀 Deployment
+
+The application is optimized for deployment on:
+
+- **Vercel** (recommended for Next.js)
+- **Railway** or **Heroku** (with PostgreSQL)
+- **Docker** containers
+- **AWS** or **Google Cloud**
+
+## 📖 Documentation
+
+For detailed documentation, see:
+- [Authentication Setup](./AUTHENTICATION_IMPROVEMENTS.md)
+- [Database Setup](./DATABASE_SETUP.md)
+- [Login Configuration](./LOGIN_SETUP.md)
+
+## 🤝 Contributing
+
+This is an educational platform designed to revolutionize English learning through innovative story-based methods. Contributions are welcome!
+
+## 📄 License
+
+This project is proprietary software for educational purposes.

@@ -8,13 +8,15 @@ import { api } from "@/core/api/api";
 
 // Types
 export interface Lesson {
-  id: number;
+  id: string;
   title: string;
-  description: string | null;
-  objective: string | null;
-  level: "beginner" | "intermediate" | "advanced";
+  order: number;
+  status: string;
   createdAt: string;
   updatedAt: string;
+  unitId: string;
+  courseId: string;
+  tenantId: string;
   _count?: {
     stories: number;
     vocabularies: number;
@@ -54,29 +56,29 @@ export interface LessonDetail extends Lesson {
 
 export interface CreateLessonData {
   title: string;
-  description?: string;
-  objective?: string;
-  level?: "beginner" | "intermediate" | "advanced";
+  order: number;
+  unitId: string;
+  courseId: string;
+  status?: string;
 }
 
 export interface UpdateLessonData {
   title?: string;
-  description?: string;
-  objective?: string;
-  level?: "beginner" | "intermediate" | "advanced";
+  order?: number;
+  status?: string;
 }
 
 // Query builders
 export const buildLessonsListQuery = (params?: {
   search?: string;
-  level?: string;
+  status?: string;
 }) =>
   queryOptions({
     queryKey: keyFactory.list("lessons", params),
     queryFn: ({ signal }) => {
       const searchParams = new URLSearchParams();
       if (params?.search) searchParams.append("search", params.search);
-      if (params?.level) searchParams.append("level", params.level);
+      if (params?.status) searchParams.append("status", params.status);
 
       const url = `/api/lessons${
         searchParams.toString() ? `?${searchParams.toString()}` : ""
@@ -88,7 +90,7 @@ export const buildLessonsListQuery = (params?: {
     placeholderData: (prev) => prev,
   });
 
-export const buildLessonDetailQuery = (id: number) =>
+export const buildLessonDetailQuery = (id: string) =>
   queryOptions({
     queryKey: keyFactory.detail("lessons", id),
     queryFn: ({ signal }) =>
@@ -119,7 +121,7 @@ export function useUpdateLesson() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: UpdateLessonData }) =>
+    mutationFn: ({ id, data }: { id: string; data: UpdateLessonData }) =>
       api<Lesson>(`/api/lessons/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -135,7 +137,7 @@ export function useDeleteLesson() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: number) => api(`/api/lessons/${id}`, { method: "DELETE" }),
+    mutationFn: (id: string) => api(`/api/lessons/${id}`, { method: "DELETE" }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["lessons"] });
     },

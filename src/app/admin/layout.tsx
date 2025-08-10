@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Admin Panel - Edtech",
@@ -26,7 +27,7 @@ export default function AdminLayout({
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
-          <a
+          <Link
             href="/admin"
             style={{
               textDecoration: "none",
@@ -43,10 +44,23 @@ export default function AdminLayout({
             >
               🎓 Edtech Admin
             </h1>
-          </a>
+          </Link>
 
           <nav style={{ display: "flex", gap: 16 }}>
-            <a
+            <Link
+              href="/admin/dashboard"
+              style={{
+                textDecoration: "none",
+                color: "#64748b",
+                fontSize: 14,
+                fontWeight: 500,
+                padding: "8px 12px",
+                borderRadius: 6,
+              }}
+            >
+              📊 Tổng quan
+            </Link>
+            <Link
               href="/admin/users"
               style={{
                 textDecoration: "none",
@@ -58,8 +72,8 @@ export default function AdminLayout({
               }}
             >
               👥 Người dùng
-            </a>
-            <a
+            </Link>
+            <Link
               href="/admin/lessons"
               style={{
                 textDecoration: "none",
@@ -71,7 +85,46 @@ export default function AdminLayout({
               }}
             >
               📚 Bài học
-            </a>
+            </Link>
+            <Link
+              href="/admin/stories"
+              style={{
+                textDecoration: "none",
+                color: "#64748b",
+                fontSize: 14,
+                fontWeight: 500,
+                padding: "8px 12px",
+                borderRadius: 6,
+              }}
+            >
+              📖 Stories
+            </Link>
+            <Link
+              href="/admin/vocabularies"
+              style={{
+                textDecoration: "none",
+                color: "#64748b",
+                fontSize: 14,
+                fontWeight: 500,
+                padding: "8px 12px",
+                borderRadius: 6,
+              }}
+            >
+              📝 Từ vựng
+            </Link>
+            <Link
+              href="/admin/quizzes"
+              style={{
+                textDecoration: "none",
+                color: "#64748b",
+                fontSize: 14,
+                fontWeight: 500,
+                padding: "8px 12px",
+                borderRadius: 6,
+              }}
+            >
+              🧩 Quizzes
+            </Link>
           </nav>
         </div>
 

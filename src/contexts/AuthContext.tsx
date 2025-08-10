@@ -1,22 +1,45 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
+import { useRouter } from "next/navigation";
+import {
+  setAuthToken,
+  getAuthToken,
+  refreshToken,
+  clearCSRFToken,
+} from "@/core/api/api";
 
 // Types
 interface User {
-  id: number;
+  id: string;
   name: string;
   email: string;
-  role: 'student' | 'coach' | 'admin';
+  role: "student" | "coach" | "admin";
+  tenantId?: string;
 }
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  login: (
+    email: string,
+    password: string
+  ) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
-  register: (name: string, email: string, password: string, role?: 'student' | 'coach') => Promise<{ success: boolean; error?: string }>;
+  register: (
+    name: string,
+    email: string,
+    password: string,
+    role?: "student" | "coach"
+  ) => Promise<{ success: boolean; error?: string }>;
+  refreshUserToken: () => Promise<boolean>;
   isLoading: boolean;
+  isAuthenticated: boolean;
 }
 
 // Create context
@@ -28,49 +51,116 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
+  // Handle auth events
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      console.log("🔑 Unauthorized event received - logging out");
+      // Only logout if not already on login page
+      if (window.location.pathname !== "/login") {
+        logout();
+      }
+    };
+
+    const handleTokenRefreshFailed = () => {
+      console.log("🔄 Token refresh failed - logging out");
+      // Only logout if not already on login page
+      if (window.location.pathname !== "/login") {
+        logout();
+      }
+    };
+
+    window.addEventListener("auth:unauthorized", handleUnauthorized);
+    window.addEventListener(
+      "auth:token-refresh-failed",
+      handleTokenRefreshFailed
+    );
+
+    return () => {
+      window.removeEventListener("auth:unauthorized", handleUnauthorized);
+      window.removeEventListener(
+        "auth:token-refresh-failed",
+        handleTokenRefreshFailed
+      );
+    };
+  }, []);
+
   // Check if user is logged in on mount
   useEffect(() => {
     checkAuth();
   }, []);
 
-  const checkAuth = async () => {
+  const checkAuth = useCallback(async () => {
+    console.log("🔍 AuthContext: checkAuth started");
     try {
-      const token = localStorage.getItem('auth_token');
+      const token = getAuthToken();
+      console.log("🔍 AuthContext: token =", token ? "exists" : "null");
+      
       if (!token) {
+        console.log("🔍 AuthContext: No token, setting isLoading = false");
         setIsLoading(false);
         return;
       }
 
+      console.log("🔍 AuthContext: Verifying token with /api/auth/me");
       // Verify token with API
-      const response = await fetch('/api/auth/me', {
+      const response = await fetch("/api/auth/me", {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
+      console.log("🔍 AuthContext: API response status =", response.status);
+      
       if (response.ok) {
-        const userData = await response.json();
+        const apiResponse = await response.json();
+        console.log("🔍 AuthContext: API response received", apiResponse);
+        
+        // Extract user data from response.data
+        const userData = apiResponse.data || apiResponse;
+        console.log("🔍 AuthContext: Extracted user data", userData);
         setUser(userData);
       } else {
+        console.log("🔍 AuthContext: Token invalid, clearing auth");
         // Token is invalid, remove it
-        localStorage.removeItem('auth_token');
+        setAuthToken(null);
+        setUser(null);
       }
     } catch (error) {
-      console.error('Auth check failed:', error);
-      localStorage.removeItem('auth_token');
+      console.error("🚨 AuthContext: Auth check failed:", error);
+      setAuthToken(null);
+      setUser(null);
     } finally {
+      console.log("🔍 AuthContext: Setting isLoading = false");
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+  const refreshUserToken = useCallback(async (): Promise<boolean> => {
+    try {
+      const newToken = await refreshToken();
+      if (newToken) {
+        // Re-check auth with new token
+        await checkAuth();
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error("Token refresh failed:", error);
+      return false;
+    }
+  }, [checkAuth]);
+
+  const login = async (
+    email: string,
+    password: string
+  ): Promise<{ success: boolean; error?: string }> => {
     try {
       setIsLoading(true);
-      
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
+
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ email, password }),
       });
@@ -78,40 +168,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const data = await response.json();
 
       if (response.ok) {
-        // Store token
-        localStorage.setItem('auth_token', data.token);
+        // Store tokens with proper expiry
+        setAuthToken(data.accessToken, data.expiresIn, data.refreshToken);
         setUser(data.user);
-        
+
         // Redirect based on role
-        const redirectPath = data.user.role === 'admin' ? '/admin' : 
-                           data.user.role === 'coach' ? '/coach' : '/dashboard';
+        const redirectPath =
+          data.user.role === "admin"
+            ? "/admin"
+            : data.user.role === "coach"
+            ? "/coach"
+            : "/dashboard";
         router.push(redirectPath);
-        
+
         return { success: true };
       } else {
-        return { success: false, error: data.message || 'Login failed' };
+        return { success: false, error: data.message || "Login failed" };
       }
     } catch (error) {
-      console.error('Login error:', error);
-      return { success: false, error: 'Network error. Please try again.' };
+      console.error("Login error:", error);
+      return { success: false, error: "Network error. Please try again." };
     } finally {
       setIsLoading(false);
     }
   };
 
   const register = async (
-    name: string, 
-    email: string, 
-    password: string, 
-    role: 'student' | 'coach' = 'student'
+    name: string,
+    email: string,
+    password: string,
+    role: "student" | "coach" = "student"
   ): Promise<{ success: boolean; error?: string }> => {
     try {
       setIsLoading(true);
-      
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
+
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ name, email, password, role }),
       });
@@ -122,42 +216,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Auto login after successful registration
         return await login(email, password);
       } else {
-        return { success: false, error: data.message || 'Registration failed' };
+        return { success: false, error: data.message || "Registration failed" };
       }
     } catch (error) {
-      console.error('Registration error:', error);
-      return { success: false, error: 'Network error. Please try again.' };
+      console.error("Registration error:", error);
+      return { success: false, error: "Network error. Please try again." };
     } finally {
       setIsLoading(false);
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem('auth_token');
+  const logout = useCallback(() => {
+    setAuthToken(null);
+    clearCSRFToken();
     setUser(null);
-    router.push('/login');
-  };
+    router.push("/login");
+  }, [router]);
 
   const value: AuthContextType = {
     user,
     login,
     logout,
     register,
+    refreshUserToken,
     isLoading,
+    isAuthenticated: !!user,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 // Custom hook to use auth context
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 }
@@ -165,7 +258,7 @@ export function useAuth() {
 // HOC for protected routes
 export function withAuth<P extends object>(
   Component: React.ComponentType<P>,
-  allowedRoles?: ('student' | 'coach' | 'admin')[]
+  allowedRoles?: ("student" | "coach" | "admin")[]
 ) {
   return function AuthenticatedComponent(props: P) {
     const { user, isLoading } = useAuth();
@@ -174,12 +267,12 @@ export function withAuth<P extends object>(
     useEffect(() => {
       if (!isLoading) {
         if (!user) {
-          router.push('/login');
+          router.push("/login");
           return;
         }
 
         if (allowedRoles && !allowedRoles.includes(user.role)) {
-          router.push('/unauthorized');
+          router.push("/unauthorized");
           return;
         }
       }

@@ -1,41 +1,41 @@
 "use client";
 
-import { makeStore, shallow } from "@/core/state/makeStore";
+import { makeStore } from "@/core/state/makeStore";
 
 // UI State interface for Lessons feature
 interface LessonsUIState {
   // Filter and pagination state
   search: string;
-  level: string;
+  status: string;
 
   // Modal and selection state
-  selectedId: number | null;
+  selectedId: string | null;
 
   // Actions
   setSearch: (search: string) => void;
-  setLevel: (level: string) => void;
-  setSelectedId: (id: number | null) => void;
+  setStatus: (status: string) => void;
+  setSelectedId: (id: string | null) => void;
   reset: () => void;
 }
 
 // Initial state
 const initialState = {
   search: "",
-  level: "",
+  status: "",
   selectedId: null,
 };
 
 // Create the store
 export const useLessonsUI = makeStore<LessonsUIState>(
-  (set, get) => ({
+  (set) => ({
     ...initialState,
 
     // Filter actions
     setSearch: (search: string) => set({ search }),
-    setLevel: (level: string) => set({ level }),
+    setStatus: (status: string) => set({ status }),
 
     // Selection actions
-    setSelectedId: (selectedId: number | null) => set({ selectedId }),
+    setSelectedId: (selectedId: string | null) => set({ selectedId }),
 
     // Reset action
     reset: () => set(initialState),
@@ -47,30 +47,18 @@ export const useLessonsUI = makeStore<LessonsUIState>(
 );
 
 // Simple selectors
-export const useLessonsFilters = () =>
-  useLessonsUI(
-    (state) => ({
-      search: state.search,
-      level: state.level,
-    }),
-    shallow
-  );
+export const useLessonsFilters = () => ({
+  search: useLessonsUI((state) => state.search),
+  status: useLessonsUI((state) => state.status),
+});
 
-export const useLessonsFilterActions = () =>
-  useLessonsUI(
-    (state) => ({
-      setSearch: state.setSearch,
-      setLevel: state.setLevel,
-      reset: state.reset,
-    }),
-    shallow
-  );
+export const useLessonsFilterActions = () => ({
+  setSearch: useLessonsUI((state) => state.setSearch),
+  setStatus: useLessonsUI((state) => state.setStatus),
+  reset: useLessonsUI((state) => state.reset),
+});
 
-export const useLessonsSelection = () =>
-  useLessonsUI(
-    (state) => ({
-      selectedId: state.selectedId,
-      setSelectedId: state.setSelectedId,
-    }),
-    shallow
-  );
+export const useLessonsSelection = () => ({
+  selectedId: useLessonsUI((state) => state.selectedId),
+  setSelectedId: useLessonsUI((state) => state.setSelectedId),
+});

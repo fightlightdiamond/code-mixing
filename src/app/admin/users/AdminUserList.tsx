@@ -35,6 +35,9 @@ export default function AdminUserList() {
   const createUser = useCreateUser();
   const updateUser = useUpdateUser();
   const deleteUser = useDeleteUser();
+  
+  // Safely extract users array (query hook handles API response internally)
+  const users = q.data || [];
 
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -420,7 +423,7 @@ export default function AdminUserList() {
             </div>
 
             {/* Rows */}
-            {q.data.map((user: User) => {
+            {users.map((user: User) => {
               const roleColor = getRoleBadgeColor(user.role);
               return (
                 <div

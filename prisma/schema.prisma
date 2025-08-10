@@ -16,44 +16,82 @@ enum UserRole {
   student
   coach
   admin
+  super_admin
+  org_admin
+  curriculum_lead
+  content_creator
+  instructor
+  voice_artist
+  qa
+  guest
 }
 
 // Learning levels enum
 enum LearningLevel {
   beginner
+  elementary
   intermediate
+  upper_intermediate
   advanced
+  proficient
+}
+
+// Content status enum
+enum ContentStatus {
+  draft
+  in_review
+  published
+  archived
+  rejected
+}
+
+// Progress status enum
+enum ProgressStatus {
+  not_started
+  in_progress
+  completed
+  paused
+}
+
+// Difficulty level enum
+enum DifficultyLevel {
+  beginner
+  elementary
+  intermediate
+  upper_intermediate
+  advanced
+  proficient
 }
 
 // Story types for embedding method
 enum StoryType {
-  original      // Original story
-  chemdanhtu    // Noun embedding
-  chemdongtu    // Verb embedding
-  chemtinhtu    // Adjective embedding
-  custom        // Custom embedding
+  original // Original story
+  chemdanhtu // Noun embedding
+  chemdongtu // Verb embedding
+  chemtinhtu // Adjective embedding
+  custom // Custom embedding
 }
 
 // Story chunk types
 enum ChunkType {
-  normal   // Regular text
-  chem     // Embedded English words
-  explain  // Explanation/translation
+  normal // Regular text
+  chem // Embedded English words
+  explain // Explanation/translation
 }
 
 // Audio types
 enum AudioType {
-  original     // Original dialogue audio
-  chem         // Story with embedded words audio
-  vocab        // Vocabulary pronunciation
-  user_record  // User's recorded audio
+  original // Original dialogue audio
+  chem // Story with embedded words audio
+  vocab // Vocabulary pronunciation
+  user_record // User's recorded audio
 }
 
 // Question types for quizzes
 enum QuestionType {
-  MCQ          // Multiple choice
-  fill_blank   // Fill in the blanks
-  drag_drop    // Drag and drop
+  MCQ // Multiple choice
+  fill_blank // Fill in the blanks
+  drag_drop // Drag and drop
   short_answer // Short answer
 }
 
@@ -64,73 +102,294 @@ enum VocabStatus {
   mastered
 }
 
+// Notification types
+enum NotificationType {
+  info
+  success
+  warning
+  error
+}
+
+// Tenant entity for multi-tenancy
+model Tenant {
+  id        String   @id @default(uuid())
+  name      String   @db.VarChar(255)
+  plan      String   @default("free") @db.VarChar(50)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  users           User[]
+  userRoles       UserToRole[]
+  roles           Role[]
+  courses         Course[]
+  units           Unit[]
+  lessons         Lesson[]
+  stories         Story[]
+  storyVersions   StoryVersion[]
+  clozeConfigs    ClozeConfig[]
+  audioAssets     Audio[]
+  exercises       Exercise[]
+  questions       Question[]
+  quizzes         Quiz[]
+  quizResults     QuizResult[]
+  tags            Tag[]
+  remixJobs       RemixJob[]
+  userProgress    UserProgress[]
+  approvals       Approval[]
+  auditLogs       AuditLog[]
+  notifications   Notification[]
+  learningSessions LearningSession[]
+
+  @@index([isActive])
+  @@index([plan])
+  @@map("tenants")
+}
+
+// Role entity for RBAC
+model Role {
+  id          String   @id @default(uuid())
+  name        String   @db.VarChar(255)
+  slug        String   @unique @db.VarChar(100)
+  tenantScope String?  @db.VarChar(50) // "system", "tenant", or null for public
+  isSystem    Boolean  @default(false)
+  tenantId    String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  userRoles UserToRole[]
+  tenant    Tenant? @relation(fields: [tenantId], references: [id])
+
+  @@index([slug])
+  @@index([tenantId])
+  @@index([isSystem])
+  @@map("roles")
+}
+
+// User-Role relationship
+model UserToRole {
+  id       String  @id @default(uuid())
+  userId   String
+  roleId   String
+  tenantId String?
+
+  // Relations
+  user   User    @relation(fields: [userId], references: [id])
+  role   Role    @relation(fields: [roleId], references: [id])
+  tenant Tenant? @relation(fields: [tenantId], references: [id])
+
+  @@unique([userId, roleId, tenantId])
+  @@map("user_roles")
+}
+
 // === CORE ENTITIES ===
 
 model User {
-  id           Int      @id @default(autoincrement())
-  name         String
-  email        String   @unique
-  passwordHash String   @map("password_hash")
-  role         UserRole @default(student)
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  id             String    @id @default(uuid())
+  name           String    @db.VarChar(255)
+  email          String    @unique @db.VarChar(320) // RFC 5321 limit
+  passwordHash   String    @map("password_hash") @db.VarChar(255)
+  role           UserRole
+  tenantId       String?   // For tenant-scoped users
+  locale         String?   @default("en") @db.VarChar(10)
+  isActive       Boolean   @default(true)
+  lastLoginAt    DateTime? @map("last_login_at")
+  profilePicture String?   @map("profile_picture")
+  timezone       String?   @default("UTC") @db.VarChar(50)
+  preferences    Json?     // User preferences as JSON
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
 
   // Relations
+  tenant                 Tenant?                  @relation(fields: [tenantId], references: [id])
+  userRoles              UserToRole[] // Many-to-many with roles
   userResults            UserResult[]
   userVocabularyProgress UserVocabularyProgress[]
   feedbacks              Feedback[]
   reflections            Reflection[]
-  audioRecordings        Audio[]
+  recordedAudio          Audio[]                  @relation("RecordedAudio")
+  stories                Story[]                  @relation("CreatedStory") // Stories created by user
+  storyVersions          StoryVersion[]           @relation("CreatedStoryVersion") // Story versions created by user
+  audioAssets            Audio[]                  @relation("CreatedAudio") // Audio assets created by user
+  exercises              Exercise[]               @relation("CreatedExercise") // Exercises created by user
+  quizzes                Quiz[]                   @relation("CreatedQuiz") // Quizzes created by user
+  quizResults            QuizResult[] // Quiz results for this user
+  userProgress           UserProgress[] // Progress records for this user
+  approvals              Approval[]               @relation("RequestedApproval") // Approval requests made by user
+  approvedApprovals      Approval[]               @relation("ApprovedApproval") // Approvals made by user
+  remixJobs              RemixJob[] // Remix jobs initiated by user
+  createdCourses         Course[]                 @relation("CreatedCourse") // Courses created by user
+  createdLessons         Lesson[]                 @relation("CreatedLesson") // Lessons created by user
+  approvedLessons        Lesson[]                 @relation("ApprovedLesson") // Lessons approved by user
+  auditLogs              AuditLog[] // Audit logs for this user
+  notifications          Notification[] // Notifications for this user
+  learningSessions       LearningSession[] // Learning sessions for this user
 
+  @@index([email])
+  @@index([tenantId])
+  @@index([role])
+  @@index([isActive])
+  @@index([lastLoginAt])
   @@map("users")
 }
 
-model Lesson {
-  id          Int            @id @default(autoincrement())
-  title       String
-  description String?        @db.Text
-  objective   String?
-  level       LearningLevel  @default(intermediate)
-  createdAt   DateTime       @default(now()) @map("created_at")
-  updatedAt   DateTime       @updatedAt @map("updated_at")
+model Course {
+  id               String        @id @default(uuid())
+  title            String        @db.VarChar(255)
+  description      String?       @db.Text
+  level            LearningLevel @default(intermediate)
+  difficulty       DifficultyLevel @default(intermediate)
+  thumbnailUrl     String?       @map("thumbnail_url")
+  estimatedHours   Int?          @map("estimated_hours")
+  tenantId         String
+  status           String        @default("draft") // draft, in_review, published, archived, rejected
+  createdBy        String
+  createdAt        DateTime      @default(now()) @map("created_at")
+  updatedAt        DateTime      @updatedAt @map("updated_at")
 
   // Relations
-  stories       Story[]
-  vocabularies  Vocabulary[]
-  grammarPoints GrammarPoint[]
-  audios        Audio[]
-  quizzes       Quiz[]
-  userResults   UserResult[]
-  feedbacks     Feedback[]
-  reflections   Reflection[]
+  tenant  Tenant   @relation(fields: [tenantId], references: [id])
+  creator User     @relation("CreatedCourse", fields: [createdBy], references: [id])
+  units   Unit[]
+  lessons Lesson[]
 
+  @@index([tenantId])
+  @@index([status])
+  @@index([level])
+  @@index([difficulty])
+  @@index([createdBy])
+  @@index([createdAt])
+  @@map("courses")
+}
+
+model Unit {
+  id       String @id @default(uuid())
+  courseId String
+  title    String
+  order    Int
+  tenantId String
+
+  // Relations
+  course  Course   @relation(fields: [courseId], references: [id])
+  tenant  Tenant   @relation(fields: [tenantId], references: [id])
+  lessons Lesson[]
+
+  @@map("units")
+}
+
+model Lesson {
+  id               String         @id @default(uuid())
+  unitId           String
+  courseId         String
+  title            String         @db.VarChar(255)
+  description      String?        @db.Text
+  order            Int
+  estimatedMinutes Int?           @map("estimated_minutes")
+  prerequisites    String[]       // Array of lesson IDs
+  tenantId         String
+  status           ContentStatus  @default(draft)
+  publishedAt      DateTime?      @map("published_at")
+  createdBy        String
+  approvedBy       String?        @map("approved_by")
+  createdAt        DateTime       @default(now()) @map("created_at")
+  updatedAt        DateTime       @updatedAt @map("updated_at")
+
+  // Relations
+  unit             Unit             @relation(fields: [unitId], references: [id])
+  course           Course           @relation(fields: [courseId], references: [id])
+  tenant           Tenant           @relation(fields: [tenantId], references: [id])
+  creator          User             @relation("CreatedLesson", fields: [createdBy], references: [id])
+  approver         User?            @relation("ApprovedLesson", fields: [approvedBy], references: [id])
+  stories          Story[]
+  vocabularies     Vocabulary[]
+  grammarPoints    GrammarPoint[]
+  audios           Audio[]
+  exercises        Exercise[]
+  quizzes          Quiz[]
+  userResults      UserResult[]
+  feedbacks        Feedback[]
+  reflections      Reflection[]
+  userProgress     UserProgress[]
+  learningSessions LearningSession[]
+
+  @@index([courseId])
+  @@index([unitId])
+  @@index([status])
+  @@index([tenantId])
+  @@index([createdAt])
+  @@index([createdBy])
   @@map("lessons")
 }
 
 // === STORY & CONTENT ENTITIES ===
 
 model Story {
-  id         Int       @id @default(autoincrement())
-  lessonId   Int       @map("lesson_id")
-  title      String
-  content    String    @db.Text
-  storyType  StoryType @default(original) @map("story_type")
-  chemRatio  Float?    @map("chem_ratio") // Percentage of English words embedded
-  createdAt  DateTime  @default(now()) @map("created_at")
+  id               String         @id @default(uuid())
+  lessonId         String?
+  title            String         @db.VarChar(255)
+  content          String         @db.Text
+  storyType        StoryType      @default(original) @map("story_type")
+  difficulty       DifficultyLevel @default(intermediate)
+  estimatedMinutes Int?           @map("estimated_minutes")
+  wordCount        Int?           @map("word_count")
+  chemRatio        Float?         // Percentage of English words embedded
+  tenantId         String
+  createdBy        String
+  status           ContentStatus  @default(draft)
+  createdAt        DateTime       @default(now()) @map("created_at")
+  updatedAt        DateTime       @updatedAt @map("updated_at")
 
   // Relations
-  lesson Lesson        @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-  chunks StoryChunk[]
-  audios Audio[]
+  lesson           Lesson?          @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  tenant           Tenant           @relation(fields: [tenantId], references: [id])
+  creator          User             @relation("CreatedStory", fields: [createdBy], references: [id])
+  versions         StoryVersion[]
+  tags             StoryTag[]
+  audios           Audio[]
+  chunks           StoryChunk[]
+  learningSessions LearningSession[]
 
+  @@index([lessonId])
+  @@index([tenantId])
+  @@index([status])
+  @@index([storyType])
+  @@index([difficulty])
+  @@index([createdBy])
   @@map("stories")
 }
 
+model StoryVersion {
+  id            String   @id @default(uuid())
+  storyId       String
+  version       Int
+  content       String   @db.Text
+  isApproved    Boolean  @default(false) @map("is_approved")
+  isPublished   Boolean  @default(false) @map("is_published")
+  chemingRatio  Float?   @map("cheming_ratio") // Percentage of English words embedded
+  chemingScopes String?  @map("cheming_scopes") // JSON of embedding scopes
+  createdBy     String
+  tenantId      String
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  story        Story         @relation(fields: [storyId], references: [id])
+  creator      User          @relation("CreatedStoryVersion", fields: [createdBy], references: [id])
+  tenant       Tenant        @relation(fields: [tenantId], references: [id])
+  clozeConfigs ClozeConfig[]
+  audioAssets  Audio[]       @relation("StoryVersionAudio")
+  remixJobs    RemixJob[]
+
+  @@map("story_versions")
+}
+
 model StoryChunk {
-  id         Int       @id @default(autoincrement())
-  storyId    Int       @map("story_id")
+  id         String    @id @default(uuid())
+  storyId    String    @map("story_id")
   chunkOrder Int       @map("chunk_order")
-  chunkText  String    @db.Text @map("chunk_text")
+  chunkText  String    @map("chunk_text") @db.Text
   type       ChunkType
 
   // Relations
@@ -139,9 +398,23 @@ model StoryChunk {
   @@map("story_chunks")
 }
 
+model ClozeConfig {
+  id             String @id @default(uuid())
+  storyVersionId String @map("story_version_id")
+  partOfSpeech   String @map("part_of_speech")
+  ratio          Float
+  tenantId       String
+
+  // Relations
+  storyVersion StoryVersion @relation(fields: [storyVersionId], references: [id])
+  tenant       Tenant       @relation(fields: [tenantId], references: [id])
+
+  @@map("cloze_configs")
+}
+
 model Vocabulary {
-  id       Int    @id @default(autoincrement())
-  lessonId Int    @map("lesson_id")
+  id       String  @id @default(uuid())
+  lessonId String  @map("lesson_id")
   word     String
   meaning  String
   example  String?
@@ -155,8 +428,8 @@ model Vocabulary {
 }
 
 model GrammarPoint {
-  id          Int    @id @default(autoincrement())
-  lessonId    Int    @map("lesson_id")
+  id          String @id @default(uuid())
+  lessonId    String @map("lesson_id")
   point       String
   explanation String @db.Text
 
@@ -169,88 +442,176 @@ model GrammarPoint {
 // === AUDIO ENTITIES ===
 
 model Audio {
-  id        Int       @id @default(autoincrement())
-  storyId   Int?      @map("story_id")
-  lessonId  Int?      @map("lesson_id")
-  userId    Int?      @map("user_id") // For user recordings
-  type      AudioType
-  url       String
-  createdAt DateTime  @default(now()) @map("created_at")
+  id          String   @id @default(uuid())
+  lessonId    String?  @map("lesson_id")
+  storyId     String?  @map("story_id")
+  storageKey  String   @map("storage_key")
+  voiceType   String   @map("voice_type")
+  durationSec Int?     @map("duration_sec")
+  tenantId    String   @map("tenant_id")
+  createdBy   String   @map("created_by")
+  status      String   @default("draft") // draft, processed, published
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
   // Relations
-  story  Story? @relation(fields: [storyId], references: [id], onDelete: Cascade)
-  lesson Lesson? @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson           Lesson?       @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  story            Story?        @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  storyVersion     StoryVersion? @relation("StoryVersionAudio", fields: [storyVersionId], references: [id])
+  storyVersionId   String?       @map("story_version_id")
+  tenant           Tenant        @relation(fields: [tenantId], references: [id])
+  creator          User          @relation("CreatedAudio", fields: [createdBy], references: [id])
+  recordedBy       User?         @relation("RecordedAudio", fields: [recordedByUserId], references: [id])
+  recordedByUserId String?       @map("recorded_by_user_id")
 
-  @@map("audios")
+  @@map("audio_assets")
 }
 
 // === QUIZ & ASSESSMENT ENTITIES ===
 
-model Quiz {
-  id          Int    @id @default(autoincrement())
-  lessonId    Int    @map("lesson_id")
-  title       String
-  description String?
+model Exercise {
+  id         String   @id @default(uuid())
+  lessonId   String   @map("lesson_id")
+  type       String // cloze, matching, etc.
+  difficulty String // easy, medium, hard
+  tenantId   String   @map("tenant_id")
+  createdBy  String   @map("created_by")
+  status     String   @default("draft") // draft, published, archived
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
 
   // Relations
-  lesson      Lesson       @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-  questions   Question[]
-  userResults UserResult[]
+  lesson        Lesson         @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  tenant        Tenant         @relation(fields: [tenantId], references: [id])
+  creator       User           @relation("CreatedExercise", fields: [createdBy], references: [id])
+  questions     Question[]
+  quizExercises QuizExercise[]
 
-  @@map("quizzes")
+  @@map("exercises")
 }
 
 model Question {
-  id           Int          @id @default(autoincrement())
-  quizId       Int          @map("quiz_id")
-  questionText String       @db.Text @map("question_text")
-  type         QuestionType
-  order        Int
+  id         String       @id @default(uuid())
+  exerciseId String       @map("exercise_id")
+  stem       String       @map("stem") @db.Text
+  type       QuestionType
+  tenantId   String       @map("tenant_id")
+  createdAt  DateTime     @default(now()) @map("created_at")
+  updatedAt  DateTime     @updatedAt @map("updated_at")
 
   // Relations
-  quiz    Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
-  answers Answer[]
+  exercise      Exercise       @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  tenant        Tenant         @relation(fields: [tenantId], references: [id])
+  choices       Choice[]
+  quizQuestions QuizQuestion[]
 
   @@map("questions")
 }
 
-model Answer {
-  id         Int     @id @default(autoincrement())
-  questionId Int     @map("question_id")
-  answerText String  @db.Text @map("answer_text")
+model Choice {
+  id         String  @id @default(uuid())
+  questionId String  @map("question_id")
+  text       String  @db.Text
   isCorrect  Boolean @map("is_correct")
 
   // Relations
   question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
-  @@map("answers")
+  @@map("choices")
+}
+
+model Quiz {
+  id          String   @id @default(uuid())
+  lessonId    String   @map("lesson_id")
+  title       String
+  description String? // hoặc kiểu phù hợp
+  tenantId    String   @map("tenant_id")
+  status      String   @default("draft") // draft, published, archived
+  createdBy   String   @map("created_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  lesson        Lesson         @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  tenant        Tenant         @relation(fields: [tenantId], references: [id])
+  creator       User           @relation("CreatedQuiz", fields: [createdBy], references: [id])
+  questions     QuizQuestion[]
+  quizExercises QuizExercise[]
+  quizResults   QuizResult[]
+
+  @@map("quizzes")
+}
+
+model QuizQuestion {
+  id         String @id @default(uuid())
+  quizId     String @map("quiz_id")
+  questionId String @map("question_id")
+  order      Int
+
+  // Relations
+  quiz     Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  question Question @relation(fields: [questionId], references: [id])
+
+  @@map("quiz_questions")
+}
+
+model QuizExercise {
+  id         String @id @default(uuid())
+  quizId     String @map("quiz_id")
+  exerciseId String @map("exercise_id")
+  order      Int
+
+  // Relations
+  quiz     Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  exercise Exercise @relation(fields: [exerciseId], references: [id])
+
+  @@map("quiz_exercises")
+}
+
+model QuizResult {
+  id           String   @id @default(uuid())
+  quizId       String   @map("quiz_id")
+  userId       String   @map("user_id")
+  score        Decimal  @db.Decimal(5,2) // More precise for scores
+  timeSpentSec Int      @map("time_spent_sec")
+  attemptedAt  DateTime @map("attempted_at")
+  tenantId     String   @map("tenant_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  // Relations
+  quiz   Quiz   @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([userId])
+  @@index([quizId])
+  @@index([attemptedAt])
+  @@map("quiz_results")
 }
 
 // === USER PROGRESS & RESULTS ===
 
 model UserResult {
-  id         Int       @id @default(autoincrement())
-  userId     Int       @map("user_id")
-  lessonId   Int       @map("lesson_id")
-  quizId     Int?      @map("quiz_id")
+  id         String    @id @default(uuid())
+  userId     String    @map("user_id")
+  lessonId   String    @map("lesson_id")
+  quizId     String?   @map("quiz_id")
   score      Float
   recordUrl  String?   @map("record_url") // URL to user's speaking recording
   startedAt  DateTime  @map("started_at")
   finishedAt DateTime? @map("finished_at")
 
   // Relations
-  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  lesson Lesson  @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-  quiz   Quiz?   @relation(fields: [quizId], references: [id], onDelete: SetNull)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 
   @@map("user_results")
 }
 
 model UserVocabularyProgress {
-  id           Int         @id @default(autoincrement())
-  userId       Int         @map("user_id")
-  vocabularyId Int         @map("vocabulary_id")
+  id           String      @id @default(uuid())
+  userId       String      @map("user_id")
+  vocabularyId String      @map("vocabulary_id")
   status       VocabStatus @default(new)
   lastReviewed DateTime?   @map("last_reviewed")
 
@@ -262,12 +623,99 @@ model UserVocabularyProgress {
   @@map("user_vocabulary_progress")
 }
 
+// === TAGGING SYSTEM ===
+
+model Tag {
+  id        String   @id @default(uuid())
+  name      String
+  tenantId  String   @map("tenant_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  tenant  Tenant     @relation(fields: [tenantId], references: [id])
+  stories StoryTag[]
+
+  @@map("tags")
+}
+
+model StoryTag {
+  storyId String @map("story_id")
+  tagId   String @map("tag_id")
+
+  // Relations
+  story Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  tag   Tag   @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([storyId, tagId])
+  @@map("story_tags")
+}
+
+// === REMIX & APPROVAL SYSTEM ===
+
+model RemixJob {
+  id             String   @id @default(uuid())
+  storyVersionId String   @map("story_version_id")
+  userId         String   @map("user_id")
+  paramsJson     String   @map("params_json") @db.Text // JSON of remix parameters
+  status         String   @default("pending") // pending, processing, completed, failed
+  tenantId       String   @map("tenant_id")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  // Relations
+  storyVersion StoryVersion @relation(fields: [storyVersionId], references: [id])
+  user         User         @relation(fields: [userId], references: [id])
+  tenant       Tenant       @relation(fields: [tenantId], references: [id])
+
+  @@map("remix_jobs")
+}
+
+model UserProgress {
+  id           String         @id @default(uuid())
+  userId       String         @map("user_id")
+  lessonId     String         @map("lesson_id")
+  status       ProgressStatus @default(not_started)
+  lastViewedAt DateTime?      @map("last_viewed_at")
+  tenantId     String         @map("tenant_id")
+  createdAt    DateTime       @default(now()) @map("created_at")
+  updatedAt    DateTime       @updatedAt @map("updated_at")
+
+  // Relations
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@unique([userId, lessonId]) // Prevent duplicate progress records
+  @@index([userId])
+  @@index([lessonId])
+  @@index([status])
+  @@map("user_progress")
+}
+
+model Approval {
+  id          String   @id @default(uuid())
+  entityType  String   @map("entity_type") // StoryVersion, Lesson, etc.
+  entityId    String   @map("entity_id")
+  requestedBy String   @map("requested_by")
+  approvedBy  String?  @map("approved_by")
+  status      String   @default("pending") // pending, approved, rejected
+  tenantId    String   @map("tenant_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  requester User   @relation("RequestedApproval", fields: [requestedBy], references: [id])
+  approver  User?  @relation("ApprovedApproval", fields: [approvedBy], references: [id])
+  tenant    Tenant @relation(fields: [tenantId], references: [id])
+
+  @@map("approvals")
+}
+
 // === FEEDBACK & REFLECTION ===
 
 model Feedback {
-  id        Int      @id @default(autoincrement())
-  userId    Int      @map("user_id")
-  lessonId  Int      @map("lesson_id")
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  lessonId  String   @map("lesson_id")
   content   String   @db.Text
   rate      Int      @db.SmallInt // Rating 1-5
   createdAt DateTime @default(now()) @map("created_at")
@@ -276,13 +724,15 @@ model Feedback {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 
+  @@index([userId])
+  @@index([lessonId])
   @@map("feedbacks")
 }
 
 model Reflection {
-  id        Int      @id @default(autoincrement())
-  lessonId  Int      @map("lesson_id")
-  userId    Int      @map("user_id")
+  id        String   @id @default(uuid())
+  lessonId  String   @map("lesson_id")
+  userId    String   @map("user_id")
   content   String   @db.Text // User's creative dialogue or reflection
   createdAt DateTime @default(now()) @map("created_at")
 
@@ -290,5 +740,81 @@ model Reflection {
   lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId])
+  @@index([lessonId])
   @@map("reflections")
+}
+
+// === NEW MODELS ===
+
+// Audit trail for tracking changes
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  action    String   @db.VarChar(50) // CREATE, UPDATE, DELETE
+  entityType String  @map("entity_type") @db.VarChar(100) // User, Story, Lesson, etc.
+  entityId  String   @map("entity_id")
+  oldValues Json?    @map("old_values")
+  newValues Json?    @map("new_values")
+  tenantId  String   @map("tenant_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  // Relations
+  user   User   @relation(fields: [userId], references: [id])
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@index([tenantId])
+  @@map("audit_logs")
+}
+
+// Notification system
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String           @map("user_id")
+  title     String           @db.VarChar(255)
+  message   String           @db.Text
+  type      NotificationType
+  isRead    Boolean          @default(false) @map("is_read")
+  actionUrl String?          @map("action_url")
+  tenantId  String           @map("tenant_id")
+  createdAt DateTime         @default(now()) @map("created_at")
+  
+  // Relations
+  user   User   @relation(fields: [userId], references: [id])
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  
+  @@index([userId, isRead])
+  @@index([createdAt])
+  @@index([tenantId])
+  @@map("notifications")
+}
+
+// Learning session analytics
+model LearningSession {
+  id              String   @id @default(uuid())
+  userId          String   @map("user_id")
+  lessonId        String?  @map("lesson_id")
+  storyId         String?  @map("story_id")
+  startedAt       DateTime @map("started_at")
+  endedAt         DateTime? @map("ended_at")
+  timeSpentSec    Int?     @map("time_spent_sec")
+  interactionCount Int?    @map("interaction_count")
+  tenantId        String   @map("tenant_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+  
+  // Relations
+  user   User    @relation(fields: [userId], references: [id])
+  lesson Lesson? @relation(fields: [lessonId], references: [id])
+  story  Story?  @relation(fields: [storyId], references: [id])
+  tenant Tenant  @relation(fields: [tenantId], references: [id])
+  
+  @@index([userId])
+  @@index([startedAt])
+  @@index([lessonId])
+  @@index([storyId])
+  @@index([tenantId])
+  @@map("learning_sessions")
 }

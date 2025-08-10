@@ -1,30 +1,30 @@
-import { NextRequest, NextResponse } from 'next/server';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-import { PrismaClient } from '@prisma/client';
-import { z } from 'zod';
+import { NextRequest, NextResponse } from "next/server";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import { PrismaClient } from "@prisma/client";
+import { z } from "zod";
 
-const prisma = new PrismaClient();
+import { prisma } from "@/core/prisma";
 
 // Validation schema
 const registerSchema = z.object({
-  name: z.string().min(2, 'Tên phải có ít nhất 2 ký tự'),
-  email: z.string().email('Email không hợp lệ'),
-  password: z.string().min(6, 'Mật khẩu phải có ít nhất 6 ký tự'),
-  role: z.enum(['student', 'coach']).default('student'),
+  name: z.string().min(2, "Tên phải có ít nhất 2 ký tự"),
+  email: z.string().email("Email không hợp lệ"),
+  password: z.string().min(6, "Mật khẩu phải có ít nhất 6 ký tự"),
+  role: z.enum(["student", "coach"]).default("student"),
 });
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    
+
     // Validate input
     const validationResult = registerSchema.safeParse(body);
     if (!validationResult.success) {
       return NextResponse.json(
-        { 
-          message: 'Dữ liệu không hợp lệ',
-          errors: validationResult.error.errors 
+        {
+          message: "Dữ liệu không hợp lệ",
+          errors: validationResult.error.errors,
         },
         { status: 400 }
       );
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
 
     if (existingUser) {
       return NextResponse.json(
-        { message: 'Email này đã được sử dụng' },
+        { message: "Email này đã được sử dụng" },
         { status: 409 }
       );
     }
@@ -58,35 +58,54 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Generate JWT token
-    const token = jwt.sign(
-      { 
-        userId: user.id, 
-        email: user.email, 
-        role: user.role 
+    // Generate access token (shorter expiry)
+    const accessToken = jwt.sign(
+      {
+        userId: user.id,
+        email: user.email,
+        role: user.role,
+        tenantId: user.tenantId,
       },
-      process.env.JWT_SECRET || 'fallback-secret',
-      { expiresIn: '7d' }
+      process.env.JWT_SECRET || "fallback-secret",
+      { expiresIn: "15m" }
     );
 
-    // Return user data (without password) and token
+    // Generate refresh token (longer expiry)
+    const refreshToken = jwt.sign(
+      {
+        userId: user.id,
+        type: "refresh",
+      },
+      process.env.JWT_SECRET || "fallback-secret",
+      { expiresIn: "7d" }
+    );
+
+    // Return user data (without password) and tokens
     const userData = {
       id: user.id,
       name: user.name,
       email: user.email,
       role: user.role,
+      tenantId: user.tenantId,
     };
 
-    return NextResponse.json({
-      message: 'Đăng ký thành công',
-      user: userData,
-      token,
-    }, { status: 201 });
-
-  } catch (error) {
-    console.error('Registration error:', error);
     return NextResponse.json(
-      { message: 'Lỗi server. Vui lòng thử lại sau.' },
+      {
+        message: "Đăng ký thành công",
+        user: userData,
+        accessToken,
+        refreshToken,
+        expiresIn: 15 * 60, // 15 minutes in seconds
+        tokenType: "Bearer",
+        // Legacy support
+        token: accessToken,
+      },
+      { status: 201 }
+    );
+  } catch (error) {
+    console.error("Registration error:", error);
+    return NextResponse.json(
+      { message: "Lỗi server. Vui lòng thử lại sau." },
       { status: 500 }
     );
   } finally {
