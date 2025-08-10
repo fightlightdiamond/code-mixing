@@ -12,9 +12,9 @@ export type StatusColorConfig = {
 export type StatusColorMap<T extends string> = Record<T, StatusColorConfig>;
 
 // Lesson Status Colors
-export type LessonStatus = 'published' | 'draft' | 'archived';
+export type LessonStatusUI = 'published' | 'draft' | 'archived';
 
-export const LESSON_STATUS_COLORS: StatusColorMap<LessonStatus> = {
+export const LESSON_STATUS_COLORS: StatusColorMap<LessonStatusUI> = {
   published: {
     background: 'bg-green-100',
     text: 'text-green-800',
@@ -59,9 +59,9 @@ export const STORY_STATUS_COLORS: StatusColorMap<StoryStatus> = {
 };
 
 // User Role Colors
-export type UserRole = 'admin' | 'teacher' | 'student' | 'guest';
+export type UserRoleUI = 'admin' | 'teacher' | 'student' | 'guest';
 
-export const USER_ROLE_COLORS: StatusColorMap<UserRole> = {
+export const USER_ROLE_COLORS: StatusColorMap<UserRoleUI> = {
   admin: {
     background: 'bg-red-100',
     text: 'text-red-800',

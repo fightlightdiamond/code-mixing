@@ -514,10 +514,10 @@ export default function AdminStoriesManagement() {
                         <div className="flex flex-wrap gap-1">
                           {story.tags.slice(0, 3).map((storyTag) => (
                             <span
-                              key={storyTag.tag.id}
+                              key={storyTag.id}
                               className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full border border-blue-200"
                             >
-                              {storyTag.tag.name}
+                              {storyTag.name}
                             </span>
                           ))}
                           {story.tags.length > 3 && (

@@ -14,8 +14,8 @@ interface RequireDebugProps {
 export function RequireDebug({ action, subject, children }: RequireDebugProps) {
   const ability = useAbility();
   const { user, isLoading, isAuthenticated } = useAuth();
-  const { ability } = useAbility();
   const router = useRouter();
+  const [checked, setChecked] = useState(false);
 
   // Debug info
   const debugInfo = {
@@ -26,38 +26,37 @@ export function RequireDebug({ action, subject, children }: RequireDebugProps) {
     },
     ability: {
       hasAbility: !!ability,
-      loading: isLoading,
+      isLoading: isLoading,
     },
     hasRules: !!ability,
     userRoles: user?.role ? [user.role] : [],
-    tenantId?: string;
-    timestamp: string;
-  } as any;
+    tenantId: user?.id,
+    timestamp: new Date().toISOString(),
+  };
 
   useEffect(() => {
     const debug = {
       ...debugInfo,
-      loading: isLoading,
-      loading,
+      isLoading: isLoading,
       hasUser: !!user,
-      hasRules: !!rules,
-      userRoles: user?.roles || [],
-      tenantId: user?.tenantId,
+      hasRules: !!ability,
+      userRoles: user?.role ? [user.role] : [],
+      tenantId: user?.id,
       timestamp: new Date().toISOString()
     };
 
     console.log("🔍 RequireDebug Info:", debug);
-    setDebugInfo(debug);
 
     // Chỉ check khi đã load xong auth
-    if (loading) {
-      console.log("⏳ Still loading auth...");
+    if (isLoading) {
+      console.log("⏳ Still loading auth state...");
       return;
     }
 
     // Nếu chưa có user hoặc rules, coi như chưa xác thực
-    if (!user || !rules) {
-      console.log("❌ No user or rules:", { user: !!user, rules: !!rules });
+    if (!user || !ability) {
+      console.log("❌ No user or ability:", { user: !!user, ability: !!ability });
+      router.push("/login");
       return;
     }
 
@@ -71,7 +70,7 @@ export function RequireDebug({ action, subject, children }: RequireDebugProps) {
       console.log("✅ Access granted!");
       setChecked(true);
     }
-  }, [ability, action, subject, router, user, rules, loading]);
+  }, [ability, action, subject, router, user, isLoading, debugInfo]);
 
   // Debug UI
   if (!checked) {
@@ -81,14 +80,14 @@ export function RequireDebug({ action, subject, children }: RequireDebugProps) {
         <div className="space-y-2 text-sm">
           <div><strong>Action:</strong> {action}</div>
           <div><strong>Subject:</strong> {subject}</div>
-          <div><strong>Loading:</strong> {debugInfo.loading ? "Yes" : "No"}</div>
-          <div><strong>Has User:</strong> {debugInfo.hasUser ? "Yes" : "No"}</div>
+          <div><strong>Loading:</strong> {isLoading ? "Yes" : "No"}</div>
+          <div><strong>Has User:</strong> {!!user ? "Yes" : "No"}</div>
           <div><strong>Has Rules:</strong> {debugInfo.hasRules ? "Yes" : "No"}</div>
           <div><strong>User Roles:</strong> {debugInfo.userRoles?.join(", ") || "N/A"}</div>
           <div><strong>Tenant ID:</strong> {debugInfo.tenantId || "N/A"}</div>
           <div><strong>Checked:</strong> {checked ? "Yes" : "No"}</div>
         </div>
-        {!debugInfo.loading && (!debugInfo.hasUser || !debugInfo.hasRules) && (
+        {!isLoading && (!user || !debugInfo.hasRules) && (
           <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded text-red-800">
             <strong>Issue:</strong> Missing authentication data. Please check login status.
           </div>

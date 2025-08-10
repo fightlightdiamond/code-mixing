@@ -76,11 +76,11 @@ export default function AdminStoriesList() {
     }
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     if (!confirm("Bạn có chắc chắn muốn xóa story này?")) return;
 
     try {
-      await deleteMutation.mutateAsync(String(id));
+      await deleteMutation.mutateAsync(id);
     } catch (error) {
       console.error("Error deleting story:", error);
     }
@@ -231,7 +231,7 @@ export default function AdminStoriesList() {
                       Sửa
                     </button>
                     <button
-                      onClick={() => handleDelete(String(story.id))}
+                      onClick={() => handleDelete(story.id)}
                       className="text-red-600 hover:text-red-900"
                       disabled={deleteMutation.isPending}
                     >
@@ -390,9 +390,7 @@ function CreateStoryModal({
                 onChange={(e) =>
                   setFormData({
                     ...formData,
-                    lessonId: e.target.value
-                      ? parseInt(e.target.value)
-                      : undefined,
+                    lessonId: e.target.value || undefined,
                   })
                 }
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -508,9 +506,7 @@ function EditStoryModal({
                 onChange={(e) =>
                   setFormData({
                     ...formData,
-                    lessonId: e.target.value
-                      ? parseInt(e.target.value)
-                      : undefined,
+                    lessonId: e.target.value || undefined,
                   })
                 }
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"

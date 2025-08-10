@@ -3,8 +3,7 @@ import { caslGuard, RequiredRule } from "@/core/auth/casl.guard";
 import jwt from "jsonwebtoken";
 
 import { prisma } from "@/core/prisma";
-import { StoryType } from "@/core/api/entityRegistry";
-import { isValidStoryType, VALID_STORY_TYPES, STORY_DEFAULTS } from "@/config";
+import { isValidStoryType, VALID_STORY_TYPES, STORY_DEFAULTS, StoryType } from "@/config";
 
 // Helper function to get user from request
 async function getUserFromRequest(request: NextRequest) {

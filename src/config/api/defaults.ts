@@ -35,7 +35,7 @@ export const STORY_DEFAULTS: StoryDefaults = {
   status: 'draft'
 };
 
-export const LESSON_DEFAULTS: LessonDefaults = {
+export const API_LESSON_DEFAULTS: LessonDefaults = {
   difficulty: 'beginner',
   estimatedMinutes: 30,
   status: 'draft',
