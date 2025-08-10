@@ -174,8 +174,8 @@ export async function PUT(
       }
     }
 
-    // Build update data
-    const updateData: any = {};
+    // Build update data - using Record to avoid Prisma type conflicts
+    const updateData: Record<string, string | number> = {};
     if (title !== undefined) updateData.title = title;
     if (content !== undefined) updateData.content = content;
     if (storyType !== undefined) updateData.storyType = storyType;

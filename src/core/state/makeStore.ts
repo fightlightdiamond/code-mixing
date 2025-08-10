@@ -9,11 +9,11 @@ import {
 } from "zustand/middleware";
 import { shallow } from "zustand/shallow";
 
-interface StoreOptions {
+interface StoreOptions<T> {
   name?: string;
   persist?: boolean;
   persistKey?: string;
-  partialize?: (state: any) => any;
+  partialize?: (state: T) => Partial<T>;
 }
 
 /**
@@ -49,7 +49,7 @@ interface StoreOptions {
  */
 export function makeStore<T>(
   initializer: (set: any, get: any, api: any) => T,
-  options: StoreOptions = {}
+  options: StoreOptions<T> = {}
 ) {
   const {
     name,

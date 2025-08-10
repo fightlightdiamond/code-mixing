@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
+import jwt, { JwtPayload } from "jsonwebtoken";
 import { PrismaClient } from "@prisma/client";
 
 import { prisma } from "@/core/prisma";
@@ -18,9 +18,15 @@ export async function GET(request: NextRequest) {
     const token = authHeader.substring(7); // Remove 'Bearer ' prefix
 
     // Verify token
-    let decoded: any;
+    interface CustomJwtPayload extends JwtPayload {
+      userId: string;
+      email: string;
+      roles?: string[];
+    }
+    
+    let decoded: CustomJwtPayload;
     try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET || "fallback-secret");
+      decoded = jwt.verify(token, process.env.JWT_SECRET || "fallback-secret") as CustomJwtPayload;
     } catch (error) {
       return NextResponse.json(
         { message: "Token không hợp lệ hoặc đã hết hạn" },
