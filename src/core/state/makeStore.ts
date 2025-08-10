@@ -58,7 +58,7 @@ export function makeStore<T>(
     partialize,
   } = options;
 
-  let store = create<T>()(
+  const store = create<T>()(
     subscribeWithSelector(
       devtools(
         shouldPersist
