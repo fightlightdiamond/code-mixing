@@ -3,6 +3,8 @@ import { caslGuard, RequiredRule } from "@/core/auth/casl.guard";
 import jwt from "jsonwebtoken";
 
 import { prisma } from "@/core/prisma";
+import { StoryType } from "@/core/api/entityRegistry";
+import { isValidStoryType, VALID_STORY_TYPES, STORY_DEFAULTS } from "@/config";
 
 // Helper function to get user from request
 async function getUserFromRequest(request: NextRequest) {
@@ -140,17 +142,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate storyType if provided
-    const validStoryTypes = [
-      "original",
-      "chemdanhtu",
-      "chemdongtu",
-      "chemtinhtu",
-      "custom",
-    ];
-    if (storyType && !validStoryTypes.includes(storyType)) {
+    if (storyType && !isValidStoryType(storyType)) {
       return NextResponse.json(
         {
-          error: `Invalid storyType. Must be one of: ${validStoryTypes.join(
+          error: `Invalid storyType. Must be one of: ${VALID_STORY_TYPES.join(
             ", "
           )}`,
         },

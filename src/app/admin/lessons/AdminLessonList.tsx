@@ -6,6 +6,7 @@ import {
   useLessonsFilterActions,
   useLessonsSelection,
 } from "@/features/lessons/state";
+import { getStatusClasses, LESSON_STATUS_COLORS } from "@/config/ui/status-colors";
 import { buildLessonsListQuery, type Lesson } from "@/features/lessons/hooks";
 
 export default function AdminLessonList() {
@@ -105,13 +106,7 @@ export default function AdminLessonList() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
-                      className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        lesson.status === "published"
-                          ? "bg-green-100 text-green-800"
-                          : lesson.status === "draft"
-                          ? "bg-yellow-100 text-yellow-800"
-                          : "bg-gray-100 text-gray-800"
-                      }`}
+                      className={getStatusClasses(LESSON_STATUS_COLORS, lesson.status as any)}
                     >
                       {lesson.status}
                     </span>
