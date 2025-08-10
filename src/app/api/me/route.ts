@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import jwt, { JwtPayload } from "jsonwebtoken";
-import { PrismaClient } from "@prisma/client";
+import type { UserRole } from "@prisma/client";
 
 import { prisma } from "@/core/prisma";
 
@@ -17,11 +17,11 @@ export async function GET(request: NextRequest) {
 
     const token = authHeader.substring(7); // Remove 'Bearer ' prefix
 
-    // Verify token - based on Prisma User model
+    // Verify token - using Prisma generated types
     interface CustomJwtPayload extends JwtPayload {
       userId: string; // UUID from User.id
       email: string;
-      role: 'student' | 'coach' | 'admin' | 'super_admin' | 'org_admin' | 'curriculum_lead' | 'content_creator' | 'instructor' | 'voice_artist' | 'qa' | 'guest';
+      role: UserRole; // Use Prisma generated enum
       tenantId?: string; // UUID from User.tenantId
     }
     

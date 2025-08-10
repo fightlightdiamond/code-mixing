@@ -33,14 +33,8 @@ export type Subjects =
   | "Approval"
   | "all";
 
-// CASL conditions type - based on MongoDB-style queries
-type CASLConditions = {
-  [key: string]: any; // Field conditions
-} | ((item: any) => boolean); // Function-based conditions
+// Use CASL's built-in types instead of custom ones
+import type { MongoQuery, RawRuleFrom } from '@casl/ability';
 
-export interface Rule {
-  action: Actions;
-  subject: Subjects;
-  conditions?: CASLConditions;
-  fields?: string[];
-}
+// Use CASL's RawRuleFrom type which is more accurate than custom Rule
+export type Rule = RawRuleFrom<[Actions, Subjects], MongoQuery>;

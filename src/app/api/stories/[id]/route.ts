@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { caslGuard, RequiredRule } from "@/core/auth/casl.guard";
 import jwt from "jsonwebtoken";
+import type { Prisma, StoryType } from "@prisma/client";
 
 import { prisma } from "@/core/prisma";
 
@@ -174,19 +175,17 @@ export async function PUT(
       }
     }
 
-    // Build update data - based on Prisma Story model
-    const updateData: {
-      title?: string;
-      content?: string;
-      storyType?: 'original' | 'chemdanhtu' | 'chemdongtu' | 'chemtinhtu' | 'custom';
-      chemRatio?: number;
-      lessonId?: string; // UUID string based on schema
-    } = {};
+    // Build update data - using Prisma generated types
+    const updateData: Prisma.StoryUpdateInput = {};
+    
+    // Type-safe assignments with Prisma enums
     if (title !== undefined) updateData.title = title;
     if (content !== undefined) updateData.content = content;
-    if (storyType !== undefined) updateData.storyType = storyType;
+    if (storyType !== undefined) updateData.storyType = storyType as StoryType;
     if (chemRatio !== undefined) updateData.chemRatio = chemRatio;
-    if (lessonId !== undefined) updateData.lessonId = lessonId;
+    if (lessonId !== undefined) {
+      updateData.lesson = { connect: { id: lessonId } }; // Proper Prisma relation update
+    }
 
     // Update story
     const story = await prisma.story.update({

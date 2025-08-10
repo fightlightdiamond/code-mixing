@@ -1,9 +1,10 @@
 // Testing utilities for React Query
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import type { QueryKey } from '@tanstack/react-query';
 import React, { ReactNode } from 'react';
 
-// Mock API responses
-export interface MockResponse<T = any> {
+// Mock API responses - using unknown instead of any for better type safety
+export interface MockResponse<T = unknown> {
   data?: T;
   error?: Error;
   delay?: number;
@@ -118,7 +119,7 @@ export function TestWrapper({ children, queryClient }: TestWrapperProps) {
 // Query test helpers
 export const queryTestHelpers = {
   // Wait for query to settle
-  waitForQuery: async (queryClient: QueryClient, queryKey: readonly unknown[]) => {
+  waitForQuery: async (queryClient: QueryClient, queryKey: QueryKey) => {
     return new Promise<void>((resolve) => {
       const unsubscribe = queryClient.getQueryCache().subscribe((event) => {
         if (event?.query?.queryKey === queryKey && event?.query?.state.status !== 'pending') {
@@ -130,19 +131,19 @@ export const queryTestHelpers = {
   },
 
   // Set query data for testing
-  setQueryData: <T>(queryClient: QueryClient, queryKey: readonly unknown[], data: T) => {
+  setQueryData: <T>(queryClient: QueryClient, queryKey: QueryKey, data: T) => {
     queryClient.setQueryData(queryKey, data);
   },
 
   // Trigger query error
-  setQueryError: (queryClient: QueryClient, queryKey: readonly unknown[], error: Error) => {
+  setQueryError: (queryClient: QueryClient, queryKey: QueryKey, error: Error) => {
     queryClient.setQueryData(queryKey, () => {
       throw error;
     });
   },
 
   // Get query state
-  getQueryState: (queryClient: QueryClient, queryKey: readonly unknown[]) => {
+  getQueryState: (queryClient: QueryClient, queryKey: QueryKey) => {
     return queryClient.getQueryState(queryKey);
   },
 
@@ -198,8 +199,8 @@ export const integrationTestHelpers = {
     // Test optimistic updates
     optimisticUpdate: <T extends { id: number }>(
       queryClient: QueryClient,
-      listKey: readonly unknown[],
-      detailKey: readonly unknown[],
+      listKey: QueryKey,
+      detailKey: QueryKey,
       updateData: Partial<T>
     ) => {
       // Set initial data
@@ -219,7 +220,7 @@ export const integrationTestHelpers = {
     },
 
     // Test cache invalidation
-    cacheInvalidation: async (queryClient: QueryClient, pattern: readonly unknown[]) => {
+    cacheInvalidation: async (queryClient: QueryClient, pattern: QueryKey) => {
       await queryClient.invalidateQueries({ queryKey: pattern });
       
       // Return queries that were invalidated
