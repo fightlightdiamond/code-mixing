@@ -1,6 +1,6 @@
 "use client";
 
-import { makeStore, shallow, createSelector } from "@/core/state/makeStore";
+import { makeStore } from "@/core/state/makeStore";
 
 // UI State interface for Products feature
 interface ProductsUIState {
@@ -44,7 +44,7 @@ const initialState = {
 
 // Create the store
 export const useProductsUI = makeStore<ProductsUIState>(
-  (set, get) => ({
+  (set) => ({
     ...initialState,
 
     // Filter actions
@@ -71,42 +71,31 @@ export const useProductsUI = makeStore<ProductsUIState>(
 
 // Optimized selectors
 export const useProductsFilters = () =>
-  useProductsUI(
-    createSelector((state) => ({
-      search: state.search,
-      page: state.page,
-      pageSize: state.pageSize,
-      sortBy: state.sortBy,
-      category: state.category,
-      priceRange: state.priceRange,
-      inStock: state.inStock,
-    })),
-    shallow
-  );
+  useProductsUI((state) => ({
+    search: state.search,
+    page: state.page,
+    pageSize: state.pageSize,
+    sortBy: state.sortBy,
+    category: state.category,
+    priceRange: state.priceRange,
+    inStock: state.inStock,
+  }));
 
 export const useProductsFilterActions = () =>
-  useProductsUI(
-    createSelector((state) => ({
-      setSearch: state.setSearch,
-      setPage: state.setPage,
-      setPageSize: state.setPageSize,
-      setSortBy: state.setSortBy,
-      setCategory: state.setCategory,
-      setPriceRange: state.setPriceRange,
-      setInStock: state.setInStock,
-      reset: state.reset,
-    })),
-    shallow
-  );
+  useProductsUI((state) => ({
+    setSearch: state.setSearch,
+    setPage: state.setPage,
+    setPageSize: state.setPageSize,
+    setSortBy: state.setSortBy,
+    setCategory: state.setCategory,
+    setPriceRange: state.setPriceRange,
+    setInStock: state.setInStock,
+    reset: state.reset,
+  }));
 
-// Selector for URL sync (only the params that should be synced)
-export const useProductsURLState = () =>
-  useProductsUI(
-    createSelector((state) => ({
-      search: state.search,
-      page: state.page,
-      pageSize: state.pageSize,
-      sortBy: state.sortBy,
-    })),
-    shallow
-  );
+// Selector for selection state
+export const useProductsSelection = () =>
+  useProductsUI((state) => ({
+    selectedId: state.selectedId,
+    setSelectedId: state.setSelectedId,
+  }));

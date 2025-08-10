@@ -5,14 +5,14 @@ export class AuthLogger {
     tenantId: string,
     action: string,
     subject: string,
-    details?: Record<string, any>
+    metadata?: Record<string, unknown>
   ) {
     console.warn(`[AUTH] Unauthorized access attempt:`, {
       userId,
       tenantId,
       action,
       subject,
-      details,
+      metadata,
       timestamp: new Date().toISOString(),
     });
   }
@@ -23,7 +23,7 @@ export class AuthLogger {
     action: string,
     subject: string,
     reason: string,
-    details?: Record<string, any>
+    metadata?: Record<string, unknown>
   ) {
     console.warn(`[AUTH] Forbidden access:`, {
       userId,
@@ -31,7 +31,7 @@ export class AuthLogger {
       action,
       subject,
       reason,
-      details,
+      metadata,
       timestamp: new Date().toISOString(),
     });
   }
@@ -42,7 +42,7 @@ export class AuthLogger {
     action: string,
     subject: string,
     allowed: boolean,
-    details?: Record<string, any>
+    metadata?: Record<string, unknown>
   ) {
     console.info(`[AUTH] Authorization check:`, {
       userId,
@@ -50,7 +50,7 @@ export class AuthLogger {
       action,
       subject,
       allowed,
-      details,
+      metadata,
       timestamp: new Date().toISOString(),
     });
   }

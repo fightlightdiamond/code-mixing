@@ -14,19 +14,30 @@ interface RequireDebugProps {
 export function RequireDebug({ action, subject, children }: RequireDebugProps) {
   const ability = useAbility();
   const { user, isLoading, isAuthenticated } = useAuth();
+  const { ability } = useAbility();
   const router = useRouter();
-  const [checked, setChecked] = useState(false);
-  const [debugInfo, setDebugInfo] = useState<{
-    loading: boolean;
-    hasUser: boolean;
-    hasRules: boolean;
-    userRoles: string[];
+
+  // Debug info
+  const debugInfo = {
+    user: {
+      id: user?.id,
+      email: user?.email,
+      role: user?.role,
+    },
+    ability: {
+      hasAbility: !!ability,
+      loading: isLoading,
+    },
+    hasRules: !!ability,
+    userRoles: user?.role ? [user.role] : [],
     tenantId?: string;
     timestamp: string;
-  }>({} as any);
+  } as any;
 
   useEffect(() => {
     const debug = {
+      ...debugInfo,
+      loading: isLoading,
       loading,
       hasUser: !!user,
       hasRules: !!rules,

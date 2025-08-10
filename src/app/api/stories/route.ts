@@ -129,7 +129,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { title, content, lessonId, storyType, chemRatio } = body;
+    const { title, content, lessonId, storyType, difficulty, estimatedMinutes, chemRatio } = body;
 
     // Validate required fields
     if (!title || !content) {
@@ -178,9 +178,13 @@ export async function POST(request: NextRequest) {
         title,
         content,
         storyType: storyType || "original",
+        difficulty: difficulty || "beginner",
+        estimatedMinutes: estimatedMinutes || 10,
+        chemRatio: chemRatio || 0.3,
         lessonId: lessonId || null,
-        tenantId: user.tenantId || "default-tenant", // Use user's tenantId or default
-        createdBy: user.sub, // Use user ID from JWT
+        tenantId: user.tenantId!,
+        createdBy: user.sub,
+        status: "draft",
       },
       include: {
         lesson: {

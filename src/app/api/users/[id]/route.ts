@@ -8,10 +8,10 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const userId = parseInt(params.id);
+    const userId = params.id;
     const body = await request.json();
 
-    if (isNaN(userId)) {
+    if (!userId) {
       return NextResponse.json({ error: "Invalid user ID" }, { status: 400 });
     }
 
@@ -73,9 +73,8 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const userId = parseInt(params.id);
-
-    if (isNaN(userId)) {
+    const userId = params.id;
+    if (!userId) {
       return NextResponse.json({ error: "Invalid user ID" }, { status: 400 });
     }
 

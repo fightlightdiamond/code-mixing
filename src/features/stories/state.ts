@@ -6,17 +6,17 @@ import { makeStore } from "@/core/state/makeStore";
 interface StoriesUIState {
   // Filter state
   search: string;
-  lessonId: number | null;
+  lessonId: string | null;
   storyType: string;
 
   // Selection state
-  selectedId: number | null;
+  selectedId: string | null;
 
   // Actions
   setSearch: (search: string) => void;
-  setLessonId: (lessonId: number | null) => void;
+  setLessonId: (lessonId: string | null) => void;
   setStoryType: (storyType: string) => void;
-  setSelectedId: (id: number | null) => void;
+  setSelectedId: (id: string | null) => void;
   reset: () => void;
 }
 
@@ -35,11 +35,11 @@ export const useStoriesUI = makeStore<StoriesUIState>(
 
     // Filter actions
     setSearch: (search: string) => set({ search }),
-    setLessonId: (lessonId: number | null) => set({ lessonId }),
+    setLessonId: (lessonId: string | null) => set({ lessonId }),
     setStoryType: (storyType: string) => set({ storyType }),
 
     // Selection actions
-    setSelectedId: (selectedId: number | null) => set({ selectedId }),
+    setSelectedId: (selectedId: string | null) => set({ selectedId }),
 
     // Reset action
     reset: () => set(initialState),

@@ -1,16 +1,8 @@
-import {
-  queryOptions,
-  useQuery,
-  useMutation,
-  useQueryClient,
-  useInfiniteQuery,
-  InfiniteData
-} from "@tanstack/react-query";
+import { queryOptions, useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "./api";
 import { queryProfiles, QueryProfileName } from "./queryConfig";
-import { keyFactory, queryKeyUtils } from "./keyFactory";
-import { entities, EntityName, BaseEntity } from "./entityRegistry";
-import { retryConfig } from "./errorHandling";
+import { keyFactory } from "./keyFactory";
+import { entities, EntityName } from "./entityRegistry";
 
 type ListParams = Record<string, string | number | boolean | undefined>;
 
@@ -28,12 +20,13 @@ export function makeResource<N extends EntityName>(name: N) {
     const prof = queryProfiles[profile];
     const url = buildUrl(def.baseUrl, params);
 
+    const hasSelectList = ("selectList" in def) && typeof (def as any).selectList === "function";
     const opts = queryOptions({
       queryKey: keyFactory.list(def.entity, params),
       queryFn: () => api<T>(url),
       ...prof,
       placeholderData: (prev) => prev,
-      ...(def.selectList && { select: def.selectList as any }),
+      ...(hasSelectList ? { select: (def as any).selectList as any } : {}),
     });
     return useQuery(opts);
   }
@@ -42,27 +35,29 @@ export function makeResource<N extends EntityName>(name: N) {
     const prof = queryProfiles[profile];
     const url = `${def.baseUrl}/${id}`;
 
+    const hasSelectDetail = ("selectDetail" in def) && typeof (def as any).selectDetail === "function";
     const opts = queryOptions({
       queryKey: keyFactory.detail(def.entity, id),
       queryFn: () => api<T>(url),
       enabled: !!id,
       ...prof,
-      ...(def.selectDetail && { select: def.selectDetail as any }),
+      ...(hasSelectDetail ? { select: (def as any).selectDetail as any } : {}),
     });
     return useQuery(opts);
   }
 
-  function useCreate<TBody extends object, TResp = unknown>(invalidateTags: string[] = def.tags) {
+  function useCreate<TBody extends object, TResp = unknown>(invalidateTags?: ReadonlyArray<string>) {
     const qc = useQueryClient();
+    const tags = invalidateTags ?? def.tags;
     return useMutation({
       mutationFn: (body: TBody) =>
         api<TResp>(def.baseUrl, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }),
-      onSuccess: () => invalidateTags.forEach(tag => qc.invalidateQueries({ queryKey: [tag] })),
+      onSuccess: () => tags.forEach(tag => qc.invalidateQueries({ queryKey: [tag] })),
     });
   }
 
   function useUpdate<TBody extends object, TResp = unknown>(
-    invalidate: (vars: { id: string | number; body: TBody }) => string[] = () => def.tags
+    invalidate: (vars: { id: string | number; body: TBody }) => ReadonlyArray<string> = () => def.tags
   ) {
     const qc = useQueryClient();
     return useMutation({
@@ -72,10 +67,10 @@ export function makeResource<N extends EntityName>(name: N) {
       onMutate: async (vars) => {
         await qc.cancelQueries({ queryKey: [def.entity] });
 
-        const prevList = qc.getQueriesData<any>([def.entity]);
+        const prevList = qc.getQueriesData<any>({ queryKey: [def.entity] });
         const prevDetail = qc.getQueryData<any>(keyFactory.detail(def.entity, vars.id));
 
-        qc.setQueriesData<any>([def.entity], (old: any) => {
+        qc.setQueriesData<any>({ queryKey: [def.entity] }, (old: any) => {
           if (!old) return old;
           return old.map((item: any) => item.id === vars.id ? { ...item, ...vars.body } : item);
         });
@@ -101,8 +96,9 @@ export function makeResource<N extends EntityName>(name: N) {
     });
   }
 
-  function useDelete<TResp = unknown>(invalidateTags: string[] = def.tags) {
+  function useDelete<TResp = unknown>(invalidateTags?: ReadonlyArray<string>) {
     const qc = useQueryClient();
+    const tags = invalidateTags ?? def.tags;
     return useMutation({
       mutationFn: (id: string | number) =>
         api<TResp>(`${def.baseUrl}/${id}`, { method: "DELETE" }),
@@ -110,8 +106,8 @@ export function makeResource<N extends EntityName>(name: N) {
       onMutate: async (id) => {
         await qc.cancelQueries({ queryKey: [def.entity] });
 
-        const prevList = qc.getQueriesData<any>([def.entity]);
-        qc.setQueriesData<any>([def.entity], (old: any) => {
+        const prevList = qc.getQueriesData<any>({ queryKey: [def.entity] });
+        qc.setQueriesData<any>({ queryKey: [def.entity] }, (old: any) => {
           if (!old) return old;
           return old.filter((item: any) => item.id !== id);
         });
@@ -124,7 +120,7 @@ export function makeResource<N extends EntityName>(name: N) {
       },
 
       onSettled: () => {
-        invalidateTags.forEach(tag => qc.invalidateQueries({ queryKey: [tag] }));
+        tags.forEach(tag => qc.invalidateQueries({ queryKey: [tag] }));
       },
     });
   }

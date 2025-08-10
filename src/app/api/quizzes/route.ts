@@ -156,6 +156,8 @@ export async function POST(request: NextRequest) {
         title,
         description: description || "",
         lessonId: lessonId || null,
+        tenantId: user.tenantId!,
+        createdBy: user.sub,
       },
       select: {
         id: true,

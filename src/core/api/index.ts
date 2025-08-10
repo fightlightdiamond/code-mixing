@@ -86,8 +86,8 @@ export {
   devTools,
 } from './monitoring';
 
-// Import devTools for internal use
-import { devTools } from './monitoring';
+// Import devTools and queryMonitor for internal use
+import { devTools, queryMonitor } from './monitoring';
 
 // Testing utilities
 export {
@@ -119,7 +119,6 @@ export type {
   QueryClient,
   QueryOptions,
   MutationOptions,
-  InfiniteQueryOptions,
 } from '@tanstack/react-query';
 
 /**

@@ -3,9 +3,16 @@ import { ApiError } from "./errorHandling";
 /* ======================================
  * Types
  * ====================================== */
+// Enhanced request configuration interface
+export interface ApiRequestConfig extends RequestInit {
+    url: string;
+    timeout?: number;
+    retries?: number;
+}
+
 export type RequestInterceptor = (
-    config: RequestInit & { url: string }
-) => (RequestInit & { url: string }) | Promise<RequestInit & { url: string }>;
+    config: ApiRequestConfig
+) => ApiRequestConfig | Promise<ApiRequestConfig>;
 
 export type ResponseInterceptor = (response: Response) => Response | Promise<Response>;
 export type ErrorInterceptor = (error: Error) => Error | Promise<Error>;
@@ -122,6 +129,11 @@ class TokenManager {
     return this.cached?.refreshToken ?? null;
   }
 
+  getExpiresAtSync(): number | null {
+    this.init();
+    return this.cached?.expiresAt ?? null;
+  }
+
   isExpiringSoon(): boolean {
     this.init();
     if (!this.cached) return false;
@@ -221,7 +233,7 @@ class ApiClient {
     return url; // prefer relative path on client
   }
 
-  async request<T>(input: RequestInfo, init?: RequestInit): Promise<T> {
+  async request<T = unknown>(input: RequestInfo, init?: RequestInit): Promise<T> {
     try {
       let config: RequestInit & { url: string } = {
         ...init,
@@ -244,14 +256,16 @@ class ApiClient {
       }
 
       const isJson = response.headers.get("content-type")?.includes("application/json");
-      const body = isJson ? await response.json().catch(() => undefined) : undefined;
+      const body: unknown = isJson ? await response.json().catch(() => undefined) : undefined;
 
       if (!response.ok) {
-        const message = (body && ((body as any).message || (body as any).error)) || `HTTP ${response.status}`;
+        type ErrorBody = { message?: string; error?: string; [k: string]: unknown };
+        const obj = (typeof body === "object" && body !== null) ? (body as ErrorBody) : undefined;
+        const message = obj?.message || obj?.error || `HTTP ${response.status}`;
         throw new ApiError(message, response.status, body, `HTTP_${response.status}`);
       }
 
-      return (body ?? (await response.text())) as T;
+      return (body as T) ?? (await response.text() as unknown as T);
     } catch (err) {
       let e = err as Error;
       for (const i of this.errorInterceptors) {
@@ -359,36 +373,41 @@ apiClient.addErrorInterceptor(async (error) => {
 /* ======================================
  * Public API (giữ tên export để không vỡ import cũ)
  * ====================================== */
-export const api = <T>(input: RequestInfo, init?: RequestInit): Promise<T> =>
+// Note: Use <T,> to avoid JSX parsing issues in environments that parse TS as TSX
+export const api = <T = unknown,>(input: RequestInfo, init?: RequestInit): Promise<T> =>
     apiClient.request<T>(input, init);
 
 export const setAuthToken = (
     token: string | null,
     expiresIn?: number,
     refreshToken?: string
-) => {
+): void => {
   if (token) tokenManager.set(token, expiresIn, refreshToken);
   else tokenManager.clear();
 };
 
-export const getAuthToken = () => tokenManager.getAccessTokenSync();
-export const getRefreshToken = () => tokenManager.getRefreshTokenSync();
-export const isTokenExpiringSoon = () => tokenManager.isExpiringSoon();
+export const getAuthToken = (): string | null => tokenManager.getAccessTokenSync();
+export const getRefreshToken = (): string | null => tokenManager.getRefreshTokenSync();
+export const isTokenExpiringSoon = (): boolean => tokenManager.isExpiringSoon();
 
-export const refreshToken = () => tokenManager.refresh(performRefresh);
+export const refreshToken = (): Promise<string | null> => tokenManager.refresh(performRefresh);
 
-export const getCSRFTokenForClient = () => getCSRFToken();
+export const getCSRFTokenForClient = (): Promise<string | null> => getCSRFToken();
 
-export const getTokenStatus = () => {
+export const getTokenStatus = (): {
+  hasToken: boolean;
+  isExpiringSoon: boolean;
+  expiresAt: number | null;
+  refreshInFlight: boolean;
+} => {
   const access = tokenManager.getAccessTokenSync();
   const refresh = tokenManager.getRefreshTokenSync();
   const expiring = tokenManager.isExpiringSoon();
   return {
-    hasAccessToken: !!access,
-    hasRefreshToken: !!refresh,
+    hasToken: !!access || !!refresh,
     isExpiringSoon: expiring,
-    accessTokenLength: access?.length || 0,
-    refreshTokenLength: refresh?.length || 0,
+    expiresAt: tokenManager.getExpiresAtSync(),
+    refreshInFlight: tokenManager.getRefreshInFlight() !== null,
   };
 };
 

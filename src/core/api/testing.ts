@@ -95,13 +95,9 @@ export function createTestQueryClient(): QueryClient {
         retry: false,
       },
     },
-    logger: {
-      log: () => {},
-      warn: () => {},
-      error: () => {},
-    },
   });
 }
+
 
 // Test wrapper component
 interface TestWrapperProps {
@@ -125,7 +121,7 @@ export const queryTestHelpers = {
   waitForQuery: async (queryClient: QueryClient, queryKey: readonly unknown[]) => {
     return new Promise<void>((resolve) => {
       const unsubscribe = queryClient.getQueryCache().subscribe((event) => {
-        if (event?.query?.queryKey === queryKey && event?.query?.state.status !== 'loading') {
+        if (event?.query?.queryKey === queryKey && event?.query?.state.status !== 'pending') {
           unsubscribe();
           resolve();
         }
@@ -183,13 +179,14 @@ export const integrationTestHelpers = {
     
     // Replace global fetch with mock
     const originalFetch = global.fetch;
-    global.fetch = mockClient.mockFetch.bind(mockClient);
+    // Cast to satisfy TS overloads in different environments
+    (globalThis as any).fetch = mockClient.mockFetch.bind(mockClient) as any;
     
     return {
       mockClient,
       queryClient,
       cleanup: () => {
-        global.fetch = originalFetch;
+        (globalThis as any).fetch = originalFetch as any;
         queryClient.clear();
         mockClient.clearMocks();
       },

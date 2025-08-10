@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   buildStoriesListQuery,
   buildTagsListQuery,
@@ -18,6 +18,11 @@ import {
   type ContentStatus,
   type StoryTag,
 } from "@/features/stories/hooks";
+import {
+  useStoriesFilters,
+  useStoriesFilterActions,
+  useStoriesSelection,
+} from "@/features/stories/state";
 import { buildLessonsListQuery } from "@/features/lessons/hooks";
 
 interface StoriesFilters {
@@ -39,7 +44,10 @@ export default function AdminStoriesList() {
 
   // Queries
   const { data: stories = [], isLoading } = useQuery(
-    buildStoriesListQuery(filters)
+    buildStoriesListQuery({
+      ...filters,
+      storyType: filters.storyType as StoryType | undefined,
+    })
   );
 
   // Mutations
@@ -72,7 +80,7 @@ export default function AdminStoriesList() {
     if (!confirm("Bạn có chắc chắn muốn xóa story này?")) return;
 
     try {
-      await deleteMutation.mutateAsync(id);
+      await deleteMutation.mutateAsync(String(id));
     } catch (error) {
       console.error("Error deleting story:", error);
     }
@@ -108,7 +116,7 @@ export default function AdminStoriesList() {
               type="number"
               value={filters.lessonId || ""}
               onChange={(e) =>
-                setLessonId(e.target.value ? parseInt(e.target.value) : null)
+                setLessonId(e.target.value || null)
               }
               placeholder="Lọc theo lesson..."
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -223,7 +231,7 @@ export default function AdminStoriesList() {
                       Sửa
                     </button>
                     <button
-                      onClick={() => handleDelete(story.id)}
+                      onClick={() => handleDelete(String(story.id))}
                       className="text-red-600 hover:text-red-900"
                       disabled={deleteMutation.isPending}
                     >
@@ -255,7 +263,7 @@ export default function AdminStoriesList() {
       {/* Edit Modal */}
       {showEditModal && selectedId && (
         <EditStoryModal
-          storyId={selectedId}
+          storyId={selectedId ? String(selectedId) : ""}
           onClose={() => {
             setShowEditModal(false);
             setSelectedId(null);
@@ -282,7 +290,8 @@ function CreateStoryModal({
     title: "",
     content: "",
     storyType: "original",
-    chemRatio: 0.3,
+    difficulty: "beginner",
+    chemRatio: 0,
     lessonId: undefined,
   });
 
@@ -339,7 +348,7 @@ function CreateStoryModal({
                 <select
                   value={formData.storyType}
                   onChange={(e) =>
-                    setFormData({ ...formData, storyType: e.target.value })
+                    setFormData({ ...formData, storyType: e.target.value as StoryType })
                   }
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
@@ -427,7 +436,7 @@ function EditStoryModal({
   onSubmit,
   isLoading,
 }: {
-  storyId: number;
+  storyId: string;
   onClose: () => void;
   onSubmit: (data: UpdateStoryData) => void;
   isLoading: boolean;
@@ -439,7 +448,7 @@ function EditStoryModal({
   const { data: stories = [] } = useQuery(buildStoriesListQuery());
 
   // Find the current story to get its lessonId
-  const currentStory = stories.find((story) => story.id === storyId);
+  const currentStory = stories.find((story) => story.id === String(storyId));
 
   useEffect(() => {
     if (currentStory && currentStory.lesson) {

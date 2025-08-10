@@ -8,10 +8,10 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const vocabularyId = parseInt(params.id);
+    const vocabularyId = params.id;
     const body = await request.json();
 
-    if (isNaN(vocabularyId)) {
+    if (!vocabularyId) {
       return NextResponse.json(
         { error: "Invalid vocabulary ID" },
         { status: 400 }
@@ -86,9 +86,8 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const vocabularyId = parseInt(params.id);
-
-    if (isNaN(vocabularyId)) {
+    const vocabularyId = params.id;
+    if (!vocabularyId) {
       return NextResponse.json(
         { error: "Invalid vocabulary ID" },
         { status: 400 }

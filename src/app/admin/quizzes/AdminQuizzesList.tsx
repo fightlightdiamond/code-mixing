@@ -27,7 +27,10 @@ export default function AdminQuizzesList() {
 
   // Queries
   const { data: quizzes = [], isLoading } = useQuery(
-    buildQuizzesListQuery(filters)
+    buildQuizzesListQuery({
+      ...filters,
+      lessonId: filters.lessonId || undefined,
+    })
   );
 
   // Mutations

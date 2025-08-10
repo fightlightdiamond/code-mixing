@@ -1,32 +1,60 @@
 "use client";
 
 import React, { createContext, useContext, useMemo } from "react";
-import { AppAbility, buildAbility } from "./ability";
+import { AppAbility, buildAbility, ServerRule, type AbilityContext } from "./ability";
 
-interface AbilityContextType {
-  ability: AppAbility;
+// Remove unused interface
+
+interface UserContext {
+  id: string;
+  roles: string[];
+  tenantId?: string;
 }
 
 const AbilityContext = createContext<AppAbility | null>(null);
+
+interface AbilityProviderProps {
+  children: React.ReactNode;
+  rules: ServerRule[] | null;
+  user: UserContext | null;
+}
 
 export default function AbilityProvider({
   children,
   rules,
   user,
-}: {
-  children: React.ReactNode;
-  rules: any[] | null;
-  user: { id: string; roles: string[]; tenantId?: string } | null;
-}) {
-  const ability = useMemo(
-    () =>
-      buildAbility(rules ?? undefined, {
-        userId: user?.id,
-        roles: user?.roles,
-        tenantId: user?.tenantId,
-      }),
-    [rules, user]
-  );
+}: AbilityProviderProps) {
+  const ability = useMemo(() => {
+    try {
+      // Validate user context
+      if (user && (!user.id || !Array.isArray(user.roles))) {
+        console.warn('Invalid user context provided to AbilityProvider');
+        return buildAbility(undefined, undefined);
+      }
+
+      // Validate rules if provided
+      if (rules && !Array.isArray(rules)) {
+        console.warn('Invalid rules provided to AbilityProvider, expected array');
+        return buildAbility(undefined, {
+          userId: user?.id,
+          roles: user?.roles || [],
+          tenantId: user?.tenantId,
+        });
+      }
+
+      const context: AbilityContext | undefined = user ? {
+        userId: user.id,
+        roles: user.roles,
+        tenantId: user.tenantId,
+      } : undefined;
+
+      return buildAbility(rules ?? undefined, context);
+    } catch (error) {
+      console.error('Error building ability in AbilityProvider:', error);
+      // Return a default ability with no permissions as fallback
+      return buildAbility(undefined, undefined);
+    }
+  }, [rules, user]);
 
   return (
     <AbilityContext.Provider value={ability}>
@@ -38,7 +66,20 @@ export default function AbilityProvider({
 export function useAbility(): AppAbility {
   const ability = useContext(AbilityContext);
   if (!ability) {
-    throw new Error("useAbility must be used within an AbilityProvider");
+    throw new Error(
+      "useAbility must be used within an AbilityProvider. " +
+      "Make sure your component is wrapped with <AbilityProvider>."
+    );
   }
   return ability;
+}
+
+// Helper hook to safely use ability with error boundary
+export function useSafeAbility(): AppAbility | null {
+  try {
+    return useAbility();
+  } catch (error) {
+    console.error('Error accessing ability context:', error);
+    return null;
+  }
 }

@@ -35,7 +35,7 @@ export function useURLSync(options: URLSyncOptions = {}) {
   const { debounceMs = 300, replace = true } = options;
   const router = useRouter();
   const searchParams = useSearchParams();
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const syncToURL = useCallback(
     (params: Record<string, string | number | boolean | null | undefined>) => {

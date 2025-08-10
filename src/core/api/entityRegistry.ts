@@ -1,5 +1,5 @@
 // Enhanced type definitions with better constraints
-interface BaseEntity {
+export interface BaseEntity {
   id: string | number;
   createdAt?: string;
   updatedAt?: string;
@@ -8,8 +8,8 @@ interface BaseEntity {
 interface EntityDef<TList extends BaseEntity = BaseEntity, TDetail extends BaseEntity = BaseEntity> {
   entity: "users" | "lessons" | "stories" | "vocabularies" | "quizzes" | "userResults";
   baseUrl: string;
-  selectList?: (data: TList[]) => any[];
-  selectDetail?: (data: TDetail) => any;
+  selectList?: (data: TList[]) => unknown[];
+  selectDetail?: (data: TDetail) => unknown;
   tags: readonly string[];
   // Add validation schemas
   listSchema?: (data: unknown) => data is TList[];

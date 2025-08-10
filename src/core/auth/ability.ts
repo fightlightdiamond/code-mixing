@@ -1,4 +1,4 @@
-import { AbilityBuilder, createMongoAbility } from '@casl/ability';
+import { AbilityBuilder, createMongoAbility, MongoQuery } from '@casl/ability';
 
 // Define the types for our application
 export type Actions =
@@ -37,15 +37,20 @@ export type Subjects =
 
 export type AppAbility = ReturnType<typeof createMongoAbility>;
 
+// Define proper types for rule conditions using CASL MongoQuery
+export type RuleConditions = MongoQuery;
+
+// Define proper rule interface
+export interface AbilityRule {
+  action: Actions | Actions[];
+  subject: Subjects | Subjects[];
+  conditions?: RuleConditions;
+  inverted?: boolean;
+  reason?: string;
+}
+
 // Role definitions from requirements
-const roleDefinitions: Record<
-  string,
-  Array<{
-    action: Actions | Actions[];
-    subject: Subjects | Subjects[];
-    conditions?: any;
-  }>
-> = {
+const roleDefinitions: Record<string, AbilityRule[]> = {
   super_admin: [{ action: "manage", subject: "all" }],
   admin: [{ action: "manage", subject: "all" }], // Add admin role with full permissions
   org_admin: [
@@ -293,9 +298,25 @@ function cleanExpiredCache() {
   }
 }
 
+// Define proper context interface
+export interface AbilityContext {
+  userId?: string;
+  roles?: string[];
+  tenantId?: string;
+}
+
+// Define proper server rules interface
+export interface ServerRule {
+  action: string;
+  subject: string;
+  conditions?: MongoQuery;
+  inverted?: boolean;
+  reason?: string;
+}
+
 export function buildAbility(
-  rulesFromServer: any[] | undefined,
-  ctx: { userId?: string; roles?: string[]; tenantId?: string } | undefined
+  rulesFromServer: ServerRule[] | undefined,
+  ctx: AbilityContext | undefined
 ): AppAbility {
   // If rulesFromServer is provided, use them directly
   if (rulesFromServer) {

@@ -5,7 +5,7 @@
  * Tracks user actions, data changes, and system events for compliance and debugging.
  */
 
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -15,11 +15,10 @@ export interface AuditLogData {
   action: AuditAction;
   entityType: string;
   entityId: string;
-  oldValues?: Record<string, unknown>;
-  newValues?: Record<string, unknown>;
-  userId?: string;
+  oldValues?: Prisma.InputJsonValue | null;
+  newValues?: Prisma.InputJsonValue | null;
+  userId: string;
   tenantId: string;
-  metadata?: Record<string, unknown>;
 }
 
 /**
@@ -32,11 +31,10 @@ export async function createAuditLog(data: AuditLogData) {
         action: data.action,
         entityType: data.entityType,
         entityId: data.entityId,
-        oldValues: data.oldValues || null,
-        newValues: data.newValues || null,
-        userId: data.userId || null,
+        oldValues: data.oldValues ?? Prisma.JsonNull,
+        newValues: data.newValues ?? Prisma.JsonNull,
+        userId: data.userId,
         tenantId: data.tenantId,
-        metadata: data.metadata || null,
       },
     });
   } catch (error) {
@@ -52,10 +50,9 @@ export async function createAuditLog(data: AuditLogData) {
 export async function auditCreate(
   entityType: string,
   entityId: string,
-  newValues: Record<string, unknown>,
+  newValues: Prisma.InputJsonValue,
   userId: string,
   tenantId: string,
-  metadata?: Record<string, unknown>
 ) {
   return createAuditLog({
     action: 'CREATE',
@@ -64,7 +61,6 @@ export async function auditCreate(
     newValues,
     userId,
     tenantId,
-    metadata,
   });
 }
 
@@ -74,11 +70,10 @@ export async function auditCreate(
 export async function auditUpdate(
   entityType: string,
   entityId: string,
-  oldValues: Record<string, unknown>,
-  newValues: Record<string, unknown>,
+  oldValues: Prisma.InputJsonValue,
+  newValues: Prisma.InputJsonValue,
   userId: string,
   tenantId: string,
-  metadata?: Record<string, unknown>
 ) {
   return createAuditLog({
     action: 'UPDATE',
@@ -88,7 +83,6 @@ export async function auditUpdate(
     newValues,
     userId,
     tenantId,
-    metadata,
   });
 }
 
@@ -98,10 +92,9 @@ export async function auditUpdate(
 export async function auditDelete(
   entityType: string,
   entityId: string,
-  oldValues: Record<string, unknown>,
+  oldValues: Prisma.InputJsonValue,
   userId: string,
   tenantId: string,
-  metadata?: Record<string, unknown>
 ) {
   return createAuditLog({
     action: 'DELETE',
@@ -110,7 +103,6 @@ export async function auditDelete(
     oldValues,
     userId,
     tenantId,
-    metadata,
   });
 }
 
@@ -121,7 +113,6 @@ export async function auditAuth(
   action: 'LOGIN' | 'LOGOUT',
   userId: string,
   tenantId: string,
-  metadata?: Record<string, unknown>
 ) {
   return createAuditLog({
     action,
@@ -129,7 +120,6 @@ export async function auditAuth(
     entityId: userId,
     userId,
     tenantId,
-    metadata,
   });
 }
 
@@ -141,7 +131,6 @@ export async function auditAccess(
   entityId: string,
   userId: string,
   tenantId: string,
-  metadata?: Record<string, unknown>
 ) {
   return createAuditLog({
     action: 'ACCESS',
@@ -149,7 +138,6 @@ export async function auditAccess(
     entityId,
     userId,
     tenantId,
-    metadata,
   });
 }
 

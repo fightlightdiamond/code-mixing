@@ -5,8 +5,7 @@
  * Supports different notification types and delivery methods.
  */
 
-import { PrismaClient } from '@prisma/client';
-import { NotificationType } from '@/types/schema';
+import { PrismaClient, NotificationType } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -16,9 +15,6 @@ export interface CreateNotificationData {
   message: string;
   userId: string;
   tenantId: string;
-  metadata?: Record<string, unknown>;
-  relatedEntityType?: string;
-  relatedEntityId?: string;
 }
 
 /**
@@ -33,9 +29,6 @@ export async function createNotification(data: CreateNotificationData) {
         message: data.message,
         userId: data.userId,
         tenantId: data.tenantId,
-        metadata: data.metadata || null,
-        relatedEntityType: data.relatedEntityType || null,
-        relatedEntityId: data.relatedEntityId || null,
       },
       include: {
         user: {
@@ -61,15 +54,13 @@ export async function createSystemNotification(
   message: string,
   userId: string,
   tenantId: string,
-  metadata?: Record<string, unknown>
 ) {
   return createNotification({
-    type: NotificationType.SYSTEM,
+    type: NotificationType.info,
     title,
     message,
     userId,
     tenantId,
-    metadata,
   });
 }
 
@@ -84,13 +75,11 @@ export async function createCourseUpdateNotification(
   tenantId: string
 ) {
   return createNotification({
-    type: NotificationType.COURSE_UPDATE,
+    type: NotificationType.info,
     title: `Course Updated: ${courseName}`,
     message: updateMessage,
     userId,
     tenantId,
-    relatedEntityType: 'Course',
-    relatedEntityId: courseId,
   });
 }
 
@@ -108,18 +97,11 @@ export async function createQuizResultNotification(
   const percentage = Math.round((score / totalQuestions) * 100);
   
   return createNotification({
-    type: NotificationType.QUIZ_RESULT,
+    type: NotificationType.success,
     title: `Quiz Completed: ${quizTitle}`,
     message: `You scored ${score}/${totalQuestions} (${percentage}%) on the quiz.`,
     userId,
     tenantId,
-    relatedEntityType: 'Quiz',
-    relatedEntityId: quizId,
-    metadata: {
-      score,
-      totalQuestions,
-      percentage,
-    },
   });
 }
 
@@ -131,15 +113,13 @@ export async function createAchievementNotification(
   achievementDescription: string,
   userId: string,
   tenantId: string,
-  metadata?: Record<string, unknown>
 ) {
   return createNotification({
-    type: NotificationType.ACHIEVEMENT,
+    type: NotificationType.success,
     title: `Achievement Unlocked: ${achievementName}`,
     message: achievementDescription,
     userId,
     tenantId,
-    metadata,
   });
 }
 
@@ -151,17 +131,13 @@ export async function createReminderNotification(
   message: string,
   userId: string,
   tenantId: string,
-  relatedEntityType?: string,
-  relatedEntityId?: string
 ) {
   return createNotification({
-    type: NotificationType.REMINDER,
+    type: NotificationType.warning,
     title,
     message,
     userId,
     tenantId,
-    relatedEntityType,
-    relatedEntityId,
   });
 }
 
@@ -255,7 +231,6 @@ export async function markNotificationAsRead(
       },
       data: {
         isRead: true,
-        readAt: new Date(),
       },
     });
   } catch (error) {
@@ -277,7 +252,6 @@ export async function markAllNotificationsAsRead(userId: string, tenantId: strin
       },
       data: {
         isRead: true,
-        readAt: new Date(),
       },
     });
   } catch (error) {
