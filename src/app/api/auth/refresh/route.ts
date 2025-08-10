@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import jwt from 'jsonwebtoken';
+import jwt, { JwtPayload } from 'jsonwebtoken';
 import { PrismaClient } from '@prisma/client';
 
 import { prisma } from "@/core/prisma";
@@ -16,9 +16,15 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify refresh token
-    let decoded: any;
+    interface CustomJwtPayload extends JwtPayload {
+      userId: string;
+      email: string;
+      roles?: string[];
+    }
+    
+    let decoded: CustomJwtPayload;
     try {
-      decoded = jwt.verify(refreshToken, process.env.JWT_SECRET || 'fallback-secret');
+      decoded = jwt.verify(refreshToken, process.env.JWT_SECRET || 'fallback-secret') as CustomJwtPayload;
     } catch (error) {
       return NextResponse.json(
         { message: 'Refresh token không hợp lệ hoặc đã hết hạn' },

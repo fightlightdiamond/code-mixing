@@ -174,8 +174,14 @@ export async function PUT(
       }
     }
 
-    // Build update data - using Record to avoid Prisma type conflicts
-    const updateData: Record<string, string | number> = {};
+    // Build update data - based on Prisma Story model
+    const updateData: {
+      title?: string;
+      content?: string;
+      storyType?: 'original' | 'chemdanhtu' | 'chemdongtu' | 'chemtinhtu' | 'custom';
+      chemRatio?: number;
+      lessonId?: string; // UUID string based on schema
+    } = {};
     if (title !== undefined) updateData.title = title;
     if (content !== undefined) updateData.content = content;
     if (storyType !== undefined) updateData.storyType = storyType;

@@ -17,11 +17,12 @@ export async function GET(request: NextRequest) {
 
     const token = authHeader.substring(7); // Remove 'Bearer ' prefix
 
-    // Verify token
+    // Verify token - based on Prisma User model
     interface CustomJwtPayload extends JwtPayload {
-      userId: string;
+      userId: string; // UUID from User.id
       email: string;
-      roles?: string[];
+      role: 'student' | 'coach' | 'admin' | 'super_admin' | 'org_admin' | 'curriculum_lead' | 'content_creator' | 'instructor' | 'voice_artist' | 'qa' | 'guest';
+      tenantId?: string; // UUID from User.tenantId
     }
     
     let decoded: CustomJwtPayload;

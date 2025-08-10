@@ -33,9 +33,14 @@ export type Subjects =
   | "Approval"
   | "all";
 
+// CASL conditions type - based on MongoDB-style queries
+type CASLConditions = {
+  [key: string]: any; // Field conditions
+} | ((item: any) => boolean); // Function-based conditions
+
 export interface Rule {
   action: Actions;
   subject: Subjects;
-  conditions?: any;
+  conditions?: CASLConditions;
   fields?: string[];
 }

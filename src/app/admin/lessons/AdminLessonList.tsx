@@ -1,13 +1,12 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
 import {
   useLessonsFilters,
   useLessonsFilterActions,
   useLessonsSelection,
 } from "@/features/lessons/state";
-import { buildLessonsListQuery } from "@/features/lessons/hooks";
+import { buildLessonsListQuery, type Lesson } from "@/features/lessons/hooks";
 
 export default function AdminLessonList() {
   const { search, status } = useLessonsFilters();
@@ -92,7 +91,7 @@ export default function AdminLessonList() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {lessons.map((lesson: any) => (
+              {lessons.map((lesson: Lesson) => (
                 <tr key={lesson.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div>

@@ -196,21 +196,21 @@ export const integrationTestHelpers = {
   // Common test scenarios
   scenarios: {
     // Test optimistic updates
-    optimisticUpdate: async (
+    optimisticUpdate: <T extends { id: number }>(
       queryClient: QueryClient,
       listKey: readonly unknown[],
       detailKey: readonly unknown[],
-      updateData: any
+      updateData: Partial<T>
     ) => {
       // Set initial data
       queryClient.setQueryData(listKey, [{ id: 1, name: 'Test' }]);
       queryClient.setQueryData(detailKey, { id: 1, name: 'Test' });
       
       // Simulate optimistic update
-      queryClient.setQueryData(listKey, (old: any) => 
-        old?.map((item: any) => item.id === 1 ? { ...item, ...updateData } : item)
+      queryClient.setQueryData(listKey, (old: T[] | undefined) => 
+        old?.map((item: T) => item.id === 1 ? { ...item, ...updateData } : item)
       );
-      queryClient.setQueryData(detailKey, (old: any) => ({ ...old, ...updateData }));
+      queryClient.setQueryData(detailKey, (old: T | undefined) => ({ ...old, ...updateData }));
       
       return {
         listData: queryClient.getQueryData(listKey),
