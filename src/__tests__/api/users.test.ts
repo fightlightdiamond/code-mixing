@@ -4,11 +4,11 @@
 
 import { NextRequest } from "next/server";
 import { GET, POST } from "@/app/api/users/route";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/core/prisma";
 
 // Mock Prisma
-jest.mock("@prisma/client", () => ({
-  PrismaClient: jest.fn().mockImplementation(() => ({
+jest.mock("@/core/prisma", () => ({
+  prisma: {
     user: {
       findMany: jest.fn(),
       findUnique: jest.fn(),
@@ -16,10 +16,24 @@ jest.mock("@prisma/client", () => ({
       update: jest.fn(),
       delete: jest.fn(),
     },
-  })),
+  },
 }));
 
-const mockPrisma = new PrismaClient() as jest.Mocked<PrismaClient>;
+// Mock JWT
+jest.mock("jsonwebtoken", () => ({
+  verify: jest.fn().mockReturnValue({
+    userId: 1,
+    tenantId: 1,
+    role: "admin",
+  }),
+}));
+
+// Mock CASL guard
+jest.mock("@/core/auth/casl.guard", () => ({
+  caslGuard: jest.fn().mockReturnValue({ allowed: true, error: null }),
+}));
+
+const mockPrisma = prisma as jest.Mocked<typeof prisma>;
 
 describe("/api/users", () => {
   beforeEach(() => {
@@ -40,12 +54,22 @@ describe("/api/users", () => {
 
       (mockPrisma.user.findMany as jest.Mock).mockResolvedValue(mockUsers);
 
-      const request = new NextRequest("http://localhost:3000/api/users");
+      const request = new NextRequest("http://localhost:3000/api/users", {
+        headers: {
+          authorization: "Bearer mock-jwt-token",
+        },
+      });
       const response = await GET(request);
       const data = await response.json();
 
       expect(response.status).toBe(200);
-      expect(data).toEqual(mockUsers);
+      expect(data).toEqual({
+        data: mockUsers,
+        success: true,
+        meta: {
+          total: mockUsers.length
+        }
+      });
       expect(mockPrisma.user.findMany).toHaveBeenCalledWith({
         where: {},
         select: {
@@ -56,7 +80,6 @@ describe("/api/users", () => {
           createdAt: true,
         },
         orderBy: { name: "asc" },
-        take: 50,
       });
     });
 
@@ -74,7 +97,12 @@ describe("/api/users", () => {
       (mockPrisma.user.findMany as jest.Mock).mockResolvedValue(mockUsers);
 
       const request = new NextRequest(
-        "http://localhost:3000/api/users?search=john"
+        "http://localhost:3000/api/users?search=john",
+        {
+          headers: {
+            authorization: "Bearer mock-jwt-token",
+          },
+        }
       );
       const response = await GET(request);
 
@@ -93,7 +121,6 @@ describe("/api/users", () => {
           createdAt: true,
         },
         orderBy: { name: "asc" },
-        take: 50,
       });
     });
   });
@@ -118,7 +145,10 @@ describe("/api/users", () => {
       const request = new NextRequest("http://localhost:3000/api/users", {
         method: "POST",
         body: JSON.stringify(newUser),
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          authorization: "Bearer mock-jwt-token",
+        },
       });
 
       const response = await POST(request);
@@ -143,7 +173,10 @@ describe("/api/users", () => {
       const request = new NextRequest("http://localhost:3000/api/users", {
         method: "POST",
         body: JSON.stringify(newUser),
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          authorization: "Bearer mock-jwt-token",
+        },
       });
 
       const response = await POST(request);
@@ -162,7 +195,10 @@ describe("/api/users", () => {
       const request = new NextRequest("http://localhost:3000/api/users", {
         method: "POST",
         body: JSON.stringify(invalidUser),
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          authorization: "Bearer mock-jwt-token",
+        },
       });
 
       const response = await POST(request);
