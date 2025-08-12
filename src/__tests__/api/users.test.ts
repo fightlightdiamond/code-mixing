@@ -31,6 +31,9 @@ jest.mock("jsonwebtoken", () => ({
 // Mock CASL guard
 jest.mock("@/core/auth/casl.guard", () => ({
   caslGuard: jest.fn().mockReturnValue({ allowed: true, error: null }),
+  caslGuardWithPolicies: jest
+    .fn()
+    .mockResolvedValue({ allowed: true, error: null }),
 }));
 
 const mockPrisma = prisma as jest.Mocked<typeof prisma>;

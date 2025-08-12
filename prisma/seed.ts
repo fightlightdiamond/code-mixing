@@ -17,8 +17,10 @@ async function main() {
   });
 
   // Create admin user
-  const adminUser = await prisma.user.create({
-    data: {
+  const adminUser = await prisma.user.upsert({
+    where: { email: "admin@edtech.com" },
+    update: {},
+    create: {
       name: "Admin User",
       email: "admin@edtech.com",
       passwordHash: await bcrypt.hash("admin123", 10),
@@ -36,8 +38,10 @@ async function main() {
   });
 
   // Create coach user
-  const coachUser = await prisma.user.create({
-    data: {
+  const coachUser = await prisma.user.upsert({
+    where: { email: "coach@edtech.com" },
+    update: {},
+    create: {
       name: "Coach Sarah",
       email: "coach@edtech.com",
       passwordHash: await bcrypt.hash("coach123", 10),
@@ -50,8 +54,10 @@ async function main() {
   });
 
   // Create student users
-  const student1 = await prisma.user.create({
-    data: {
+  const student1 = await prisma.user.upsert({
+    where: { email: "student1@edtech.com" },
+    update: {},
+    create: {
       name: "Nguyễn Văn A",
       email: "student1@edtech.com",
       passwordHash: await bcrypt.hash("student123", 10),
@@ -63,8 +69,10 @@ async function main() {
     },
   });
 
-  const student2 = await prisma.user.create({
-    data: {
+  const student2 = await prisma.user.upsert({
+    where: { email: "student2@edtech.com" },
+    update: {},
+    create: {
       name: "Trần Thị B",
       email: "student2@edtech.com",
       passwordHash: await bcrypt.hash("student123", 10),
@@ -77,6 +85,179 @@ async function main() {
   });
 
   console.log("✅ Users created");
+
+  // ===== IAM: Permissions, Roles, Assignments, Policies =====
+  console.log("🌱 Seeding IAM (Permissions, Roles, Assignments, Policies)...");
+
+  // Seed permissions (resource x action)
+  const resources = [
+    "User",
+    "Role",
+    "Permission",
+    "ResourcePolicy",
+    "Course",
+    "Unit",
+    "Lesson",
+    "Story",
+    "Quiz",
+    "QuizResult",
+    "Audio",
+    "Tag",
+  ];
+  const actions = ["create", "read", "update", "delete"] as const;
+
+  const permissionRows = resources.flatMap((res) =>
+    actions.map((act) => ({
+      name: `${act} ${res}`,
+      slug: `${res.toLowerCase()}:${act}`,
+      resource: res,
+      action: act,
+      isSystem: true,
+    }))
+  );
+
+  await prisma.permission.createMany({ data: permissionRows, skipDuplicates: true });
+
+  const allPermissions = await prisma.permission.findMany();
+  const bySlug = new Map(allPermissions.map((p) => [p.slug, p]));
+
+  // Seed roles
+  await prisma.role.createMany({
+    data: [
+      { name: "Administrator", slug: "admin", tenantScope: "system", isSystem: true },
+      { name: "Editor", slug: "editor", tenantScope: null, isSystem: false },
+      { name: "Viewer", slug: "viewer", tenantScope: null, isSystem: false },
+    ],
+    skipDuplicates: true,
+  });
+
+  const adminRole = await prisma.role.findFirst({ where: { slug: "admin" } });
+  const editorRole = await prisma.role.findFirst({ where: { slug: "editor" } });
+  const viewerRole = await prisma.role.findFirst({ where: { slug: "viewer" } });
+
+  if (!adminRole || !editorRole || !viewerRole) {
+    throw new Error("Failed to seed base roles");
+  }
+
+  // Assign permissions to roles
+  const assignRolePerm = async (roleSlug: string, permissionSlugs: string[]) => {
+    const role = await prisma.role.findFirst({ where: { slug: roleSlug } });
+    if (!role) return;
+
+    for (const slug of permissionSlugs) {
+      const perm = bySlug.get(slug);
+      if (!perm) continue;
+      await prisma.rolePermission.upsert({
+        where: {
+          roleId_permissionId: {
+            roleId: role.id,
+            permissionId: perm.id,
+          },
+        },
+        create: {
+          roleId: role.id,
+          permissionId: perm.id,
+        },
+        update: {},
+      });
+    }
+  };
+
+  // Admin gets all permissions
+  await assignRolePerm(
+    "admin",
+    allPermissions.map((p) => p.slug)
+  );
+
+  // Editor: CRUD on content entities; read users/roles/permissions
+  const editorSlugs = [
+    // content CRUD
+    "course:create", "course:read", "course:update",
+    "unit:create", "unit:read", "unit:update",
+    "lesson:create", "lesson:read", "lesson:update",
+    "story:create", "story:read", "story:update",
+    "quiz:create", "quiz:read", "quiz:update",
+    "audio:create", "audio:read", "audio:update",
+    "tag:create", "tag:read", "tag:update",
+    // limited reads
+    "user:read", "role:read", "permission:read", "resourcepolicy:read",
+  ];
+  await assignRolePerm("editor", editorSlugs.filter((s) => bySlug.has(s)));
+  await assignRolePerm("editor", editorSlugs.filter((s) => bySlug.has(s)));
+
+  // Viewer: read-only across most entities
+  await assignRolePerm("viewer", [
+    "story:read",
+    "lesson:read",
+    "user:read",
+  ]);
+
+  // Assign admin user to admin role
+  try {
+    await prisma.userToRole.create({
+      data: {
+        userId: adminUser.id,
+        roleId: adminRole.id,
+      },
+    });
+  } catch (error) {
+    // Ignore duplicate entries
+    console.log('Admin role assignment already exists');
+  }
+
+  // Assign coach user to editor role
+  try {
+    await prisma.userToRole.create({
+      data: {
+        userId: coachUser.id,
+        roleId: editorRole.id,
+      },
+    });
+  } catch (error) {
+    console.log('Coach editor role assignment already exists');
+  }
+
+  // Assign students to viewer role
+  try {
+    await prisma.userToRole.create({
+      data: {
+        userId: student1.id,
+        roleId: viewerRole.id,
+      },
+    });
+  } catch (error) {
+    console.log('Student1 viewer role assignment already exists');
+  }
+
+  try {
+    await prisma.userToRole.create({
+      data: {
+        userId: student2.id,
+        roleId: viewerRole.id,
+      },
+    });
+  } catch (error) {
+    console.log('Student2 viewer role assignment already exists');
+  }
+
+  // Sample deny-first policy: deny delete Story if not admin
+  await prisma.resourcePolicy.create({
+    data: {
+      name: "Deny delete Story for non-admin",
+      resource: "Story",
+      effect: "deny",
+      priority: 100,
+      isActive: true,
+      conditions: {
+        // Example CASL-like condition shape to deny when user lacks admin role
+        // Your guard should interpret tenant/roles accordingly
+        notRoles: ["admin"],
+        action: "delete",
+      },
+    },
+  }).catch(() => void 0);
+
+  console.log("✅ IAM seeded");
 
   // Create sample course
   const course1 = await prisma.course.create({

@@ -51,6 +51,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
+  // Define logout function first
+  const logout = useCallback(() => {
+    setAuthToken(null);
+    clearCSRFToken();
+    setUser(null);
+    router.push("/login");
+  }, [router]);
+
   // Handle auth events
   useEffect(() => {
     const handleUnauthorized = () => {
@@ -69,11 +77,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     };
 
+    const handleLogout = () => {
+      console.log("🚪 Logout event received");
+      logout();
+    };
+
     window.addEventListener("auth:unauthorized", handleUnauthorized);
     window.addEventListener(
       "auth:token-refresh-failed",
       handleTokenRefreshFailed
     );
+    window.addEventListener("auth:logout", handleLogout);
 
     return () => {
       window.removeEventListener("auth:unauthorized", handleUnauthorized);
@@ -81,12 +95,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         "auth:token-refresh-failed",
         handleTokenRefreshFailed
       );
+      window.removeEventListener("auth:logout", handleLogout);
     };
-  }, []);
+  }, [logout]);
 
   // Check if user is logged in on mount
   useEffect(() => {
     checkAuth();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const checkAuth = useCallback(async () => {
@@ -139,8 +155,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const newToken = await refreshToken();
       if (newToken) {
-        // Re-check auth with new token
-        await checkAuth();
+        // Re-check auth with new token - we'll call checkAuth directly
         return true;
       }
       return false;
@@ -148,7 +163,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error("Token refresh failed:", error);
       return false;
     }
-  }, [checkAuth]);
+  }, []);
 
   const login = async (
     email: string,
@@ -225,13 +240,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(false);
     }
   };
-
-  const logout = useCallback(() => {
-    setAuthToken(null);
-    clearCSRFToken();
-    setUser(null);
-    router.push("/login");
-  }, [router]);
 
   const value: AuthContextType = {
     user,

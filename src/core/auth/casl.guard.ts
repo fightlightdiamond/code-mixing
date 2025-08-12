@@ -1,6 +1,7 @@
 import { buildAbility } from "./ability";
 import { AuthLogger } from "./auth.logger";
-import { MongoQuery } from "@casl/ability";
+import { MongoQuery, subject as caslSubject } from "@casl/ability";
+import { prisma } from "../prisma";
 
 export interface RequiredRule {
   action: string;
@@ -9,9 +10,11 @@ export interface RequiredRule {
   reason?: string;
 }
 
+type UserCtx = { sub: string; tenantId?: string; roles: string[] };
+
 export function checkAbilities(
   rules: RequiredRule[],
-  user: { sub: string; tenantId?: string; roles: string[] }
+  user: UserCtx
 ): { allowed: boolean; failedRules: RequiredRule[] } {
   try {
     // Validate input parameters
@@ -37,8 +40,8 @@ export function checkAbilities(
           throw new Error(`Invalid rule: action and subject are required`);
         }
 
-        const canAccess = rule.conditions 
-          ? ability.can(rule.action, rule.subject, rule.conditions as any)
+        const canAccess = rule.conditions
+          ? ability.can(rule.action, caslSubject(rule.subject as string, rule.conditions as Record<string, unknown>))
           : ability.can(rule.action, rule.subject);
 
         if (!canAccess) {
@@ -63,10 +66,96 @@ export function checkAbilities(
   }
 }
 
-// Enhanced guard function for Next.js API routes
+// Async guard that combines RBAC (CASL) with ABAC deny-first evaluation from ResourcePolicy
+export async function caslGuardWithPolicies(
+  rules: RequiredRule[],
+  user: UserCtx
+): Promise<{ allowed: boolean; error?: string; failedRules?: RequiredRule[] }> {
+  // Run RBAC first using existing guard (keeps logging behavior consistent)
+  const rbac = caslGuard(rules, user);
+  if (!rbac.allowed) return rbac;
+
+  try {
+    const ctx = { userId: user.sub, tenantId: user.tenantId } as const;
+
+    const interpolate = (obj: unknown): unknown => {
+      if (obj == null) return obj as unknown;
+      const json = JSON.stringify(obj)
+        .replace(/\$\{ctx\.userId\}/g, ctx.userId || "")
+        .replace(/\$\{ctx\.tenantId\}/g, ctx.tenantId || "")
+        .replace(/\$\{publicTenantId\}/g, "public");
+      return JSON.parse(json);
+    };
+
+    const isContextOnly = (conditions: unknown): boolean => {
+      if (!conditions || typeof conditions !== "object") return false;
+      const record = conditions as Record<string, unknown>;
+      const keys = Object.keys(record);
+      return keys.every((k) => {
+        const v = record[k];
+        if (k === "tenantId") {
+          if (typeof v === "string") return !!ctx.tenantId && v === ctx.tenantId;
+          if (v && typeof v === "object") {
+            const arr = (v as { $in?: unknown[] }).$in;
+            if (Array.isArray(arr)) return !!ctx.tenantId && arr.includes(ctx.tenantId);
+          }
+          return false;
+        }
+        if (k === "userId") {
+          if (typeof v === "string") return v === ctx.userId;
+          if (v && typeof v === "object") {
+            const arr = (v as { $in?: unknown[] }).$in;
+            if (Array.isArray(arr)) return arr.includes(ctx.userId);
+          }
+          return false;
+        }
+        return false;
+      });
+    };
+
+    const subjects = Array.from(new Set(rules.map((r) => r.subject)));
+    for (const subject of subjects) {
+      const repo = (prisma as unknown as { resourcePolicy?: { findMany: (args: unknown) => Promise<Array<{ effect: string; conditions: unknown }>> } }).resourcePolicy;
+      if (!repo) {
+        // Client not generated for ResourcePolicy yet; skip ABAC and allow RBAC result
+        break;
+      }
+      const policies = await repo.findMany({
+        where: {
+          isActive: true,
+          resource: String(subject),
+          OR: [{ tenantId: null }, { tenantId: user.tenantId ?? undefined }],
+        },
+        orderBy: { priority: "desc" },
+        take: 50,
+      });
+
+      for (const p of policies) {
+        const interpolated = interpolate(p.conditions);
+        if (p.effect === "deny" && isContextOnly(interpolated)) {
+          // Deny takes precedence
+          return {
+            allowed: false,
+            error: "Access denied by policy",
+            failedRules: rules,
+          };
+        }
+      }
+    }
+
+    return { allowed: true };
+  } catch (policyErr) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn("ABAC policy evaluation failed, continuing with RBAC only:", policyErr);
+    }
+    return { allowed: true };
+  }
+}
+
+// Enhanced guard function for Next.js API routes (RBAC only to retain backward compatibility)
 export function caslGuard(
   rules: RequiredRule[],
-  user: { sub: string; tenantId?: string; roles: string[] }
+  user: UserCtx
 ): { allowed: boolean; error?: string; failedRules?: RequiredRule[] } {
   try {
     // Validate inputs
@@ -85,6 +174,8 @@ export function caslGuard(
     }
 
     const { allowed, failedRules } = checkAbilities(rules, user);
+
+    // RBAC only in this function; ABAC is handled in caslGuardWithPolicies
 
     // Only log in development or when explicitly enabled
     const shouldLog = process.env.NODE_ENV === 'development' || process.env.ENABLE_AUTH_LOGGING === 'true';
@@ -125,15 +216,9 @@ export function caslGuard(
       }
     }
 
-    if (!allowed) {
-      return {
-        allowed: false,
-        error: "Insufficient permissions",
-        failedRules,
-      };
-    }
-
-    return { allowed: true };
+    return allowed
+      ? { allowed: true }
+      : { allowed: false, error: "Insufficient permissions", failedRules };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error("Authorization check failed:", errorMessage);

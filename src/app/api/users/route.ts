@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/core/prisma";
 import jwt from "jsonwebtoken";
-import { caslGuard } from "@/core/auth/casl.guard";
+import { caslGuardWithPolicies } from "@/core/auth/casl.guard";
 import { log } from "@/lib/logger";
 import type { JWTPayload, ApiResponse, User, DatabaseWhereClause, RequiredRule } from "@/types/api";
 import bcrypt from "bcryptjs";
@@ -28,14 +28,13 @@ async function getUserFromRequest(request: NextRequest) {
       tenantId: decoded.tenantId,
       roles: [decoded.role],
     };
-  } catch (error) {
+  } catch {
     return null;
   }
 }
 
 // GET /api/users - Lấy danh sách users với search
 export async function GET(request: NextRequest) {
-  const startTime = Date.now();
   const requestStartTime = Date.now();
   log.api('Users API request started', '/api/users');
   
@@ -57,7 +56,7 @@ export async function GET(request: NextRequest) {
 
     // Check if user has required permissions
     const caslStartTime = Date.now();
-    const { allowed, error } = caslGuard(rules, user);
+    const { allowed, error } = await caslGuardWithPolicies(rules, user);
     log.performance('CASL authorization completed', Date.now() - caslStartTime, {
       endpoint: '/api/users',
       userId: user.sub,
@@ -147,7 +146,7 @@ export async function POST(request: NextRequest) {
     const rules: RequiredRule[] = [{ action: "create", subject: "User" }];
 
     // Check if user has required permissions
-    const { allowed, error } = caslGuard(rules, user);
+    const { allowed, error } = await caslGuardWithPolicies(rules, user);
 
     if (!allowed) {
       return NextResponse.json(

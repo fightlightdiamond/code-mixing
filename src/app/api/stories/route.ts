@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { caslGuard, RequiredRule } from "@/core/auth/casl.guard";
+import { caslGuardWithPolicies } from "@/core/auth/casl.guard";
 import jwt from "jsonwebtoken";
 
 import { prisma } from "@/core/prisma";
@@ -48,10 +48,10 @@ export async function GET(request: NextRequest) {
     }
 
     // Define the rules required to access this endpoint
-    const rules: RequiredRule[] = [{ action: "read", subject: "Story" }];
+    const rules = [{ action: "read", subject: "Story" }];
 
-    // Check if user has required permissions
-    const { allowed, error } = caslGuard(rules, user);
+    // Check if user has required permissions (RBAC + ABAC)
+    const { allowed, error } = await caslGuardWithPolicies(rules, user);
 
     if (!allowed) {
       return NextResponse.json(
@@ -117,10 +117,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Define the rules required to create a story
-    const rules: RequiredRule[] = [{ action: "create", subject: "Story" }];
+    const rules = [{ action: "create", subject: "Story" }];
 
-    // Check if user has required permissions
-    const { allowed, error } = caslGuard(rules, user);
+    // Check if user has required permissions (RBAC + ABAC)
+    const { allowed, error } = await caslGuardWithPolicies(rules, user);
 
     if (!allowed) {
       return NextResponse.json(

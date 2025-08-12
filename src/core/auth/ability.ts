@@ -214,6 +214,41 @@ const roleDefinitions: Record<string, AbilityRule[]> = {
       conditions: { tenantId: "${ctx.tenantId}" },
     },
   ],
+  // Coach role: similar to instructor, focused on mentoring and grading
+  coach: [
+    {
+      action: "read",
+      subject: [
+        "Course",
+        "Unit",
+        "Lesson",
+        "Story",
+        "StoryVersion",
+        "Exercise",
+        "AudioAsset",
+        "Quiz",
+      ],
+      conditions: {
+        tenantId: "${ctx.tenantId}",
+        status: { $in: ["published", "ready"] },
+      },
+    },
+    {
+      action: "assign",
+      subject: "Lesson",
+      conditions: { tenantId: "${ctx.tenantId}" },
+    },
+    {
+      action: "grade",
+      subject: "QuizResult",
+      conditions: { tenantId: "${ctx.tenantId}" },
+    },
+    {
+      action: "export",
+      subject: "QuizResult",
+      conditions: { tenantId: "${ctx.tenantId}" },
+    },
+  ],
   voice_artist: [
     {
       action: ["create", "read", "update"],

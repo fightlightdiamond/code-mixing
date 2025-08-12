@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { caslGuard, RequiredRule } from "@/core/auth/casl.guard";
+import { caslGuardWithPolicies } from "@/core/auth/casl.guard";
 import jwt from "jsonwebtoken";
 import type { Prisma, StoryType } from "@prisma/client";
 
@@ -51,10 +51,10 @@ export async function GET(
     }
 
     // Define the rules required to access this endpoint
-    const rules: RequiredRule[] = [{ action: "read", subject: "Story" }];
+    const rules = [{ action: "read", subject: "Story" }];
 
-    // Check if user has required permissions
-    const { allowed, error } = caslGuard(rules, user);
+    // Check if user has required permissions (RBAC + ABAC)
+    const { allowed, error } = await caslGuardWithPolicies(rules, user);
 
     if (!allowed) {
       return NextResponse.json(
@@ -117,10 +117,10 @@ export async function PUT(
     }
 
     // Define the rules required to update a story
-    const rules: RequiredRule[] = [{ action: "update", subject: "Story" }];
+    const rules = [{ action: "update", subject: "Story" }];
 
-    // Check if user has required permissions
-    const { allowed, error } = caslGuard(rules, user);
+    // Check if user has required permissions (RBAC + ABAC)
+    const { allowed, error } = await caslGuardWithPolicies(rules, user);
 
     if (!allowed) {
       return NextResponse.json(
@@ -236,10 +236,10 @@ export async function DELETE(
     }
 
     // Define the rules required to delete a story
-    const rules: RequiredRule[] = [{ action: "delete", subject: "Story" }];
+    const rules = [{ action: "delete", subject: "Story" }];
 
-    // Check if user has required permissions
-    const { allowed, error } = caslGuard(rules, user);
+    // Check if user has required permissions (RBAC + ABAC)
+    const { allowed, error } = await caslGuardWithPolicies(rules, user);
 
     if (!allowed) {
       return NextResponse.json(
