@@ -111,6 +111,19 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "ids is required" }, { status: 400 });
     }
 
+    const ids: string[] = body?.ids ?? [];
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return NextResponse.json({ error: "ids is required" }, { status: 400 });
+    }
+
+    const MAX_BULK_DELETE = 100;
+    if (ids.length > MAX_BULK_DELETE) {
+      return NextResponse.json(
+        { error: `Cannot delete more than ${MAX_BULK_DELETE} stories at once` },
+        { status: 400 }
+      );
+    }
+
     const result = await prisma.story.deleteMany({
       where: { id: { in: ids }, tenantId: user.tenantId ?? undefined },
     });
