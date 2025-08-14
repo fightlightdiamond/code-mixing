@@ -1,12 +1,13 @@
 import { buildAbility } from "./ability";
 import { AuthLogger } from "./auth.logger";
-import { MongoQuery, subject as caslSubject } from "@casl/ability";
+import { subject as caslSubject } from "@casl/ability";
+import { PrismaQuery } from "@casl/prisma";
 import { prisma } from "../prisma";
 
 export interface RequiredRule {
   action: string;
   subject: string;
-  conditions?: MongoQuery;
+  conditions?: PrismaQuery;
   reason?: string;
 }
 
@@ -96,7 +97,7 @@ export async function caslGuardWithPolicies(
         if (k === "tenantId") {
           if (typeof v === "string") return !!ctx.tenantId && v === ctx.tenantId;
           if (v && typeof v === "object") {
-            const arr = (v as { $in?: unknown[] }).$in;
+            const arr = (v as { in?: unknown[] }).in;
             if (Array.isArray(arr)) return !!ctx.tenantId && arr.includes(ctx.tenantId);
           }
           return false;
@@ -104,7 +105,7 @@ export async function caslGuardWithPolicies(
         if (k === "userId") {
           if (typeof v === "string") return v === ctx.userId;
           if (v && typeof v === "object") {
-            const arr = (v as { $in?: unknown[] }).$in;
+            const arr = (v as { in?: unknown[] }).in;
             if (Array.isArray(arr)) return arr.includes(ctx.userId);
           }
           return false;

@@ -1,4 +1,5 @@
-import { AbilityBuilder, createMongoAbility, MongoQuery } from '@casl/ability';
+import { AbilityBuilder } from '@casl/ability';
+import { createPrismaAbility, PrismaAbility, PrismaQuery } from '@casl/prisma';
 
 // Define the types for our application
 export type Actions =
@@ -35,10 +36,10 @@ export type Subjects =
   | "Approval"
   | "all";
 
-export type AppAbility = ReturnType<typeof createMongoAbility>;
+export type AppAbility = PrismaAbility<[Actions, Subjects]>;
 
-// Define proper types for rule conditions using CASL MongoQuery
-export type RuleConditions = MongoQuery;
+// Define proper types for rule conditions using CASL PrismaQuery
+export type RuleConditions = PrismaQuery;
 
 // Define proper rule interface
 export interface AbilityRule {
@@ -146,7 +147,7 @@ const roleDefinitions: Record<string, AbilityRule[]> = {
     {
       action: "delete",
       subject: ["Story", "Exercise"],
-      conditions: { tenantId: "${ctx.tenantId}", status: { $in: ["draft"] } }, // Note: Keep as string for MongoDB-style queries
+      conditions: { tenantId: "${ctx.tenantId}", status: { in: ["draft"] } },
     },
     {
       action: "assign",
@@ -195,7 +196,7 @@ const roleDefinitions: Record<string, AbilityRule[]> = {
       ],
       conditions: {
         tenantId: "${ctx.tenantId}",
-        status: { $in: ["published", "ready"] },
+        status: { in: ["published", "ready"] },
       },
     },
     {
@@ -230,7 +231,7 @@ const roleDefinitions: Record<string, AbilityRule[]> = {
       ],
       conditions: {
         tenantId: "${ctx.tenantId}",
-        status: { $in: ["published", "ready"] },
+        status: { in: ["published", "ready"] },
       },
     },
     {
@@ -344,7 +345,7 @@ export interface AbilityContext {
 export interface ServerRule {
   action: string;
   subject: string;
-  conditions?: MongoQuery;
+  conditions?: PrismaQuery;
   inverted?: boolean;
   reason?: string;
 }
@@ -355,7 +356,7 @@ export function buildAbility(
 ): AppAbility {
   // If rulesFromServer is provided, use them directly
   if (rulesFromServer) {
-    return createMongoAbility(rulesFromServer);
+    return createPrismaAbility(rulesFromServer as any);
   }
 
   // Check cache first
@@ -373,7 +374,7 @@ export function buildAbility(
   }
 
   // Fallback to role-based rules using AbilityBuilder
-  const { can, cannot, build } = new AbilityBuilder(createMongoAbility);
+  const { can, cannot, build } = new AbilityBuilder<AppAbility>(createPrismaAbility);
 
   // Default deny all if no tenant (except SuperAdmin)
   const isSuper = ctx?.roles?.includes("super_admin");
