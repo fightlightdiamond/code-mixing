@@ -111,7 +111,7 @@ export const entities = {
 
   stories: {
     entity: "stories",
-    baseUrl: "/api/stories",
+    baseUrl: "/api/admin/stories",
     tags: ["stories"] as const,
     listSchema: (data: unknown): data is Story[] =>
       Array.isArray(data) && data.every(item =>
@@ -126,7 +126,7 @@ export const entities = {
 
   vocabularies: {
     entity: "vocabularies",
-    baseUrl: "/api/vocabularies",
+    baseUrl: "/api/admin/vocabularies",
     tags: ["vocabularies"] as const,
     listSchema: (data: unknown): data is Vocabulary[] =>
       Array.isArray(data) && data.every(item =>
@@ -141,7 +141,7 @@ export const entities = {
 
   quizzes: {
     entity: "quizzes",
-    baseUrl: "/api/quizzes",
+    baseUrl: "/api/admin/quizzes",
     tags: ["quizzes"] as const,
     listSchema: (data: unknown): data is Quiz[] =>
       Array.isArray(data) && data.every(item =>
