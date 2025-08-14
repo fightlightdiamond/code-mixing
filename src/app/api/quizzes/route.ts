@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { caslGuard, RequiredRule } from "@/core/auth/casl.guard";
 import { prisma } from "@/core/prisma";
-import { getUserFromRequest } from "@/lib/auth";
+import { getUserFromRequest } from "@/core/auth/getUser";
 
 // GET /api/quizzes - Lấy danh sách quizzes
 export async function GET(request: NextRequest) {

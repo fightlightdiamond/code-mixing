@@ -1,42 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
-import jwt, { JwtPayload } from "jsonwebtoken";
 import type { UserRole } from "@prisma/client";
 
 import { prisma } from "@/core/prisma";
-import { getBearerToken } from "@/lib/auth";
+import { getUserFromRequest } from "@/core/auth/getUser";
 
 export async function GET(request: NextRequest) {
   try {
-    // Get token from Authorization header
-    const token = getBearerToken(request.headers.get("authorization"));
-    if (!token) {
-      return NextResponse.json(
-        { message: "Token không hợp lệ" },
-        { status: 401 }
-      );
-    }
-
-    // Verify token - using Prisma generated types
-    interface CustomJwtPayload extends JwtPayload {
-      userId: string; // UUID from User.id
-      email: string;
-      role: UserRole; // Use Prisma generated enum
-      tenantId?: string; // UUID from User.tenantId
-    }
-    
-    let decoded: CustomJwtPayload;
-    try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET || "fallback-secret") as CustomJwtPayload;
-    } catch (error) {
-      return NextResponse.json(
-        { message: "Token không hợp lệ hoặc đã hết hạn" },
-        { status: 401 }
-      );
+    const userCtx = await getUserFromRequest(request);
+    if (!userCtx) {
+      return NextResponse.json({ message: "Token không hợp lệ" }, { status: 401 });
     }
 
     // Get user from database
     const user = await prisma.user.findUnique({
-      where: { id: decoded.userId },
+      where: { id: userCtx.sub },
       select: {
         id: true,
         name: true,
@@ -70,12 +47,12 @@ export async function GET(request: NextRequest) {
     };
 
     // Define user roles for CASL
-    const roles = [user.role];
+    const roles: UserRole[] = [user.role];
 
     return NextResponse.json({
       user: userData,
-      roles: roles,
-      tenantId: tenantId,
+      roles,
+      tenantId,
     });
   } catch (error) {
     console.error("Auth verification error:", error);

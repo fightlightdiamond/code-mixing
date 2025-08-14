@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/core/prisma";
 import { caslGuardWithPolicies } from "@/core/auth/casl.guard";
-import { getUserFromRequest } from "@/lib/auth";
+import { getUserFromRequest } from "@/core/auth/getUser";
+
+// getUserFromRequest imported from core auth
 
 export async function GET(_request: NextRequest, context: { params: { id: string } }) {
   const user = await getUserFromRequest(_request);
