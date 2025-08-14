@@ -1,0 +1,38 @@
+import { Meta, Story, Canvas, ArgsTable } from '@storybook/blocks';
+import { Alert, AlertTitle, AlertDescription } from './alert';
+import { Info } from 'lucide-react';
+
+<Meta title="UI/Alert" component={Alert} argTypes={{
+  variant: {
+    control: { type: 'select' },
+    options: ['default','destructive'],
+    description: 'Visual style of the alert',
+    table: { defaultValue: { summary: 'default' } }
+  },
+  children: { control: false }
+}}/>
+
+# Alert
+
+Displays important information to the user.
+
+<Canvas>
+  <Story name="Default" args={{ variant: 'default' }}>{(args) => (
+    <Alert {...args}>
+      <Info className="h-4 w-4" />
+      <AlertTitle>Heads up!</AlertTitle>
+      <AlertDescription>
+        You can add components to your app using the CLI.
+      </AlertDescription>
+    </Alert>
+  )}</Story>
+  <Story name="Destructive" args={{ variant: 'destructive' }}>{(args) => (
+    <Alert {...args}>
+      <Info className="h-4 w-4" />
+      <AlertTitle>Error</AlertTitle>
+      <AlertDescription>Something went wrong.</AlertDescription>
+    </Alert>
+  )}</Story>
+</Canvas>
+
+<ArgsTable of={Alert} />

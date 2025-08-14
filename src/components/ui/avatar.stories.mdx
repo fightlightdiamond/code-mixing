@@ -1,0 +1,30 @@
+import { Meta, Story, Canvas, ArgsTable } from '@storybook/blocks';
+import { Avatar, AvatarImage, AvatarFallback } from './avatar';
+
+<Meta title="UI/Avatar" component={Avatar} argTypes={{
+  children: { control: false }
+}}/>
+
+# Avatar
+
+Displays a user profile image or fallback initials.
+
+<Canvas>
+  <Story name="Image">{{
+    render: () => (
+      <Avatar>
+        <AvatarImage src="https://github.com/shadcn.png" alt="User" />
+        <AvatarFallback>JD</AvatarFallback>
+      </Avatar>
+    ),
+  }}</Story>
+  <Story name="Fallback">{{
+    render: () => (
+      <Avatar>
+        <AvatarFallback>JD</AvatarFallback>
+      </Avatar>
+    ),
+  }}</Story>
+</Canvas>
+
+<ArgsTable of={Avatar} />

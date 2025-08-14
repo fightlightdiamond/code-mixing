@@ -1,0 +1,34 @@
+import { Meta, Story, Canvas } from '@storybook/blocks';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator
+} from './dropdown-menu';
+import { Button } from './button';
+
+<Meta title="UI/DropdownMenu" />
+
+# DropdownMenu
+
+Displays a menu triggered by a button.
+
+<Canvas>
+  <Story name="Default">{{
+    render: () => (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button>Open</Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownMenuLabel>My Account</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem>Profile</DropdownMenuItem>
+          <DropdownMenuItem>Settings</DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    ),
+  }}</Story>
+</Canvas>

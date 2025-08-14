@@ -1,0 +1,36 @@
+import { Meta, Story, Canvas, ArgsTable } from '@storybook/blocks';
+import { Button } from './button';
+
+<Meta title="UI/Button" component={Button} argTypes={{
+  variant: {
+    control: { type: 'select' },
+    options: ['default','destructive','outline','secondary','ghost','link'],
+    description: 'Visual style of the button',
+    table: { defaultValue: { summary: 'default' } }
+  },
+  size: {
+    control: { type: 'select' },
+    options: ['default','sm','lg','icon'],
+    description: 'Button size',
+    table: { defaultValue: { summary: 'default' } }
+  },
+  asChild: {
+    control: { type: 'boolean' },
+    description: 'Render the button as a child component'
+  },
+  children: {
+    control: { type: 'text' },
+    description: 'Button label'
+  }
+}}/>
+
+# Button
+
+The primary button component used throughout the application.
+
+<Canvas>
+  <Story name="Default" args={{ children: 'Button' }} />
+  <Story name="Destructive" args={{ variant: 'destructive', children: 'Delete' }} />
+</Canvas>
+
+<ArgsTable of={Button} />
