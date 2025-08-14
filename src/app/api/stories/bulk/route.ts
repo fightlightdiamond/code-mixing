@@ -49,6 +49,23 @@ export async function PUT(request: NextRequest) {
     const updateData: Record<string, unknown> = {};
     if (data.title !== undefined) updateData.title = data.title;
     if (data.content !== undefined) updateData.content = data.content;
+
+    // Validate non-empty strings for text fields
+    if (
+      updateData.title !== undefined &&
+      typeof updateData.title === 'string' &&
+      updateData.title.trim() === ''
+    ) {
+      return NextResponse.json({ error: "title cannot be empty" }, { status: 400 });
+    }
+    if (
+      updateData.content !== undefined &&
+      typeof updateData.content === 'string' &&
+      updateData.content.trim() === ''
+    ) {
+      return NextResponse.json({ error: "content cannot be empty" }, { status: 400 });
+    }
+
     if (data.storyType !== undefined) updateData.storyType = data.storyType;
     if (data.difficulty !== undefined) updateData.difficulty = data.difficulty;
     if (data.estimatedMinutes !== undefined) updateData.estimatedMinutes = data.estimatedMinutes;
@@ -59,7 +76,6 @@ export async function PUT(request: NextRequest) {
     if (Object.keys(updateData).length === 0) {
       return NextResponse.json({ error: "No fields to update" }, { status: 400 });
     }
-
     const result = await prisma.story.updateMany({
       where: { id: { in: ids }, tenantId: user.tenantId ?? undefined },
       data: updateData,
