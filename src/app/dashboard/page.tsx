@@ -3,15 +3,16 @@
 import { RoleBasedLink } from "@/components/auth/RoleBasedLink";
 import { RoleBasedButton } from "@/components/auth/RoleBasedButton";
 import { Require } from "@/core/auth/Require";
+import { FadeIn } from "@/components/ui/fade-in";
 
 export default function DashboardPage() {
   return (
     <Require action="read" subject="Lesson">
-      <div className="container mx-auto py-8">
+      <FadeIn className="container mx-auto py-8">
         <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div className="bg-white rounded-lg shadow p-6">
+          <FadeIn className="bg-white rounded-lg shadow p-6">
             <h2 className="text-xl font-semibold mb-4">Lessons</h2>
             <RoleBasedLink
               href="/lessons"
@@ -21,9 +22,9 @@ export default function DashboardPage() {
             >
               View Lessons
             </RoleBasedLink>
-          </div>
+          </FadeIn>
 
-          <div className="bg-white rounded-lg shadow p-6">
+          <FadeIn className="bg-white rounded-lg shadow p-6" delay={0.1}>
             <h2 className="text-xl font-semibold mb-4">Stories</h2>
             <RoleBasedLink
               href="/stories"
@@ -42,9 +43,9 @@ export default function DashboardPage() {
             >
               Create New Story
             </RoleBasedButton>
-          </div>
+          </FadeIn>
 
-          <div className="bg-white rounded-lg shadow p-6">
+          <FadeIn className="bg-white rounded-lg shadow p-6" delay={0.2}>
             <h2 className="text-xl font-semibold mb-4">Admin</h2>
             <RoleBasedLink
               href="/admin/stories"
@@ -54,9 +55,9 @@ export default function DashboardPage() {
             >
               Admin Stories
             </RoleBasedLink>
-          </div>
+          </FadeIn>
         </div>
-      </div>
+      </FadeIn>
     </Require>
   );
 }

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { ShieldX, ArrowLeft, Home } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { FadeIn } from '@/components/ui/fade-in';
 
 export default function UnauthorizedPage() {
   const { user } = useAuth();
@@ -24,18 +25,19 @@ export default function UnauthorizedPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-orange-100 p-4">
-      <Card className="w-full max-w-md shadow-xl border-0">
-        <CardHeader className="text-center">
-          <div className="mx-auto w-16 h-16 bg-gradient-to-r from-red-500 to-orange-500 rounded-full flex items-center justify-center mb-4">
-            <ShieldX className="w-8 h-8 text-white" />
-          </div>
-          <CardTitle className="text-2xl font-bold text-gray-900">
-            Không có quyền truy cập
-          </CardTitle>
-          <CardDescription className="text-gray-600">
-            Bạn không có quyền truy cập vào trang này
-          </CardDescription>
-        </CardHeader>
+      <FadeIn>
+        <Card className="w-full max-w-md shadow-xl border-0">
+          <CardHeader className="text-center">
+            <div className="mx-auto w-16 h-16 bg-gradient-to-r from-red-500 to-orange-500 rounded-full flex items-center justify-center mb-4">
+              <ShieldX className="w-8 h-8 text-white" />
+            </div>
+            <CardTitle className="text-2xl font-bold text-gray-900">
+              Không có quyền truy cập
+            </CardTitle>
+            <CardDescription className="text-gray-600">
+              Bạn không có quyền truy cập vào trang này
+            </CardDescription>
+          </CardHeader>
 
         <CardContent className="space-y-6">
           <div className="text-center">
@@ -82,7 +84,8 @@ export default function UnauthorizedPage() {
             </p>
           </div>
         </CardContent>
-      </Card>
+        </Card>
+      </FadeIn>
     </div>
   );
 }

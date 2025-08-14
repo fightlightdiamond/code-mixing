@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { FadeIn } from "@/components/ui/fade-in";
 import { BookOpen, Users, Zap, Globe } from "lucide-react";
 import Link from "next/link";
 
@@ -94,46 +95,63 @@ export default function HomePage() {
       {/* Hero Section */}
       <section className="py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto text-center">
-          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
-            Học tiếng Anh IT
-            <span className="block bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-              Phong cách Do Thái
-            </span>
-          </h1>
+          <FadeIn>
+            <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
+              Học tiếng Anh IT
+              <span className="block bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                Phong cách Do Thái
+              </span>
+            </h1>
+          </FadeIn>
 
-          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-            Phương pháp "truyện chêm" độc đáo giúp bạn học tiếng Anh giao tiếp
-            IT một cách tự nhiên và hiệu quả. Tạo phản xạ ngôn ngữ thông qua câu
-            chuyện thực tế.
-          </p>
+          <FadeIn delay={0.1}>
+            <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+              Phương pháp "truyện chêm" độc đáo giúp bạn học tiếng Anh giao tiếp
+              IT một cách tự nhiên và hiệu quả. Tạo phản xạ ngôn ngữ thông qua câu
+              chuyện thực tế.
+            </p>
+          </FadeIn>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             {!user && (
               <>
                 <Link href="/register">
-                  <Button
-                    size="lg"
-                    className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                  <FadeIn
+                    whileHover={{ scale: 1.05 }}
+                    className="inline-block"
                   >
-                    Bắt đầu học ngay
-                  </Button>
+                    <Button
+                      size="lg"
+                      className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                    >
+                      Bắt đầu học ngay
+                    </Button>
+                  </FadeIn>
                 </Link>
                 <Link href="/login">
-                  <Button size="lg" variant="outline">
-                    Đăng nhập
-                  </Button>
+                  <FadeIn
+                    delay={0.1}
+                    whileHover={{ scale: 1.05 }}
+                    className="inline-block"
+                  >
+                    <Button size="lg" variant="outline">
+                      Đăng nhập
+                    </Button>
+                  </FadeIn>
                 </Link>
               </>
             )}
 
             {user && (
               <Link href="/dashboard">
-                <Button
-                  size="lg"
-                  className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-                >
-                  Tiếp tục học tập
-                </Button>
+                <FadeIn whileHover={{ scale: 1.05 }} className="inline-block">
+                  <Button
+                    size="lg"
+                    className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                  >
+                    Tiếp tục học tập
+                  </Button>
+                </FadeIn>
               </Link>
             )}
           </div>
@@ -155,20 +173,23 @@ export default function HomePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {features.map((feature, index) => (
-              <Card
+              <FadeIn
                 key={index}
-                className="text-center hover:shadow-lg transition-shadow"
+                delay={index * 0.1}
+                whileHover={{ y: -4, scale: 1.02 }}
               >
-                <CardHeader>
-                  <div className="mx-auto w-12 h-12 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center mb-4">
-                    <feature.icon className="w-6 h-6 text-white" />
-                  </div>
-                  <CardTitle className="text-lg">{feature.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription>{feature.description}</CardDescription>
-                </CardContent>
-              </Card>
+                <Card className="text-center shadow-sm">
+                  <CardHeader>
+                    <div className="mx-auto w-12 h-12 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center mb-4">
+                      <feature.icon className="w-6 h-6 text-white" />
+                    </div>
+                    <CardTitle className="text-lg">{feature.title}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <CardDescription>{feature.description}</CardDescription>
+                  </CardContent>
+                </Card>
+              </FadeIn>
             ))}
           </div>
         </div>
@@ -177,40 +198,46 @@ export default function HomePage() {
       {/* CTA Section */}
       <section className="py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto text-center">
-          <Card className="bg-gradient-to-r from-blue-600 to-indigo-600 border-0 text-white">
-            <CardHeader>
-              <CardTitle className="text-3xl font-bold mb-4">
-                Sẵn sàng bắt đầu hành trình?
-              </CardTitle>
-              <CardDescription className="text-blue-100 text-lg">
-                Tham gia cùng hàng nghìn IT professionals đang học tiếng Anh
-                hiệu quả
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {!user ? (
-                <Link href="/register">
-                  <Button
-                    size="lg"
-                    variant="secondary"
-                    className="bg-white text-blue-600 hover:bg-gray-100"
-                  >
-                    Đăng ký miễn phí ngay
-                  </Button>
-                </Link>
-              ) : (
-                <Link href="/dashboard">
-                  <Button
-                    size="lg"
-                    variant="secondary"
-                    className="bg-white text-blue-600 hover:bg-gray-100"
-                  >
-                    Vào học ngay
-                  </Button>
-                </Link>
-              )}
-            </CardContent>
-          </Card>
+          <FadeIn>
+            <Card className="bg-gradient-to-r from-blue-600 to-indigo-600 border-0 text-white">
+              <CardHeader>
+                <CardTitle className="text-3xl font-bold mb-4">
+                  Sẵn sàng bắt đầu hành trình?
+                </CardTitle>
+                <CardDescription className="text-blue-100 text-lg">
+                  Tham gia cùng hàng nghìn IT professionals đang học tiếng Anh
+                  hiệu quả
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {!user ? (
+                  <Link href="/register">
+                    <FadeIn whileHover={{ scale: 1.05 }} className="inline-block">
+                      <Button
+                        size="lg"
+                        variant="secondary"
+                        className="bg-white text-blue-600 hover:bg-gray-100"
+                      >
+                        Đăng ký miễn phí ngay
+                      </Button>
+                    </FadeIn>
+                  </Link>
+                ) : (
+                  <Link href="/dashboard">
+                    <FadeIn whileHover={{ scale: 1.05 }} className="inline-block">
+                      <Button
+                        size="lg"
+                        variant="secondary"
+                        className="bg-white text-blue-600 hover:bg-gray-100"
+                      >
+                        Vào học ngay
+                      </Button>
+                    </FadeIn>
+                  </Link>
+                )}
+              </CardContent>
+            </Card>
+          </FadeIn>
         </div>
       </section>
 

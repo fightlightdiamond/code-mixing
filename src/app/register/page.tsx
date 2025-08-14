@@ -1,7 +1,12 @@
 import { RegisterForm } from '@/components/auth/RegisterForm';
+import { FadeIn } from '@/components/ui/fade-in';
 
 export default function RegisterPage() {
-  return <RegisterForm />;
+  return (
+    <FadeIn className="container mx-auto py-8">
+      <RegisterForm />
+    </FadeIn>
+  );
 }
 
 export const metadata = {
