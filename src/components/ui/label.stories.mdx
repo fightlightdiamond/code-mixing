@@ -1,0 +1,23 @@
+import { Meta, Story, Canvas, ArgsTable } from '@storybook/blocks';
+import { Label } from './label';
+
+<Meta title="UI/Label" component={Label} argTypes={{
+  children: {
+    control: { type: 'text' },
+    description: 'Label text'
+  },
+  htmlFor: {
+    control: { type: 'text' },
+    description: 'ID of the associated input'
+  }
+}}/>
+
+# Label
+
+Associates text with a form control.
+
+<Canvas>
+  <Story name="Default" args={{ children: 'Email' }} />
+</Canvas>
+
+<ArgsTable of={Label} />

@@ -1,0 +1,39 @@
+import { Meta, Story, Canvas } from '@storybook/blocks';
+import {
+  NavigationMenu,
+  NavigationMenuList,
+  NavigationMenuItem,
+  NavigationMenuTrigger,
+  NavigationMenuContent,
+  NavigationMenuLink
+} from './navigation-menu';
+
+<Meta title="UI/NavigationMenu" />
+
+# NavigationMenu
+
+Responsive navigation menu with dropdown content.
+
+<Canvas>
+  <Story name="Default">{{
+    render: () => (
+      <NavigationMenu>
+        <NavigationMenuList>
+          <NavigationMenuItem>
+            <NavigationMenuTrigger>Menu</NavigationMenuTrigger>
+            <NavigationMenuContent>
+              <ul className="grid gap-3 p-4 w-[200px]">
+                <li>
+                  <NavigationMenuLink href="#">Item 1</NavigationMenuLink>
+                </li>
+                <li>
+                  <NavigationMenuLink href="#">Item 2</NavigationMenuLink>
+                </li>
+              </ul>
+            </NavigationMenuContent>
+          </NavigationMenuItem>
+        </NavigationMenuList>
+      </NavigationMenu>
+    ),
+  }}</Story>
+</Canvas>

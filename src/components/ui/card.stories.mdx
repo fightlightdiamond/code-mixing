@@ -1,0 +1,25 @@
+import { Meta, Story, Canvas } from '@storybook/blocks';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from './card';
+
+<Meta title="UI/Card" component={Card} />
+
+# Card
+
+A container for grouping related content.
+
+<Canvas>
+  <Story name="Default">{{
+    render: () => (
+      <Card className="w-[350px]">
+        <CardHeader>
+          <CardTitle>Card Title</CardTitle>
+          <CardDescription>Card description goes here.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p>Card content</p>
+        </CardContent>
+        <CardFooter>Card footer</CardFooter>
+      </Card>
+    ),
+  }}</Story>
+</Canvas>

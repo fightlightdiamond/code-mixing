@@ -1,0 +1,29 @@
+import { Meta, Story, Canvas, ArgsTable } from '@storybook/blocks';
+import { Input } from './input';
+
+<Meta title="UI/Input" component={Input} argTypes={{
+  type: {
+    control: { type: 'text' },
+    description: 'HTML input type',
+    table: { defaultValue: { summary: 'text' } }
+  },
+  placeholder: {
+    control: { type: 'text' },
+    description: 'Placeholder text'
+  },
+  disabled: {
+    control: { type: 'boolean' },
+    description: 'Disable the input'
+  }
+}}/>
+
+# Input
+
+Standard text input element.
+
+<Canvas>
+  <Story name="Default" args={{ placeholder: 'Enter text...' }} />
+  <Story name="Password" args={{ type: 'password', placeholder: 'Password' }} />
+</Canvas>
+
+<ArgsTable of={Input} />
