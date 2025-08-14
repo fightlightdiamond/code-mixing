@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { caslGuardWithPolicies } from "@/core/auth/casl.guard";
 import { prisma } from "@/core/prisma";
-import { isValidStoryType, VALID_STORY_TYPES, STORY_DEFAULTS, StoryType } from "@/config";
+import { isValidStoryType, VALID_STORY_TYPES, STORY_DEFAULTS } from "@/config";
+import { generateStoryChunks, calculateStoryStats } from "@/lib/story-chunker";
 import { getUserFromRequest } from "@/core/auth/getUser";
 
 // GET /api/stories - Lấy danh sách stories với search và filter
@@ -97,7 +98,15 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { title, content, lessonId, storyType, difficulty, estimatedMinutes, chemRatio } = body;
+    const {
+      title,
+      content,
+      lessonId,
+      storyType,
+      difficulty,
+      estimatedMinutes,
+      chemRatio,
+    } = body;
 
     // Validate required fields
     if (!title || !content) {
@@ -133,19 +142,31 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Create story
+    // Generate chunks from content and calculate stats
+    const chunksData = generateStoryChunks(content);
+    const { wordCount, chemRatio: calculatedRatio } = calculateStoryStats(chunksData);
+
+    // Create story with generated chunks
     const story = await prisma.story.create({
       data: {
         title,
         content,
-        storyType: storyType || "original",
-        difficulty: difficulty || "beginner",
-        estimatedMinutes: estimatedMinutes || 10,
-        chemRatio: chemRatio || 0.3,
+        storyType: storyType || STORY_DEFAULTS.storyType,
+        difficulty: difficulty || STORY_DEFAULTS.difficulty,
+        estimatedMinutes: estimatedMinutes || STORY_DEFAULTS.estimatedMinutes,
+        chemRatio: chemRatio ?? calculatedRatio,
+        wordCount,
         lessonId: lessonId || null,
         tenantId: user.tenantId!,
         createdBy: user.sub,
-        status: "draft",
+        status: STORY_DEFAULTS.status,
+        chunks: {
+          create: chunksData.map((chunk, index) => ({
+            chunkOrder: index + 1,
+            chunkText: chunk.chunkText,
+            type: chunk.type,
+          })),
+        },
       },
       include: {
         lesson: {
