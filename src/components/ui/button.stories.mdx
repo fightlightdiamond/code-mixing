@@ -15,8 +15,9 @@ import { Button } from './button';
     table: { defaultValue: { summary: 'default' } }
   },
   asChild: {
-    control: { type: 'boolean' },
-    description: 'Render the button as a child component'
+    control: false,
+    table: { disable: true },
+    description: 'Render the button as a child component. Disabled in docs to avoid Slot-only usage requiring element children.'
   },
   children: {
     control: { type: 'text' },
