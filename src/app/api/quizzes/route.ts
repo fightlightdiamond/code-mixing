@@ -1,40 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { caslGuard, RequiredRule } from "@/core/auth/casl.guard";
-import jwt from "jsonwebtoken";
-
 import { prisma } from "@/core/prisma";
-
-// Helper function to get user from request
-async function getUserFromRequest(request: NextRequest) {
-  try {
-    // Get token from Authorization header
-    const authHeader = request.headers.get("authorization");
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return null;
-    }
-
-    const token = authHeader.substring(7); // Remove 'Bearer ' prefix
-
-    // Verify token
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET || "fallback-secret"
-    ) as {
-      userId: string;
-      email: string;
-      role: string;
-      tenantId?: string;
-    };
-
-    return {
-      sub: decoded.userId,
-      tenantId: decoded.tenantId,
-      roles: [decoded.role],
-    };
-  } catch (error) {
-    return null;
-  }
-}
+import { getUserFromRequest } from "@/lib/auth";
 
 // GET /api/quizzes - Lấy danh sách quizzes
 export async function GET(request: NextRequest) {

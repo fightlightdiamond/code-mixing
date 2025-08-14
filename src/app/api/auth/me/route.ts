@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import { prisma } from "@/core/prisma";
 import { log } from "@/lib/logger";
 import type { JWTPayload, ApiResponse, User } from "@/types/api";
+import { getBearerToken } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {
   const requestStartTime = Date.now();
@@ -10,16 +11,14 @@ export async function GET(request: NextRequest) {
   
   try {
     // Get token from Authorization header
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    const token = getBearerToken(request.headers.get('authorization'));
+    if (!token) {
       log.warn('Missing or invalid authorization header', { endpoint: '/api/auth/me' });
       return NextResponse.json(
         { message: 'Token không hợp lệ', success: false },
         { status: 401 }
       );
     }
-
-    const token = authHeader.substring(7); // Remove 'Bearer ' prefix
 
     // Verify token with proper typing
     let decoded: JWTPayload;

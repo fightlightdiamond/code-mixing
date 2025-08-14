@@ -1,39 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/core/prisma";
-import jwt from "jsonwebtoken";
 import { caslGuardWithPolicies } from "@/core/auth/casl.guard";
 import { buildAbility } from "@/core/auth/ability";
 import { accessibleBy } from "@casl/prisma";
 import { log } from "@/lib/logger";
-import type { JWTPayload, ApiResponse, User, DatabaseWhereClause, RequiredRule } from "@/types/api";
+import type { ApiResponse, User, DatabaseWhereClause, RequiredRule } from "@/types/api";
 import bcrypt from "bcryptjs";
-
-// Helper function to get user from request
-async function getUserFromRequest(request: NextRequest) {
-  try {
-    // Get token from Authorization header
-    const authHeader = request.headers.get("authorization");
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return null;
-    }
-
-    const token = authHeader.substring(7); // Remove 'Bearer ' prefix
-
-    // Verify token
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET || "fallback-secret"
-    ) as JWTPayload;
-
-    return {
-      sub: decoded.userId,
-      tenantId: decoded.tenantId,
-      roles: [decoded.role],
-    };
-  } catch {
-    return null;
-  }
-}
+import { getUserFromRequest } from "@/lib/auth";
 
 // GET /api/users - Lấy danh sách users với search
 export async function GET(request: NextRequest) {
