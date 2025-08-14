@@ -18,7 +18,12 @@ export async function getUserFromRequest(request: NextRequest) {
   }
 
   try {
-    const decoded = jwt.verify(token, secret) as JWTPayload;
+    const decoded = jwt.verify(token, secret, {
+      algorithms: ["HS256"], // keep in sync with your token issuer
+      // issuer: "your-issuer",    // uncomment if you control/know the issuer
+      // audience: "your-audience" // uncomment if you set audience
+      ignoreExpiration: false,
+    }) as JWTPayload;
     return { sub: decoded.userId, tenantId: decoded.tenantId, roles: [decoded.role] };
   } catch {
     return null;
