@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/core/prisma";
 import jwt from "jsonwebtoken";
 import { caslGuardWithPolicies } from "@/core/auth/casl.guard";
+import { buildAbility } from "@/core/auth/ability";
+import { accessibleBy } from "@casl/prisma";
 import { log } from "@/lib/logger";
 import type { JWTPayload, ApiResponse, User, DatabaseWhereClause, RequiredRule } from "@/types/api";
 import bcrypt from "bcryptjs";
@@ -84,12 +86,19 @@ export async function GET(request: NextRequest) {
         }
       : {};
 
-    // Get users
+    // Build ability for Prisma filtering
+    const ability = buildAbility(undefined, {
+      userId: user.sub,
+      tenantId: user.tenantId,
+      roles: user.roles,
+    });
+
+    // Get users with ability constraints
     log.db('Starting users database query', undefined, { where });
     const dbStartTime = Date.now();
-    
+
     const users = await prisma.user.findMany({
-      where,
+      where: { ...where, ...accessibleBy(ability).User },
       select: {
         id: true,
         name: true,

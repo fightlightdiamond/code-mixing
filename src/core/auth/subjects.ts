@@ -34,7 +34,8 @@ export type Subjects =
   | "all";
 
 // Use CASL's built-in types instead of custom ones
-import type { MongoQuery, RawRuleFrom } from '@casl/ability';
+import type { RawRuleFrom } from '@casl/ability';
+import type { PrismaQuery } from '@casl/prisma';
 
 // Use CASL's RawRuleFrom type which is more accurate than custom Rule
-export type Rule = RawRuleFrom<[Actions, Subjects], MongoQuery>;
+export type Rule = RawRuleFrom<[Actions, Subjects], PrismaQuery>;
