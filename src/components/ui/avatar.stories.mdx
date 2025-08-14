@@ -10,21 +10,21 @@ import { Avatar, AvatarImage, AvatarFallback } from './avatar';
 Displays a user profile image or fallback initials.
 
 <Canvas>
-  <Story name="Image">{{
-    render: () => (
+  <Story name="Image">
+    {() => (
       <Avatar>
         <AvatarImage src="https://github.com/shadcn.png" alt="User" />
         <AvatarFallback>JD</AvatarFallback>
       </Avatar>
-    ),
-  }}</Story>
-  <Story name="Fallback">{{
-    render: () => (
+    )}
+  </Story>
+  <Story name="Fallback">
+    {() => (
       <Avatar>
         <AvatarFallback>JD</AvatarFallback>
       </Avatar>
-    ),
-  }}</Story>
+    )}
+  </Story>
 </Canvas>
 
 <ArgsTable of={Avatar} />
