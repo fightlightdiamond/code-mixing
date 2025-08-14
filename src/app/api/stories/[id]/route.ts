@@ -1,77 +1,57 @@
 import { NextRequest, NextResponse } from "next/server";
 import { caslGuardWithPolicies } from "@/core/auth/casl.guard";
+import type { Prisma, StoryType } from "@prisma/client";
+
 import { prisma } from "@/core/prisma";
-import {
-  Prisma,
-  StoryType,
-  DifficultyLevel,
-  ContentStatus,
-} from "@prisma/client";
-import { VALID_STORY_TYPES, isValidStoryType } from "@/config";
-import { getUserFromRequest } from "@/lib/auth";
+import { getUserFromRequest } from "@/core/auth/getUser";
 
-function mapStory(story: any) {
-  return {
-    ...story,
-    tags: story.tags?.map((st: any) => ({ id: st.tag.id, name: st.tag.name })) ?? [],
-  };
-}
-
-// GET /api/stories/[id]
+// GET /api/stories/[id] - Lấy thông tin chi tiết story
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    // Get user from request
     const user = await getUserFromRequest(request);
+
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Define the rules required to access this endpoint
     const rules = [{ action: "read", subject: "Story" }];
+
+    // Check if user has required permissions (RBAC + ABAC)
     const { allowed, error } = await caslGuardWithPolicies(rules, user);
+
     if (!allowed) {
-      return NextResponse.json({ error: error || "Forbidden" }, { status: 403 });
+      return NextResponse.json(
+        { error: error || "Forbidden" },
+        { status: 403 }
+      );
     }
 
+    const storyId = params.id;
+
+    // Get story
     const story = await prisma.story.findUnique({
-      where: { id: params.id, tenantId: user.tenantId ?? undefined },
+      where: { id: storyId },
       include: {
-        lesson: { select: { id: true, title: true } },
-        tags: { include: { tag: { select: { id: true, name: true } } } },
+        lesson: {
+          select: {
+            id: true,
+            title: true,
+          },
+        },
         chunks: {
-          select: { id: true, chunkOrder: true, chunkText: true, type: true },
-          orderBy: { chunkOrder: "asc" },
-        },
-        versions: {
           select: {
             id: true,
-            version: true,
-            content: true,
-            isApproved: true,
-            isPublished: true,
-            chemingRatio: true,
-            createdAt: true,
-            creator: { select: { id: true, name: true } },
+            chunkOrder: true,
+            chunkText: true,
+            type: true,
           },
-          orderBy: { version: "desc" },
-        },
-        audios: {
-          select: {
-            id: true,
-            storageKey: true,
-            voiceType: true,
-            status: true,
-            durationSec: true,
-            createdAt: true,
-          },
-        },
-        _count: {
-          select: {
-            versions: true,
-            chunks: true,
-            audios: true,
-            learningSessions: true,
+          orderBy: {
+            chunkOrder: "asc",
           },
         },
       },
@@ -81,9 +61,9 @@ export async function GET(
       return NextResponse.json({ error: "Story not found" }, { status: 404 });
     }
 
-    return NextResponse.json(mapStory(story));
-  } catch (err) {
-    console.error("Error fetching story:", err);
+    return NextResponse.json(story);
+  } catch (error) {
+    console.error("Error fetching story:", error);
     return NextResponse.json(
       { error: "Failed to fetch story" },
       { status: 500 }
@@ -91,157 +71,118 @@ export async function GET(
   }
 }
 
-// PUT /api/stories/[id] - Update story
+// PUT /api/stories/[id] - Cập nhật story
 export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    // Get user from request
     const user = await getUserFromRequest(request);
+
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Define the rules required to update a story
     const rules = [{ action: "update", subject: "Story" }];
+
+    // Check if user has required permissions (RBAC + ABAC)
     const { allowed, error } = await caslGuardWithPolicies(rules, user);
+
     if (!allowed) {
-      return NextResponse.json({ error: error || "Forbidden" }, { status: 403 });
+      return NextResponse.json(
+        { error: error || "Forbidden" },
+        { status: 403 }
+      );
     }
 
+    const storyId = params.id;
     const body = await request.json();
-    const {
-      title,
-      content,
-      storyType,
-      chemRatio,
-      lessonId,
-      difficulty,
-      estimatedMinutes,
-      status,
-      tagIds,
-    } = body ?? {};
+    const { title, content, storyType, chemRatio, lessonId } = body;
 
+    // Check if story exists
     const existingStory = await prisma.story.findUnique({
-      where: { id: params.id, tenantId: user.tenantId ?? undefined },
+      where: { id: storyId },
     });
+
     if (!existingStory) {
       return NextResponse.json({ error: "Story not found" }, { status: 404 });
     }
 
-    if (storyType && !isValidStoryType(storyType)) {
+    // Validate storyType if provided
+    const validStoryTypes = [
+      "original",
+      "chemdanhtu",
+      "chemdongtu",
+      "chemtinhtu",
+      "custom",
+    ];
+    if (storyType && !validStoryTypes.includes(storyType)) {
       return NextResponse.json(
         {
-          error: `Invalid storyType. Must be one of: ${VALID_STORY_TYPES.join(", ")}`,
+          error: `Invalid storyType. Must be one of: ${validStoryTypes.join(
+            ", "
+          )}`,
         },
         { status: 400 }
       );
     }
-    if (difficulty && !Object.values(DifficultyLevel).includes(difficulty)) {
-      return NextResponse.json(
-        { error: `Invalid difficulty: ${difficulty}` },
-        { status: 400 }
-      );
-    }
-    if (status && !Object.values(ContentStatus).includes(status)) {
-      return NextResponse.json(
-        { error: `Invalid status: ${status}` },
-        { status: 400 }
-      );
-    }
+
+    // Check if lesson exists if lessonId is provided
     if (lessonId) {
       const lesson = await prisma.lesson.findUnique({
         where: { id: lessonId },
-        select: { tenantId: true },
       });
+
       if (!lesson) {
-        return NextResponse.json({ error: "Lesson not found" }, { status: 404 });
-      }
-      if (lesson.tenantId !== user.tenantId) {
-        return NextResponse.json({ error: "Tenant mismatch" }, { status: 403 });
+        return NextResponse.json(
+          { error: "Lesson not found" },
+          { status: 404 }
+        );
       }
     }
 
+    // Build update data - using Prisma generated types
     const updateData: Prisma.StoryUpdateInput = {};
+    
+    // Type-safe assignments with Prisma enums
     if (title !== undefined) updateData.title = title;
     if (content !== undefined) updateData.content = content;
     if (storyType !== undefined) updateData.storyType = storyType as StoryType;
     if (chemRatio !== undefined) updateData.chemRatio = chemRatio;
-    if (lessonId !== undefined) updateData.lesson = { connect: { id: lessonId } };
-    if (difficulty !== undefined) updateData.difficulty = difficulty as DifficultyLevel;
-    if (estimatedMinutes !== undefined) updateData.estimatedMinutes = estimatedMinutes;
-    if (status !== undefined) updateData.status = status as ContentStatus;
-    if (Array.isArray(tagIds)) {
-      // Validate all tagIds exist and belong to tenant
-      const existingTags = await prisma.tag.findMany({
-        where: { 
-          id: { in: tagIds },
-          tenantId: user.tenantId ?? undefined 
-        },
-        select: { id: true },
-      });
-      
-      if (existingTags.length !== tagIds.length) {
-        const existingIds = existingTags.map(t => t.id);
-        const invalidIds = tagIds.filter((id: string) => !existingIds.includes(id));
-        return NextResponse.json(
-          { error: `Invalid tag IDs: ${invalidIds.join(", ")}` },
-          { status: 400 }
-        );
-      }
-
-      updateData.tags = {
-        deleteMany: {},
-        create: tagIds.map((id: string) => ({ tag: { connect: { id } } })),
-      };
+    if (lessonId !== undefined) {
+      updateData.lesson = { connect: { id: lessonId } }; // Proper Prisma relation update
     }
 
+    // Update story
     const story = await prisma.story.update({
-      where: { id: params.id },
+      where: { id: storyId },
       data: updateData,
       include: {
-        lesson: { select: { id: true, title: true } },
-        tags: { include: { tag: { select: { id: true, name: true } } } },
+        lesson: {
+          select: {
+            id: true,
+            title: true,
+          },
+        },
         chunks: {
-          select: { id: true, chunkOrder: true, chunkText: true, type: true },
-          orderBy: { chunkOrder: "asc" },
-        },
-        versions: {
           select: {
             id: true,
-            version: true,
-            content: true,
-            isApproved: true,
-            isPublished: true,
-            chemingRatio: true,
-            createdAt: true,
-            creator: { select: { id: true, name: true } },
+            chunkOrder: true,
+            chunkText: true,
+            type: true,
           },
-          orderBy: { version: "desc" },
-        },
-        audios: {
-          select: {
-            id: true,
-            storageKey: true,
-            voiceType: true,
-            status: true,
-            durationSec: true,
-            createdAt: true,
-          },
-        },
-        _count: {
-          select: {
-            versions: true,
-            chunks: true,
-            audios: true,
-            learningSessions: true,
+          orderBy: {
+            chunkOrder: "asc",
           },
         },
       },
     });
 
-    return NextResponse.json(mapStory(story));
-  } catch (err) {
-    console.error("Error updating story:", err);
+    return NextResponse.json(story);
+  } catch (error) {
+    console.error("Error updating story:", error);
     return NextResponse.json(
       { error: "Failed to update story" },
       { status: 500 }
@@ -249,39 +190,54 @@ export async function PUT(
   }
 }
 
-// DELETE /api/stories/[id]
+// DELETE /api/stories/[id] - Xóa story
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    // Get user from request
     const user = await getUserFromRequest(request);
+
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Define the rules required to delete a story
     const rules = [{ action: "delete", subject: "Story" }];
+
+    // Check if user has required permissions (RBAC + ABAC)
     const { allowed, error } = await caslGuardWithPolicies(rules, user);
+
     if (!allowed) {
-      return NextResponse.json({ error: error || "Forbidden" }, { status: 403 });
+      return NextResponse.json(
+        { error: error || "Forbidden" },
+        { status: 403 }
+      );
     }
 
-    const existing = await prisma.story.findUnique({
-      where: { id: params.id, tenantId: user.tenantId ?? undefined },
-      select: { id: true },
+    const storyId = params.id;
+
+    // Check if story exists
+    const existingStory = await prisma.story.findUnique({
+      where: { id: storyId },
     });
-    if (!existing) {
+
+    if (!existingStory) {
       return NextResponse.json({ error: "Story not found" }, { status: 404 });
     }
 
-    await prisma.story.delete({ where: { id: params.id } });
+    // Delete story
+    await prisma.story.delete({
+      where: { id: storyId },
+    });
+
     return NextResponse.json({ message: "Story deleted successfully" });
-  } catch (err) {
-    console.error("Error deleting story:", err);
+  } catch (error) {
+    console.error("Error deleting story:", error);
     return NextResponse.json(
       { error: "Failed to delete story" },
       { status: 500 }
     );
   }
 }
-

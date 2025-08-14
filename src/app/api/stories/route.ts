@@ -1,153 +1,71 @@
 import { NextRequest, NextResponse } from "next/server";
 import { caslGuardWithPolicies } from "@/core/auth/casl.guard";
 import { prisma } from "@/core/prisma";
-import { getUserFromRequest } from "@/lib/auth";
-import {
-  Prisma,
-  StoryType,
-  DifficultyLevel,
-  ContentStatus,
-} from "@prisma/client";
-import { isValidStoryType, VALID_STORY_TYPES } from "@/config";
+import { isValidStoryType, VALID_STORY_TYPES, STORY_DEFAULTS, StoryType } from "@/config";
+import { getUserFromRequest } from "@/core/auth/getUser";
 
-// Map StoryTag[] to Tag[] for API response
-function mapStory(story: any) {
-  return {
-    ...story,
-    tags: story.tags?.map((st: any) => ({ id: st.tag.id, name: st.tag.name })) ?? [],
-  };
-}
-
-// GET /api/stories - List stories with filters
+// GET /api/stories - Lấy danh sách stories với search và filter
 export async function GET(request: NextRequest) {
   try {
+    // Get user from request
     const user = await getUserFromRequest(request);
+
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Define the rules required to access this endpoint
     const rules = [{ action: "read", subject: "Story" }];
+
+    // Check if user has required permissions (RBAC + ABAC)
     const { allowed, error } = await caslGuardWithPolicies(rules, user);
+
     if (!allowed) {
-      return NextResponse.json({ error: error || "Forbidden" }, { status: 403 });
+      return NextResponse.json(
+        { error: error || "Forbidden" },
+        { status: 403 }
+      );
     }
 
     const { searchParams } = new URL(request.url);
-    const search = (searchParams.get("search") || "").trim();
-    const lessonId = searchParams.get("lessonId") || undefined;
-    const storyType = searchParams.get("storyType") as StoryType | undefined;
-    const difficulty = searchParams.get("difficulty") as DifficultyLevel | undefined;
-    const status = searchParams.get("status") as ContentStatus | undefined;
-    const createdBy = searchParams.get("createdBy") || undefined;
-    const tagIds = searchParams.getAll("tagIds");
+    const search = searchParams.get("search") || "";
+    const lessonId = searchParams.get("lessonId");
 
-    let where: Prisma.StoryWhereInput = {
-      ...(user.tenantId ? { tenantId: user.tenantId } : {}),
-    };
+    // Build where clause for search
+    const where: any = {};
 
     if (search) {
-      where = {
-        ...where,
-        OR: [
-          { title: { contains: search, mode: "insensitive" } },
-          { content: { contains: search, mode: "insensitive" } },
-        ],
-      };
-    }
-    if (lessonId) where = { ...where, lessonId };
-    if (storyType && Object.values(StoryType).includes(storyType)) {
-      where = { ...where, storyType };
-    }
-    if (difficulty && Object.values(DifficultyLevel).includes(difficulty)) {
-      where = { ...where, difficulty };
-    }
-    if (status && Object.values(ContentStatus).includes(status)) {
-      where = { ...where, status };
-    }
-    if (createdBy) where = { ...where, createdBy };
-    if (tagIds.length) {
-      where = {
-        ...where,
-        tags: {
-          some: {
-            tagId: { in: tagIds },
-          },
-        },
-      };
+      where.OR = [
+        { title: { contains: search, mode: "insensitive" } },
+        { content: { contains: search, mode: "insensitive" } },
+      ];
     }
 
+    if (lessonId) {
+      const lessonIdNum = parseInt(lessonId);
+      if (!isNaN(lessonIdNum)) {
+        where.lessonId = lessonIdNum;
+      }
+    }
+
+    // Get stories
     const stories = await prisma.story.findMany({
       where,
       include: {
-        lesson: { select: { id: true, title: true } },
-        tags: { include: { tag: { select: { id: true, name: true } } } },
-        chunks: {
-          select: { id: true, chunkOrder: true, chunkText: true, type: true },
-          orderBy: { chunkOrder: "asc" },
-        },
-        versions: {
+        lesson: {
           select: {
             id: true,
-            version: true,
-            content: true,
-            isApproved: true,
-            isPublished: true,
-            chemingRatio: true,
-            createdAt: true,
-            creator: { select: { id: true, name: true } },
-          },
-          orderBy: { version: "desc" },
-        },
-        audios: {
-          select: {
-            id: true,
-            storageKey: true,
-            voiceType: true,
-            status: true,
-            durationSec: true,
-            createdAt: true,
-          },
-        },
-        _count: {
-          select: {
-            versions: true,
-            chunks: true,
-            audios: true,
-            learningSessions: true,
+            title: true,
           },
         },
       },
       orderBy: { createdAt: "desc" },
-// extract pagination parameters from the request URL
-const page = parseInt(searchParams.get("page") || "1");
-const limit = Math.min(parseInt(searchParams.get("limit") || "50"), 100);
-const skip = (page - 1) * limit;
+      take: 100, // Limit to 100 stories for now
+    });
 
-const stories = await prisma.story.findMany({
-  where,
-  include: {
-    // ... existing includes
-  },
-  orderBy: { createdAt: "desc" },
-  take: limit,
-  skip,
-});
-
-const total = await prisma.story.count({ where });
-
-return NextResponse.json({
-  data: stories.map(mapStory),
-  meta: {
-    total,
-    page,
-    limit,
-    totalPages: Math.ceil(total / limit),
-  },
-});
-
-    return NextResponse.json(stories.map(mapStory));
-  } catch (err) {
-    console.error("Error fetching stories:", err);
+    return NextResponse.json(stories);
+  } catch (error) {
+    console.error("Error fetching stories:", error);
     return NextResponse.json(
       { error: "Failed to fetch stories" },
       { status: 500 }
@@ -155,33 +73,33 @@ return NextResponse.json({
   }
 }
 
-// POST /api/stories - Create new story
+// POST /api/stories - Tạo story mới
 export async function POST(request: NextRequest) {
   try {
+    // Get user from request
     const user = await getUserFromRequest(request);
+
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Define the rules required to create a story
     const rules = [{ action: "create", subject: "Story" }];
+
+    // Check if user has required permissions (RBAC + ABAC)
     const { allowed, error } = await caslGuardWithPolicies(rules, user);
+
     if (!allowed) {
-      return NextResponse.json({ error: error || "Forbidden" }, { status: 403 });
+      return NextResponse.json(
+        { error: error || "Forbidden" },
+        { status: 403 }
+      );
     }
 
     const body = await request.json();
-    const {
-      title,
-      content,
-      lessonId,
-      storyType,
-      difficulty,
-      estimatedMinutes,
-      chemRatio,
-      tagIds = [],
-      status,
-    } = body ?? {};
+    const { title, content, lessonId, storyType, difficulty, estimatedMinutes, chemRatio } = body;
 
+    // Validate required fields
     if (!title || !content) {
       return NextResponse.json(
         { error: "Title and content are required" },
@@ -189,108 +107,73 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate storyType if provided
     if (storyType && !isValidStoryType(storyType)) {
       return NextResponse.json(
         {
-          error: `Invalid storyType. Must be one of: ${VALID_STORY_TYPES.join(", ")}`,
+          error: `Invalid storyType. Must be one of: ${VALID_STORY_TYPES.join(
+            ", "
+          )}`,
         },
         { status: 400 }
       );
     }
 
-    if (difficulty && !Object.values(DifficultyLevel).includes(difficulty)) {
-      return NextResponse.json(
-        { error: `Invalid difficulty: ${difficulty}` },
-        { status: 400 }
-      );
-    }
-
-    if (status && !Object.values(ContentStatus).includes(status)) {
-      return NextResponse.json(
-        { error: `Invalid status: ${status}` },
-        { status: 400 }
-      );
-    }
-
+    // Check if lesson exists if lessonId is provided
     if (lessonId) {
       const lesson = await prisma.lesson.findUnique({
         where: { id: lessonId },
-        select: { tenantId: true },
       });
+
       if (!lesson) {
-        return NextResponse.json({ error: "Lesson not found" }, { status: 404 });
-      }
-      if (lesson.tenantId !== user.tenantId) {
-        return NextResponse.json({ error: "Tenant mismatch" }, { status: 403 });
+        return NextResponse.json(
+          { error: "Lesson not found" },
+          { status: 404 }
+        );
       }
     }
 
+    // Create story
     const story = await prisma.story.create({
       data: {
         title,
         content,
-        storyType: (storyType as StoryType) || StoryType.original,
-        difficulty: (difficulty as DifficultyLevel) || DifficultyLevel.beginner,
-        estimatedMinutes,
-        chemRatio,
+        storyType: storyType || "original",
+        difficulty: difficulty || "beginner",
+        estimatedMinutes: estimatedMinutes || 10,
+        chemRatio: chemRatio || 0.3,
         lessonId: lessonId || null,
         tenantId: user.tenantId!,
         createdBy: user.sub,
-        status: (status as ContentStatus) || ContentStatus.draft,
-        tags: tagIds.length
-          ? {
-              create: tagIds.map((id: string) => ({ tag: { connect: { id } } })),
-            }
-          : undefined,
+        status: "draft",
       },
       include: {
-        lesson: { select: { id: true, title: true } },
-        tags: { include: { tag: { select: { id: true, name: true } } } },
+        lesson: {
+          select: {
+            id: true,
+            title: true,
+          },
+        },
         chunks: {
-          select: { id: true, chunkOrder: true, chunkText: true, type: true },
-          orderBy: { chunkOrder: "asc" },
-        },
-        versions: {
           select: {
             id: true,
-            version: true,
-            content: true,
-            isApproved: true,
-            isPublished: true,
-            chemingRatio: true,
-            createdAt: true,
-            creator: { select: { id: true, name: true } },
+            chunkOrder: true,
+            chunkText: true,
+            type: true,
           },
-          orderBy: { version: "desc" },
-        },
-        audios: {
-          select: {
-            id: true,
-            storageKey: true,
-            voiceType: true,
-            status: true,
-            durationSec: true,
-            createdAt: true,
-          },
-        },
-        _count: {
-          select: {
-            versions: true,
-            chunks: true,
-            audios: true,
-            learningSessions: true,
+          orderBy: {
+            chunkOrder: "asc",
           },
         },
       },
     });
 
-    return NextResponse.json(mapStory(story), { status: 201 });
-  } catch (err) {
-    console.error("Error creating story:", err);
+    return NextResponse.json(story, { status: 201 });
+  } catch (error) {
+    console.error("Error creating story:", error);
     return NextResponse.json(
       { error: "Failed to create story" },
       { status: 500 }
     );
   }
 }
-

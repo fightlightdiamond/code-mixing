@@ -4,9 +4,9 @@ import { caslGuardWithPolicies } from "@/core/auth/casl.guard";
 import { buildAbility } from "@/core/auth/ability";
 import { accessibleBy } from "@casl/prisma";
 import { log } from "@/lib/logger";
+import { getUserFromRequest } from "@/core/auth/getUser";
 import type { ApiResponse, User, DatabaseWhereClause, RequiredRule } from "@/types/api";
 import bcrypt from "bcryptjs";
-import { getUserFromRequest } from "@/lib/auth";
 
 // GET /api/users - Lấy danh sách users với search
 export async function GET(request: NextRequest) {
