@@ -1,0 +1,35 @@
+import { Meta, Story, Canvas, ArgsTable } from '@storybook/blocks';
+import AbilityProvider from './AbilityProvider';
+
+<Meta title="Core/Auth/AbilityProvider" component={AbilityProvider} argTypes={{
+  rules: {
+    control: 'object',
+    description: 'CASL rules supplied from the server',
+    table: { type: { summary: 'ServerRule[] | null' } }
+  },
+  user: {
+    control: 'object',
+    description: 'Current user context used to build ability',
+    table: { type: { summary: '{ id: string; roles: string[]; tenantId?: string } | null' } }
+  },
+  children: {
+    control: 'text',
+    description: 'Elements wrapped by the provider'
+  }
+}} />
+
+# AbilityProvider
+
+Context provider that builds a CASL ability from user and rule information.
+
+<Canvas>
+  <Story name="Default" args={{ user: { id: '1', roles: ['admin'] }, rules: [] }}>
+    {(args) => (
+      <AbilityProvider {...args}>
+        <div className="text-sm">Child content rendered within AbilityProvider.</div>
+      </AbilityProvider>
+    )}
+  </Story>
+</Canvas>
+
+<ArgsTable of={AbilityProvider} />

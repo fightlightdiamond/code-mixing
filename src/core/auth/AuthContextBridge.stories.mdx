@@ -1,0 +1,21 @@
+import { Meta, Story, Canvas, ArgsTable } from '@storybook/blocks';
+import AuthContextBridge from './AuthContextBridge';
+
+<Meta title="Core/Auth/AuthContextBridge" component={AuthContextBridge} argTypes={{
+  children: {
+    control: 'text',
+    description: 'Content rendered when auth state is bridged'
+  }
+}} />
+
+# AuthContextBridge
+
+Connects AuthContext to AbilityProvider. Requires the application AuthContext; preview shows placeholder.
+
+<Canvas>
+  <Story name="Preview">
+    {() => <div className="text-sm text-muted-foreground">Requires AuthContext and Next.js environment.</div>}
+  </Story>
+</Canvas>
+
+<ArgsTable of={AuthContextBridge} />

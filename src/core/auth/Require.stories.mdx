@@ -1,0 +1,29 @@
+import { Meta, Story, Canvas, ArgsTable } from '@storybook/blocks';
+import { Require } from './Require';
+
+<Meta title="Core/Auth/Require" component={Require} argTypes={{
+  action: {
+    control: 'text',
+    description: 'Action to check permissions for'
+  },
+  subject: {
+    control: 'text',
+    description: 'Subject or resource being accessed'
+  },
+  children: {
+    control: 'text',
+    description: 'Content rendered when access is granted'
+  }
+}} />
+
+# Require
+
+Component that enforces authorization checks before rendering children.
+
+<Canvas>
+  <Story name="Preview">
+    {() => <div className="text-sm text-muted-foreground">Requires AuthContext, AbilityProvider and Next.js router.</div>}
+  </Story>
+</Canvas>
+
+<ArgsTable of={Require} />
