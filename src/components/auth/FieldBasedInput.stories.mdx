@@ -1,0 +1,22 @@
+import { Meta, Story, Canvas, ArgsTable } from '@storybook/blocks';
+import { FieldBasedInput } from './FieldBasedInput';
+
+<Meta title="Auth/FieldBasedInput" component={FieldBasedInput} argTypes={{
+  action:{ control:{ type:'text' }, description:'Ability action to check' },
+  subject:{ control:{ type:'text' }, description:'Ability subject for the model' },
+  field:{ control:{ type:'text' }, description:'Name of the protected field' },
+  type:{ control:{ type:'text' }, description:'Input type', table:{ defaultValue:{ summary:'text' } } },
+  placeholder:{ control:{ type:'text' }, description:'Placeholder text' }
+}}/>
+
+# FieldBasedInput
+
+Input that only renders when the user has permission for a specific field.
+
+<Canvas>
+  <Story name="Example">
+    {() => <div className="text-sm text-muted-foreground">Requires Auth and Ability providers to render.</div>}
+  </Story>
+</Canvas>
+
+<ArgsTable of={FieldBasedInput} />

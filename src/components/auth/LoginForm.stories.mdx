@@ -1,0 +1,16 @@
+import { Meta, Story, Canvas, ArgsTable } from '@storybook/blocks';
+import { LoginForm } from './LoginForm';
+
+<Meta title="Auth/LoginForm" component={LoginForm}/>
+
+# LoginForm
+
+Authentication form for users to sign in.
+
+<Canvas>
+  <Story name="Preview">
+    {() => <div className="text-sm text-muted-foreground">Requires Auth context to function.</div>}
+  </Story>
+</Canvas>
+
+<ArgsTable of={LoginForm} />
