@@ -118,8 +118,32 @@ export async function GET(request: NextRequest) {
         },
       },
       orderBy: { createdAt: "desc" },
-      take: 100,
-    });
+// extract pagination parameters from the request URL
+const page = parseInt(searchParams.get("page") || "1");
+const limit = Math.min(parseInt(searchParams.get("limit") || "50"), 100);
+const skip = (page - 1) * limit;
+
+const stories = await prisma.story.findMany({
+  where,
+  include: {
+    // ... existing includes
+  },
+  orderBy: { createdAt: "desc" },
+  take: limit,
+  skip,
+});
+
+const total = await prisma.story.count({ where });
+
+return NextResponse.json({
+  data: stories.map(mapStory),
+  meta: {
+    total,
+    page,
+    limit,
+    totalPages: Math.ceil(total / limit),
+  },
+});
 
     return NextResponse.json(stories.map(mapStory));
   } catch (err) {
