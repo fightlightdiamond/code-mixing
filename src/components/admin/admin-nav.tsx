@@ -11,7 +11,7 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
-import { Home, BookOpen, Users, Settings, Layers } from "lucide-react";
+import { Home, Users, Layers, Shield } from "lucide-react";
 
 const navItems = [
   {
@@ -20,16 +20,11 @@ const navItems = [
     icon: <Home className="h-4 w-4 mr-2" />,
   },
   {
-    title: "Stories",
-    href: "/admin/stories",
-    icon: <BookOpen className="h-4 w-4 mr-2" />,
-  },
-  {
     title: "I AM",
     items: [
       {
         title: "Users",
-        href: "/admin/iam/users",
+        href: "/admin/users",
         description: "Manage user accounts and permissions",
       },
       {
@@ -54,17 +49,27 @@ const navItems = [
         description: "Manage learning lessons",
       },
       {
-        title: "Categories",
-        href: "/admin/categories",
-        description: "Organize content into categories",
+        title: "Stories",
+        href: "/admin/stories",
+        description: "Manage course stories",
+      },
+      {
+        title: "Vocabularies",
+        href: "/admin/vocabularies",
+        description: "Manage vocabulary lists",
+      },
+      {
+        title: "Quizzes",
+        href: "/admin/quizzes",
+        description: "Manage quizzes and assessments",
       },
     ],
     icon: <Layers className="h-4 w-4 mr-2" />,
   },
   {
-    title: "Settings",
-    href: "/admin/settings",
-    icon: <Settings className="h-4 w-4 mr-2" />,
+    title: "Policies",
+    href: "/admin/policies",
+    icon: <Shield className="h-4 w-4 mr-2" />,
   },
 ];
 
