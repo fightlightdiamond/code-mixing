@@ -2,11 +2,12 @@
 
 import { FieldBasedInput } from "@/components/auth/FieldBasedInput";
 import { Require } from "@/core/auth/Require";
+import { FadeIn } from "@/components/ui/fade-in";
 
 export default function ProfilePage() {
   return (
     <Require action="read" subject="User">
-      <div className="container mx-auto py-8">
+      <FadeIn className="container mx-auto py-8">
         <h1 className="text-3xl font-bold mb-6">User Profile</h1>
 
         <div className="bg-white rounded-lg shadow p-6 max-w-md">
@@ -56,7 +57,7 @@ export default function ProfilePage() {
             Update Profile
           </button>
         </div>
-      </div>
+      </FadeIn>
     </Require>
   );
 }

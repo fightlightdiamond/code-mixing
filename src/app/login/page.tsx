@@ -1,7 +1,12 @@
 import { LoginForm } from '@/components/auth/LoginForm';
+import { FadeIn } from '@/components/ui/fade-in';
 
 export default function LoginPage() {
-  return <LoginForm />;
+  return (
+    <FadeIn className="container mx-auto py-8">
+      <LoginForm />
+    </FadeIn>
+  );
 }
 
 export const metadata = {

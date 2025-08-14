@@ -9,21 +9,22 @@ export function TokenDebugPanel() {
   const [isVisible, setIsVisible] = useState(false);
   const { isAuthenticated, user } = useAuth();
 
-  // Only show in development
-  if (process.env.NODE_ENV !== 'development') {
-    return null;
-  }
-
   const updateStatus = () => {
     const status = getTokenStatus();
     setTokenStatus(status);
   };
 
   useEffect(() => {
+    if (process.env.NODE_ENV !== 'development') return;
     updateStatus();
     const interval = setInterval(updateStatus, 5000); // Update every 5 seconds
     return () => clearInterval(interval);
   }, []);
+
+  // Only show in development
+  if (process.env.NODE_ENV !== 'development') {
+    return null;
+  }
 
   const handleManualRefresh = async () => {
     try {
