@@ -171,6 +171,24 @@ export async function PUT(
     if (estimatedMinutes !== undefined) updateData.estimatedMinutes = estimatedMinutes;
     if (status !== undefined) updateData.status = status as ContentStatus;
     if (Array.isArray(tagIds)) {
+      // Validate all tagIds exist and belong to tenant
+      const existingTags = await prisma.tag.findMany({
+        where: { 
+          id: { in: tagIds },
+          tenantId: user.tenantId ?? undefined 
+        },
+        select: { id: true },
+      });
+      
+      if (existingTags.length !== tagIds.length) {
+        const existingIds = existingTags.map(t => t.id);
+        const invalidIds = tagIds.filter((id: string) => !existingIds.includes(id));
+        return NextResponse.json(
+          { error: `Invalid tag IDs: ${invalidIds.join(", ")}` },
+          { status: 400 }
+        );
+      }
+
       updateData.tags = {
         deleteMany: {},
         create: tagIds.map((id: string) => ({ tag: { connect: { id } } })),
