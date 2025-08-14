@@ -230,3 +230,43 @@ export function useBulkDeleteStories() {
     },
   });
 }
+
+export const buildPublicStoriesListQuery = (params?: {
+  search?: string;
+  lessonId?: string | null;
+}) =>
+  queryOptions({
+    queryKey: keyFactory.list("public-stories", params),
+    queryFn: ({ signal }) => {
+      const searchParams = new URLSearchParams();
+      if (params?.search) searchParams.append("search", params.search);
+      if (params?.lessonId !== undefined && params.lessonId !== null)
+        searchParams.append("lessonId", params.lessonId);
+      const url = `/api/stories${
+        searchParams.toString() ? `?${searchParams.toString()}` : ""
+      }`;
+      return api<Story[]>(url, { signal });
+    },
+    staleTime: 60_000,
+    gcTime: 10 * 60_000,
+    placeholderData: (prev) => prev,
+  });
+
+export function useCreatePublicStory() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (
+      data: Partial<CreateStoryData> & { title: string; content: string }
+    ) =>
+      api<Story>(`/api/stories`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["public-stories"] });
+    },
+  });
+}
+
