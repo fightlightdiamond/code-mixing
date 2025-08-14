@@ -73,7 +73,7 @@ export const buildQuizzesListQuery = (params?: {
       if (params?.lessonId)
         searchParams.append("lessonId", params.lessonId.toString());
 
-      const url = `/api/quizzes${
+      const url = `/api/admin/quizzes${
         searchParams.toString() ? `?${searchParams.toString()}` : ""
       }`;
       return api<Quiz[]>(url, { signal });
@@ -86,7 +86,7 @@ export const buildQuizzesListQuery = (params?: {
 export const buildQuizDetailQuery = (id: number) =>
   queryOptions({
     queryKey: keyFactory.detail("quizzes", id),
-    queryFn: ({ signal }) => api<Quiz>(`/api/quizzes/${id}`, { signal }),
+    queryFn: ({ signal }) => api<Quiz>(`/api/admin/quizzes/${id}`, { signal }),
     staleTime: 5 * 60_000,
     gcTime: 10 * 60_000,
     enabled: !!id,
@@ -98,7 +98,7 @@ export function useCreateQuiz() {
 
   return useMutation({
     mutationFn: (data: CreateQuizData) =>
-      api<Quiz>("/api/quizzes", {
+      api<Quiz>("/api/admin/quizzes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -115,7 +115,7 @@ export function useUpdateQuiz() {
 
   return useMutation({
     mutationFn: ({ id, data }: { id: number; data: UpdateQuizData }) =>
-      api<Quiz>(`/api/quizzes/${id}`, {
+      api<Quiz>(`/api/admin/quizzes/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -131,7 +131,7 @@ export function useDeleteQuiz() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: number) => api(`/api/quizzes/${id}`, { method: "DELETE" }),
+    mutationFn: (id: number) => api(`/api/admin/quizzes/${id}`, { method: "DELETE" }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["quizzes"] });
       queryClient.invalidateQueries({ queryKey: ["lessons"] }); // Update lesson counts

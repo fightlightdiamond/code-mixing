@@ -112,7 +112,7 @@ export const buildVocabulariesListQuery = (params?: {
       if (params?.search) searchParams.append("search", params.search);
       if (params?.level) searchParams.append("level", params.level);
 
-      const url = `/api/vocabularies${
+      const url = `/api/admin/vocabularies${
         searchParams.toString() ? `?${searchParams.toString()}` : ""
       }`;
       const vocabulariesDB = await api<VocabularyDB[]>(url, { signal });
@@ -130,7 +130,7 @@ export function useCreateVocabulary() {
   return useMutation({
     mutationFn: async (data: CreateVocabularyData) => {
       const dbData = transformCreateVocabularyData(data);
-      const result = await api<VocabularyDB>("/api/vocabularies", {
+      const result = await api<VocabularyDB>("/api/admin/vocabularies", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(dbData),
@@ -149,7 +149,7 @@ export function useUpdateVocabulary() {
   return useMutation({
     mutationFn: async ({ id, data }: { id: number; data: UpdateVocabularyData }) => {
       const dbData = transformUpdateVocabularyData(data);
-      const result = await api<VocabularyDB>(`/api/vocabularies/${id}`, {
+      const result = await api<VocabularyDB>(`/api/admin/vocabularies/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(dbData),
@@ -167,7 +167,7 @@ export function useDeleteVocabulary() {
 
   return useMutation({
     mutationFn: (id: number) =>
-      api(`/api/vocabularies/${id}`, { method: "DELETE" }),
+      api(`/api/admin/vocabularies/${id}`, { method: "DELETE" }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["vocabularies"] });
     },

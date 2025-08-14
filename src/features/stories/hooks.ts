@@ -128,7 +128,7 @@ export const buildStoriesListQuery = (params?: {
         params.tagIds.forEach(tagId => searchParams.append("tagIds", tagId));
       }
 
-      const url = `/api/stories${
+      const url = `/api/admin/stories${
         searchParams.toString() ? `?${searchParams.toString()}` : ""
       }`;
       return api<Story[]>(url, { signal });
@@ -144,7 +144,7 @@ export function useCreateStory() {
 
   return useMutation({
     mutationFn: (data: CreateStoryData) =>
-      api<Story>("/api/stories", {
+      api<Story>("/api/admin/stories", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -160,7 +160,7 @@ export function useUpdateStory() {
 
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateStoryData }) =>
-      api<Story>(`/api/stories/${id}`, {
+      api<Story>(`/api/admin/stories/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -175,7 +175,7 @@ export function useDeleteStory() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: string) => api(`/api/stories/${id}`, { method: "DELETE" }),
+    mutationFn: (id: string) => api(`/api/admin/stories/${id}`, { method: "DELETE" }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["stories"] });
     },
@@ -194,7 +194,7 @@ export const buildTagsListQuery = () =>
 export const buildStoryVersionsQuery = (storyId: string) =>
   queryOptions({
     queryKey: keyFactory.list("story-versions", { storyId }),
-    queryFn: ({ signal }) => api<StoryVersion[]>(`/api/stories/${storyId}/versions`, { signal }),
+    queryFn: ({ signal }) => api<StoryVersion[]>(`/api/admin/stories/${storyId}/versions`, { signal }),
     staleTime: 60_000,
     gcTime: 10 * 60_000,
   });
@@ -204,7 +204,7 @@ export function useBulkUpdateStories() {
 
   return useMutation({
     mutationFn: ({ ids, data }: { ids: string[]; data: Partial<UpdateStoryData> }) =>
-      api("/api/stories/bulk", {
+      api("/api/admin/stories/bulk", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ids, data }),
@@ -220,7 +220,7 @@ export function useBulkDeleteStories() {
 
   return useMutation({
     mutationFn: (ids: string[]) =>
-      api("/api/stories/bulk", {
+      api("/api/admin/stories/bulk", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ids }),
