@@ -115,8 +115,8 @@ export function AdminNav() {
             </NavigationMenuItem>
           ) : (
             <NavigationMenuItem key={item.title}>
-              <Link href={item.href} legacyBehavior passHref>
-                <NavigationMenuLink
+              <NavigationMenuLink asChild>
+                <Link href={item.href}
                   className={cn(
                     "flex items-center gap-2 h-10 px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 rounded-md",
                     pathname === item.href
@@ -126,8 +126,8 @@ export function AdminNav() {
                 >
                   {item.icon}
                   {item.title}
-                </NavigationMenuLink>
-              </Link>
+                </Link>
+              </NavigationMenuLink>
             </NavigationMenuItem>
           )
         )}
