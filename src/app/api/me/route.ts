@@ -3,19 +3,18 @@ import jwt, { JwtPayload } from "jsonwebtoken";
 import type { UserRole } from "@prisma/client";
 
 import { prisma } from "@/core/prisma";
+import { getBearerToken } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {
   try {
     // Get token from Authorization header
-    const authHeader = request.headers.get("authorization");
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    const token = getBearerToken(request.headers.get("authorization"));
+    if (!token) {
       return NextResponse.json(
         { message: "Token không hợp lệ" },
         { status: 401 }
       );
     }
-
-    const token = authHeader.substring(7); // Remove 'Bearer ' prefix
 
     // Verify token - using Prisma generated types
     interface CustomJwtPayload extends JwtPayload {

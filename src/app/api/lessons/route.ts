@@ -2,36 +2,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Prisma, LearningLevel } from "@prisma/client";
 import { caslGuard, RequiredRule } from "@/core/auth/casl.guard";
-import jwt from "jsonwebtoken";
 import { prisma } from "@/core/prisma";
-
-type JwtPayload = {
-  userId: string;
-  email: string;
-  role: string;
-  tenantId?: string;
-};
-
-async function getUserFromRequest(request: NextRequest) {
-  try {
-    const authHeader = request.headers.get("authorization");
-    if (!authHeader?.startsWith("Bearer ")) return null;
-
-    const token = authHeader.substring(7);
-    const decoded = jwt.verify(
-        token,
-        process.env.JWT_SECRET || "fallback-secret"
-    ) as JwtPayload;
-
-    return {
-      sub: decoded.userId,
-      tenantId: decoded.tenantId,
-      roles: [decoded.role],
-    };
-  } catch {
-    return null;
-  }
-}
+import { getUserFromRequest } from "@/lib/auth";
 
 // GET /api/lessons
 export async function GET(request: NextRequest) {

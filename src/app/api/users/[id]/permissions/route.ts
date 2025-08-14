@@ -1,20 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/core/prisma";
-import jwt from "jsonwebtoken";
 import { caslGuardWithPolicies } from "@/core/auth/casl.guard";
-import type { JWTPayload } from "@/types/api";
-
-async function getUserFromRequest(request: NextRequest) {
-  try {
-    const authHeader = request.headers.get("authorization");
-    if (!authHeader || !authHeader.startsWith("Bearer ")) return null;
-    const token = authHeader.substring(7);
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || "fallback-secret") as JWTPayload;
-    return { sub: decoded.userId, tenantId: decoded.tenantId, roles: [decoded.role] };
-  } catch {
-    return null;
-  }
-}
+import { getUserFromRequest } from "@/lib/auth";
 
 export async function GET(_request: NextRequest, context: { params: { id: string } }) {
   const user = await getUserFromRequest(_request);
