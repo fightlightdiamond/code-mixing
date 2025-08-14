@@ -1,0 +1,22 @@
+import { Meta, Story, Canvas, ArgsTable } from '@storybook/blocks';
+import { RoleBasedLink } from './RoleBasedLink';
+
+<Meta title="Auth/RoleBasedLink" component={RoleBasedLink} argTypes={{
+  href:{ control:{ type:'text' }, description:'Destination URL' },
+  action:{ control:{ type:'text' }, description:'Ability action to check' },
+  subject:{ control:{ type:'text' }, description:'Ability subject' },
+  children:{ control:{ type:'text' }, description:'Link label' },
+  className:{ control:{ type:'text' }, description:'Additional CSS classes' }
+}}/>
+
+# RoleBasedLink
+
+Link that only renders when the user has permission.
+
+<Canvas>
+  <Story name="Example">
+    {() => <div className="text-sm text-muted-foreground">Requires Auth and Ability providers to render.</div>}
+  </Story>
+</Canvas>
+
+<ArgsTable of={RoleBasedLink} />

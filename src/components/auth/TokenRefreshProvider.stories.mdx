@@ -1,0 +1,18 @@
+import { Meta, Story, Canvas, ArgsTable } from '@storybook/blocks';
+import { TokenRefreshProvider } from './TokenRefreshProvider';
+
+<Meta title="Auth/TokenRefreshProvider" component={TokenRefreshProvider} argTypes={{
+  children:{ control:false, description:'Content rendered within the provider' }
+}}/>
+
+# TokenRefreshProvider
+
+Provider that handles automatic token refreshing for authenticated sessions.
+
+<Canvas>
+  <Story name="Usage">
+    {() => <div className="text-sm text-muted-foreground">Wrap your app with TokenRefreshProvider inside Auth context.</div>}
+  </Story>
+</Canvas>
+
+<ArgsTable of={TokenRefreshProvider} />

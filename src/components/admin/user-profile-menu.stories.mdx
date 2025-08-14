@@ -1,0 +1,16 @@
+import { Meta, Story, Canvas, ArgsTable } from '@storybook/blocks';
+import { UserProfileMenu } from './user-profile-menu';
+
+<Meta title="Admin/UserProfileMenu" component={UserProfileMenu}/>
+
+# UserProfileMenu
+
+Dropdown menu showing the current user's profile and actions.
+
+<Canvas>
+  <Story name="Preview">
+    {() => <div className="text-sm text-muted-foreground">Requires Auth context to display user info.</div>}
+  </Story>
+</Canvas>
+
+<ArgsTable of={UserProfileMenu} />
