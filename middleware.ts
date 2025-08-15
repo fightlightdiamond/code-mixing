@@ -58,7 +58,7 @@ function addSecurityHeaders(response: NextResponse): NextResponse {
   return response;
 }
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Check if the route is public
@@ -73,18 +73,40 @@ export function middleware(request: NextRequest) {
   );
 
   if (protectedRoute) {
-    // Get token from cookies or Authorization header
-    const token =
+    let token =
       request.cookies.get("auth_token")?.value ||
       request.headers.get("authorization")?.replace("Bearer ", "");
 
+    const attemptRefresh = async () => {
+      const refreshToken = request.cookies.get("refresh_token")?.value;
+      if (!refreshToken) return null;
+      const refreshRes = await fetch(new URL("/api/auth/refresh", request.url), {
+        method: "POST",
+        headers: { cookie: request.headers.get("cookie") || "" },
+      });
+      if (!refreshRes.ok) return null;
+      const data = (await refreshRes.json().catch(() => null)) as
+        | { accessToken?: string }
+        | null;
+      const newToken = data?.accessToken;
+      const response = NextResponse.next();
+      const setCookie = refreshRes.headers.get("set-cookie");
+      if (setCookie) response.headers.set("set-cookie", setCookie);
+      return newToken ? { token: newToken, response } : null;
+    };
+
+    let response: NextResponse | null = null;
+
     if (!token) {
-      // Redirect to login if no token
-      return NextResponse.redirect(new URL("/login", request.url));
+      const refreshed = await attemptRefresh();
+      if (!refreshed) {
+        return NextResponse.redirect(new URL("/login", request.url));
+      }
+      token = refreshed.token;
+      response = refreshed.response;
     }
 
     try {
-      // Verify token
       const decoded = jwt.verify(
         token,
         process.env.JWT_SECRET || "fallback-secret"
@@ -92,26 +114,51 @@ export function middleware(request: NextRequest) {
       const userRole = decoded.role;
       const tenantId = decoded.tenantId;
 
-      // Check if user has required role
       const requiredRoles =
         protectedRoutes[protectedRoute as keyof typeof protectedRoutes];
       if (!requiredRoles.includes(userRole)) {
-        // Redirect to unauthorized page
         return NextResponse.redirect(new URL("/unauthorized", request.url));
       }
 
-      // Add user info to headers for API routes
-      const response = NextResponse.next();
-      response.headers.set("x-user-id", decoded.userId);
-      response.headers.set("x-user-role", userRole);
-      response.headers.set("x-user-email", decoded.email);
+      const res = response ?? NextResponse.next();
+      res.headers.set("x-user-id", decoded.userId);
+      res.headers.set("x-user-role", userRole);
+      res.headers.set("x-user-email", decoded.email);
       if (tenantId) {
-        response.headers.set("x-tenant-id", tenantId);
+        res.headers.set("x-tenant-id", tenantId);
       }
 
-      return addSecurityHeaders(response);
-    } catch (error) {
-      // Invalid token, redirect to login
+      return addSecurityHeaders(res);
+    } catch (error: any) {
+      if (error?.name === "TokenExpiredError") {
+        const refreshed = await attemptRefresh();
+        if (refreshed) {
+          try {
+            const decoded = jwt.verify(
+              refreshed.token,
+              process.env.JWT_SECRET || "fallback-secret"
+            ) as any;
+            const userRole = decoded.role;
+            const tenantId = decoded.tenantId;
+            const requiredRoles =
+              protectedRoutes[protectedRoute as keyof typeof protectedRoutes];
+            if (!requiredRoles.includes(userRole)) {
+              return NextResponse.redirect(new URL("/unauthorized", request.url));
+            }
+            const res = refreshed.response ?? NextResponse.next();
+            res.headers.set("x-user-id", decoded.userId);
+            res.headers.set("x-user-role", userRole);
+            res.headers.set("x-user-email", decoded.email);
+            if (tenantId) {
+              res.headers.set("x-tenant-id", tenantId);
+            }
+            return addSecurityHeaders(res);
+          } catch (err) {
+            console.error("Token verification failed after refresh:", err);
+          }
+        }
+      }
+
       console.error("Token verification failed:", error);
       return NextResponse.redirect(new URL("/login", request.url));
     }

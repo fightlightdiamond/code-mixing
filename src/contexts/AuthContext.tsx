@@ -8,12 +8,7 @@ import React, {
   useCallback,
 } from "react";
 import { useRouter } from "next/navigation";
-import {
-  setAuthToken,
-  getAuthToken,
-  refreshToken,
-  clearCSRFToken,
-} from "@/core/api/api";
+import { clearCSRFToken } from "@/core/api/api";
 
 // Types
 interface User {
@@ -53,7 +48,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Define logout function first
   const logout = useCallback(() => {
-    setAuthToken(null);
+    fetch("/api/auth/logout", {
+      method: "POST",
+      credentials: "include",
+    }).catch(() => {});
     clearCSRFToken();
     setUser(null);
     router.push("/login");
@@ -106,59 +104,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const checkAuth = useCallback(async () => {
-    console.log("🔍 AuthContext: checkAuth started");
     try {
-      const token = getAuthToken();
-      console.log("🔍 AuthContext: token =", token ? "exists" : "null");
-      
-      if (!token) {
-        console.log("🔍 AuthContext: No token, setting isLoading = false");
-        setIsLoading(false);
-        return;
-      }
-
-      console.log("🔍 AuthContext: Verifying token with /api/auth/me");
-      // Verify token with API
       const response = await fetch("/api/auth/me", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        credentials: "include",
       });
-
-      console.log("🔍 AuthContext: API response status =", response.status);
-      
       if (response.ok) {
         const apiResponse = await response.json();
-        console.log("🔍 AuthContext: API response received", apiResponse);
-        
-        // Extract user data from response.data
         const userData = apiResponse.data || apiResponse;
-        console.log("🔍 AuthContext: Extracted user data", userData);
         setUser(userData);
       } else {
-        console.log("🔍 AuthContext: Token invalid, clearing auth");
-        // Token is invalid, remove it
-        setAuthToken(null);
         setUser(null);
       }
     } catch (error) {
       console.error("🚨 AuthContext: Auth check failed:", error);
-      setAuthToken(null);
       setUser(null);
     } finally {
-      console.log("🔍 AuthContext: Setting isLoading = false");
       setIsLoading(false);
     }
   }, []);
 
   const refreshUserToken = useCallback(async (): Promise<boolean> => {
     try {
-      const newToken = await refreshToken();
-      if (newToken) {
-        // Re-check auth with new token - we'll call checkAuth directly
-        return true;
-      }
-      return false;
+      const res = await fetch("/api/auth/refresh", {
+        method: "POST",
+        credentials: "include",
+      });
+      return res.ok;
     } catch (error) {
       console.error("Token refresh failed:", error);
       return false;
@@ -177,14 +148,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({ email, password }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        // Store tokens with proper expiry
-        setAuthToken(data.accessToken, data.expiresIn, data.refreshToken);
         setUser(data.user);
 
         // Redirect based on role
@@ -222,6 +192,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({ name, email, password, role }),
       });
 
