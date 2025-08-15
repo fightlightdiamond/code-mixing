@@ -1,1 +1,1 @@
-export { GET, POST } from "../../vocabularies/route";
+export { GET } from "../../vocabularies/route";

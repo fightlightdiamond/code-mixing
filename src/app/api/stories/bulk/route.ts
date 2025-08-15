@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { caslGuardWithPolicies } from "@/core/auth/casl.guard";
 import { prisma } from "@/core/prisma";
 import { StoryType, DifficultyLevel, ContentStatus } from "@prisma/client";
-import { getUserFromRequest } from "@/lib/auth";
+import { getUserFromRequest } from "@/core/auth/getUser";
 import { z } from "zod";
 
 const bulkUpdateSchema = z.object({
