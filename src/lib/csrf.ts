@@ -5,7 +5,10 @@ import crypto from 'crypto';
  * CSRF Protection utilities
  */
 
-const CSRF_SECRET = process.env.CSRF_SECRET || 'default-csrf-secret-change-in-production';
+const CSRF_SECRET = process.env.CSRF_SECRET;
+if (!CSRF_SECRET) {
+  throw new Error('CSRF_SECRET environment variable is required');
+}
 const CSRF_TOKEN_HEADER = 'x-csrf-token';
 const CSRF_TOKEN_COOKIE = 'csrf-token';
 
@@ -41,38 +44,7 @@ export function verifyCSRFToken(token: string, hash: string): boolean {
  * Extract CSRF token from request
  */
 export function extractCSRFToken(request: NextRequest): string | null {
-  // Try header first
-  const headerToken = request.headers.get(CSRF_TOKEN_HEADER);
-  if (headerToken) {
-    return headerToken;
-  }
-
-  // Try cookie
-  const cookieToken = request.cookies.get(CSRF_TOKEN_COOKIE)?.value;
-  if (cookieToken) {
-    return cookieToken;
-  }
-
-  return null;
-}
-
-/**
- * Validate CSRF token from request
- */
-export function validateCSRFToken(request: NextRequest): boolean {
-  // Skip CSRF validation for GET, HEAD, OPTIONS requests
-  if (['GET', 'HEAD', 'OPTIONS'].includes(request.method)) {
-    return true;
-  }
-
-  const token = extractCSRFToken(request);
-  if (!token) {
-    return false;
-  }
-
-  // For simplicity, we'll use the token itself as the hash
-  // In production, you might want to store the hash in a session or database
-  return token.length === 64; // Basic validation
+  return request.headers.get(CSRF_TOKEN_HEADER);
 }
 
 /**
@@ -94,7 +66,17 @@ export function csrfMiddleware(request: NextRequest): boolean {
     return true;
   }
 
-  return validateCSRFToken(request);
+  if (['GET', 'HEAD', 'OPTIONS'].includes(request.method)) {
+    return true;
+  }
+
+  const token = extractCSRFToken(request);
+  const hash = request.cookies.get(CSRF_TOKEN_COOKIE)?.value;
+  if (!token || !hash) {
+    return false;
+  }
+
+  return verifyCSRFToken(token, hash);
 }
 
 /**
