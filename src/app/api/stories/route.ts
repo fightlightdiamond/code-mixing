@@ -31,6 +31,13 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search") || "";
     const lessonId = searchParams.get("lessonId");
+    const page = Math.max(parseInt(searchParams.get("page") || "1", 10), 1);
+    let limit = parseInt(searchParams.get("limit") || "20", 10);
+    if (isNaN(limit) || limit < 1) {
+      limit = 20;
+    }
+    limit = Math.min(limit, 100);
+    const skip = (page - 1) * limit;
 
     // Build where clause for search
     const where: any = {};
@@ -49,7 +56,8 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Get stories
+    const total = await prisma.story.count({ where });
+
     const stories = await prisma.story.findMany({
       where,
       include: {
@@ -61,10 +69,11 @@ export async function GET(request: NextRequest) {
         },
       },
       orderBy: { createdAt: "desc" },
-      take: 100, // Limit to 100 stories for now
+      skip,
+      take: limit,
     });
 
-    return NextResponse.json(stories);
+    return NextResponse.json({ data: stories, meta: { page, limit, total } });
   } catch (error) {
     console.error("Error fetching stories:", error);
     return NextResponse.json(
