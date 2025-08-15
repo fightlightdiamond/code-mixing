@@ -5,9 +5,7 @@
  * Supports comprehensive analytics for the EdTech platform.
  */
 
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from "@/core/prisma";
 
 export interface StartLearningSessionData {
   userId: string;
