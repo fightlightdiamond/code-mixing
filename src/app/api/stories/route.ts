@@ -1,9 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { caslGuardWithPolicies } from "@/core/auth/casl.guard";
 import { prisma } from "@/core/prisma";
-import { isValidStoryType, VALID_STORY_TYPES, STORY_DEFAULTS } from "@/config";
+import { STORY_DEFAULTS } from "@/config";
 import { generateStoryChunks, calculateStoryStats } from "@/lib/story-chunker";
 import { getUserFromRequest } from "@/core/auth/getUser";
+import { z } from "zod";
+import { StoryType, DifficultyLevel } from "@prisma/client";
+
+const storySchema = z.object({
+  title: z.string().min(1),
+  content: z.string().min(1),
+  lessonId: z.number().int().positive().optional(),
+  storyType: z.nativeEnum(StoryType).optional(),
+  difficulty: z.nativeEnum(DifficultyLevel).optional(),
+  estimatedMinutes: z.number().int().positive().optional(),
+  chemRatio: z.number().min(0).max(1).optional(),
+});
 
 // GET /api/stories - Lấy danh sách stories với search và filter
 export async function GET(request: NextRequest) {
@@ -97,7 +109,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = await request.json();
+    const json = await request.json();
+    const validationResult = storySchema.safeParse(json);
+
+    if (!validationResult.success) {
+      return NextResponse.json(
+        { error: "Invalid request body", details: validationResult.error.errors },
+        { status: 400 }
+      );
+    }
+
     const {
       title,
       content,
@@ -106,27 +127,7 @@ export async function POST(request: NextRequest) {
       difficulty,
       estimatedMinutes,
       chemRatio,
-    } = body;
-
-    // Validate required fields
-    if (!title || !content) {
-      return NextResponse.json(
-        { error: "Title and content are required" },
-        { status: 400 }
-      );
-    }
-
-    // Validate storyType if provided
-    if (storyType && !isValidStoryType(storyType)) {
-      return NextResponse.json(
-        {
-          error: `Invalid storyType. Must be one of: ${VALID_STORY_TYPES.join(
-            ", "
-          )}`,
-        },
-        { status: 400 }
-      );
-    }
+    } = validationResult.data;
 
     // Check if lesson exists if lessonId is provided
     if (lessonId) {
