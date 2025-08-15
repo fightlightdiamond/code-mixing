@@ -295,11 +295,12 @@ class ApiClient {
       } catch (err) {
         lastError = err as Error;
         if (attempt < retries) {
-          const backoff = 2 ** attempt * 100;
-          await new Promise((r) => setTimeout(r, backoff));
-          attempt++;
-          continue;
-        }
+         if (attempt < retries) {
+           const backoff = Math.min(2 ** attempt * 100, 10000); // Cap at 10 seconds
+           await new Promise((r) => setTimeout(r, backoff));
+           attempt++;
+           continue;
+         }
 
         let e = lastError;
         for (const i of this.errorInterceptors) {
