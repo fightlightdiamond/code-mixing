@@ -33,10 +33,6 @@ export function generateStoryChunks(content: string): GeneratedChunk[] {
   return chunks;
 }
 
-/**
- * Calculate statistics for a story based on its chunks.
- * Returns total word count and chemRatio (percentage of English words).
- */
 export function calculateStoryStats(chunks: GeneratedChunk[]): {
   wordCount: number;
   chemRatio: number;
@@ -45,7 +41,11 @@ export function calculateStoryStats(chunks: GeneratedChunk[]): {
     (sum, chunk) => sum + chunk.chunkText.split(/\s+/).filter(Boolean).length,
     0
   );
-  const chemWords = chunks.filter((c) => c.type === "chem").length;
+  const chemWords = chunks.reduce(
+    (sum, c) =>
+      sum + (c.type === "chem" ? c.chunkText.split(/\s+/).filter(Boolean).length : 0),
+    0
+  );
   const chemRatio = totalWords > 0 ? chemWords / totalWords : 0;
 
   return { wordCount: totalWords, chemRatio };
