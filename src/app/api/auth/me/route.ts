@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import { prisma } from "@/core/prisma";
 import { log } from "@/lib/logger";
 import type { JWTPayload, ApiResponse, User } from "@/types/api";
-import { getBearerToken } from "@/lib/auth";
+import { getBearerToken } from "@/core/auth/getUser";
 
 export async function GET(request: NextRequest) {
   const requestStartTime = Date.now();
