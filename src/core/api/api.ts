@@ -233,46 +233,74 @@ class ApiClient {
     return url; // prefer relative path on client
   }
 
-  async request<T = unknown>(input: RequestInfo, init?: RequestInit): Promise<T> {
-    try {
-      let config: RequestInit & { url: string } = {
-        ...init,
-        url: this.resolveURL(input),
-        headers: {
-          "Content-Type": "application/json",
-          ...(init?.headers || {}),
-        },
-        signal: init?.signal,
-      };
+  async request<T = unknown>(input: RequestInfo, init?: ApiRequestConfig): Promise<T> {
+    const { timeout, retries = 0, ...rest } = init ?? {};
+    let attempt = 0;
+    let lastError: Error | null = null;
 
-      for (const i of this.requestInterceptors) {
-        config = await i(config);
+    while (attempt <= retries) {
+      const controller = new AbortController();
+      const timer = timeout ? setTimeout(() => controller.abort(), timeout) : undefined;
+
+      try {
+        const externalSignal = rest.signal;
+        if (externalSignal) {
+          if (externalSignal.aborted) controller.abort();
+          else externalSignal.addEventListener("abort", () => controller.abort(), { once: true });
+        }
+
+        let config: ApiRequestConfig & { url: string } = {
+          ...rest,
+          url: this.resolveURL(input),
+          headers: {
+            "Content-Type": "application/json",
+            ...(rest.headers || {}),
+          },
+          signal: controller.signal,
+        };
+
+        for (const i of this.requestInterceptors) {
+          config = await i(config);
+        }
+
+        let response = await fetch(config.url, config);
+
+        for (const i of this.responseInterceptors) {
+          response = await i(response);
+        }
+
+        const isJson = response.headers.get("content-type")?.includes("application/json");
+        const body: unknown = isJson ? await response.json().catch(() => undefined) : undefined;
+
+        if (!response.ok) {
+          type ErrorBody = { message?: string; error?: string; [k: string]: unknown };
+          const obj = (typeof body === "object" && body !== null) ? (body as ErrorBody) : undefined;
+          const message = obj?.message || obj?.error || `HTTP ${response.status}`;
+          throw new ApiError(message, response.status, body, `HTTP_${response.status}`);
+        }
+
+        return (body as T) ?? (await response.text() as unknown as T);
+      } catch (err) {
+        lastError = err as Error;
+        if (attempt < retries) {
+          const backoff = 2 ** attempt * 100;
+          await new Promise((r) => setTimeout(r, backoff));
+          attempt++;
+          continue;
+        }
+
+        let e = lastError;
+        for (const i of this.errorInterceptors) {
+          e = await i(e);
+        }
+        throw e;
+      } finally {
+        if (timer) clearTimeout(timer);
       }
-
-      let response = await fetch(config.url, config);
-
-      for (const i of this.responseInterceptors) {
-        response = await i(response);
-      }
-
-      const isJson = response.headers.get("content-type")?.includes("application/json");
-      const body: unknown = isJson ? await response.json().catch(() => undefined) : undefined;
-
-      if (!response.ok) {
-        type ErrorBody = { message?: string; error?: string; [k: string]: unknown };
-        const obj = (typeof body === "object" && body !== null) ? (body as ErrorBody) : undefined;
-        const message = obj?.message || obj?.error || `HTTP ${response.status}`;
-        throw new ApiError(message, response.status, body, `HTTP_${response.status}`);
-      }
-
-      return (body as T) ?? (await response.text() as unknown as T);
-    } catch (err) {
-      let e = err as Error;
-      for (const i of this.errorInterceptors) {
-        e = await i(e);
-      }
-      throw e;
     }
+
+    // Should never reach here
+    throw lastError!;
   }
 }
 
@@ -374,7 +402,7 @@ apiClient.addErrorInterceptor(async (error) => {
  * Public API (giữ tên export để không vỡ import cũ)
  * ====================================== */
 // Note: Use <T,> to avoid JSX parsing issues in environments that parse TS as TSX
-export const api = <T = unknown,>(input: RequestInfo, init?: RequestInit): Promise<T> =>
+export const api = <T = unknown,>(input: RequestInfo, init?: ApiRequestConfig): Promise<T> =>
     apiClient.request<T>(input, init);
 
 export const setAuthToken = (

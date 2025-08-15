@@ -2,6 +2,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { QueryKey } from '@tanstack/react-query';
 import React, { ReactNode } from 'react';
+import { apiClient } from './api';
 
 // Mock API responses - using unknown instead of any for better type safety
 export interface MockResponse<T = unknown> {
@@ -222,9 +223,24 @@ export const integrationTestHelpers = {
     // Test cache invalidation
     cacheInvalidation: async (queryClient: QueryClient, pattern: QueryKey) => {
       await queryClient.invalidateQueries({ queryKey: pattern });
-      
+
       // Return queries that were invalidated
       return queryClient.getQueryCache().findAll({ queryKey: pattern });
+    },
+
+    // Illustrate timeout and retry configuration
+    timeoutAndRetry: async () => {
+      const { mockClient, cleanup } = integrationTestHelpers.setupTestEnvironment();
+      // A slow endpoint that will exceed the timeout
+      mockClient.mock('/slow', { delay: 50, status: 200, data: { ok: true } });
+      try {
+        await apiClient.request('/slow', { timeout: 10, retries: 2 });
+      } catch {
+        // ignore
+      }
+      const attempts = mockClient.getCallLog().length;
+      cleanup();
+      return attempts;
     },
   },
 };
