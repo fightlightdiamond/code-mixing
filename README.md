@@ -757,7 +757,12 @@ AWS_S3_BUCKET=your-audio-bucket
 # Optional: Monitoring
 SENTRY_DSN=your-sentry-dsn
 ANALYTICS_ID=your-analytics-id
+# Login API rate limiting
+LOGIN_RATE_LIMIT_MAX=5
+LOGIN_RATE_LIMIT_WINDOW_MS=60000
 ```
+
+`LOGIN_RATE_LIMIT_MAX` defines how many login attempts are allowed from a single IP within `LOGIN_RATE_LIMIT_WINDOW_MS` milliseconds before a `429` response is returned.
 
 ## 🧪 Testing Strategy
 

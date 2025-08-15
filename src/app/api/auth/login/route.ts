@@ -3,23 +3,53 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
 import { prisma } from "@/core/prisma";
+import { rateLimit } from "@/lib/rate-limit";
 
 const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(1, "Mật khẩu là bắt buộc"),
+    email: z.string().email(),
+    password: z.string().min(1, "Mật khẩu là bắt buộc"),
 });
+
+const MAX_ATTEMPTS = parseInt(
+  process.env.LOGIN_RATE_LIMIT_MAX || "5",
+  10
+);
+const WINDOW_MS = parseInt(
+  process.env.LOGIN_RATE_LIMIT_WINDOW_MS || "60000",
+  10
+);
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const parsed = loginSchema.safeParse(body);
-    if (!parsed.success) {
+    const ip =
+      request.ip ||
+      request.headers.get("x-forwarded-for")?.split(",")[0] ||
+      "unknown";
+    const allowed = rateLimit(ip, { max: MAX_ATTEMPTS, windowMs: WINDOW_MS });
+    if (!allowed) {
+      return NextResponse.json(
+        { message: "Too many login attempts. Please try again later." },
+        { status: 429 }
+      );
+    }
+
+      const body = await request.json();
+      const parsed = loginSchema.safeParse(body);
+      if (!parsed.success) {
+          return NextResponse.json(
+              { message: "Dữ liệu không hợp lệ", errors: parsed.error.flatten() },
+              { status: 400 }
+          );
+      }
+      const { email, password } = parsed.data;
+
+    // Validate input
+    if (!email || !password) {
       return NextResponse.json(
         { message: "Dữ liệu không hợp lệ", errors: parsed.error.flatten() },
         { status: 400 }
       );
     }
-    const { email, password } = parsed.data;
 
     // Find user by email
     const user = await prisma.user.findUnique({
