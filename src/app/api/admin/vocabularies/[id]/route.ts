@@ -1,1 +1,1 @@
-export { GET, PUT, DELETE } from "../../../vocabularies/[id]/route";
+export { PUT, DELETE } from "../../../vocabularies/[id]/route";
