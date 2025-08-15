@@ -19,6 +19,7 @@ export async function GET(request: NextRequest) {
         name: true,
         email: true,
         role: true,
+        tenantId: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -31,17 +32,21 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // For now, we'll use a default tenant ID since the schema doesn't have tenantId
-    // In a real implementation, you would fetch the tenantId from the database
-    const tenantId = "default-tenant-id";
-
     // Return user data with tenant information
-    const userData = {
+    const userData: {
+      id: string;
+      name: string | null;
+      email: string;
+      role: UserRole;
+      tenantId: string | null;
+      createdAt: Date;
+      updatedAt: Date;
+    } = {
       id: user.id,
       name: user.name,
       email: user.email,
       role: user.role,
-      tenantId: tenantId,
+      tenantId: user.tenantId,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     };
@@ -52,7 +57,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       user: userData,
       roles,
-      tenantId,
+      tenantId: user.tenantId,
     });
   } catch (error) {
     console.error("Auth verification error:", error);
