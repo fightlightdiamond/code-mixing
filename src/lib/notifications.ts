@@ -5,9 +5,8 @@
  * Supports different notification types and delivery methods.
  */
 
-import { PrismaClient, NotificationType } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { NotificationType } from '@prisma/client';
+import { prisma } from "@/core/prisma";
 
 export interface CreateNotificationData {
   type: NotificationType;
