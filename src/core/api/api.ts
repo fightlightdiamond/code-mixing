@@ -243,11 +243,23 @@ class ApiClient {
       const timer = timeout ? setTimeout(() => controller.abort(), timeout) : undefined;
 
       try {
+        // track the listener so we can clean it up
+        let abortListener: (() => void) | undefined;
         const externalSignal = rest.signal;
         if (externalSignal) {
-          if (externalSignal.aborted) controller.abort();
-          else externalSignal.addEventListener("abort", () => controller.abort(), { once: true });
+          if (externalSignal.aborted) {
+            controller.abort();
+          } else {
+            abortListener = () => controller.abort();
+            externalSignal.addEventListener("abort", abortListener, { once: true });
+          }
         }
+      } finally {
+        if (timer) clearTimeout(timer);
+        if (abortListener && externalSignal) {
+          externalSignal.removeEventListener("abort", abortListener);
+        }
+      }
 
         let config: ApiRequestConfig & { url: string } = {
           ...rest,
