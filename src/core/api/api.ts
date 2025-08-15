@@ -282,8 +282,14 @@ class ApiClient {
         }
 
         const isJson = response.headers.get("content-type")?.includes("application/json");
-        const body: unknown = isJson ? await response.json().catch(() => undefined) : undefined;
-
+        const body: unknown = isJson 
+          ? await response.json().catch((err) => {
+              if (process.env.NODE_ENV === 'development') {
+                console.warn('Failed to parse JSON response:', err);
+              }
+              return undefined;
+            })
+          : undefined;
         if (!response.ok) {
           type ErrorBody = { message?: string; error?: string; [k: string]: unknown };
           const obj = (typeof body === "object" && body !== null) ? (body as ErrorBody) : undefined;
