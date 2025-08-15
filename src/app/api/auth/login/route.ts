@@ -1,20 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-
+import { z } from "zod";
 import { prisma } from "@/core/prisma";
+
+const loginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(1, "Mật khẩu là bắt buộc"),
+});
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password } = await request.json();
-
-    // Validate input
-    if (!email || !password) {
+    const body = await request.json();
+    const parsed = loginSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
-        { message: "Email và mật khẩu là bắt buộc" },
+        { message: "Dữ liệu không hợp lệ", errors: parsed.error.flatten() },
         { status: 400 }
       );
     }
+    const { email, password } = parsed.data;
 
     // Find user by email
     const user = await prisma.user.findUnique({
