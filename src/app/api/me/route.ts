@@ -60,7 +60,5 @@ export async function GET(request: NextRequest) {
       { message: "Lỗi server. Vui lòng thử lại sau." },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }
