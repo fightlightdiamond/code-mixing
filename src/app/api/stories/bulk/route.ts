@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { caslGuardWithPolicies } from "@/core/auth/casl.guard";
 import { prisma } from "@/core/prisma";
 import { StoryType, DifficultyLevel, ContentStatus } from "@prisma/client";
+import logger from "@/lib/logger";
 import { getUserFromRequest } from "@/core/auth/getUser";
 import { z } from "zod";
 
@@ -60,7 +61,7 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json({ count: result.count });
   } catch (err) {
-    console.error("Error bulk updating stories:", err);
+    logger.error("Error bulk updating stories", undefined, err);
     return NextResponse.json(
       { error: "Failed to bulk update stories" },
       { status: 500 }
@@ -108,7 +109,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ count: result.count });
   } catch (err) {
-    console.error("Error bulk deleting stories:", err);
+    logger.error("Error bulk deleting stories", undefined, err);
     return NextResponse.json(
       { error: "Failed to bulk delete stories" },
       { status: 500 }

@@ -4,6 +4,7 @@ import { caslGuardWithPolicies } from "@/core/auth/casl.guard";
 import { getUserFromRequest } from "@/core/auth/getUser";
 import type { RequiredRule } from "@/types/api";
 import { Prisma, ProgressStatus } from "@prisma/client";
+import logger from "@/lib/logger";
 
 // GET /api/progress - list or fetch progress for current user
 export async function GET(request: NextRequest) {
@@ -38,7 +39,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(progressRecords);
   } catch (err) {
-    console.error("Error fetching user progress:", err);
+    logger.error("Error fetching user progress", undefined, err);
     return NextResponse.json({ error: "Failed to fetch progress" }, { status: 500 });
   }
 }
@@ -91,7 +92,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(progress, { status: 201 });
   } catch (err) {
-    console.error("Error updating user progress:", err);
+    logger.error("Error updating user progress", undefined, err);
     return NextResponse.json({ error: "Failed to update progress" }, { status: 500 });
   }
 }

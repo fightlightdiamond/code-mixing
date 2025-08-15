@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 
 import { prisma } from "@/core/prisma";
+import logger from "@/lib/logger";
 
 export async function POST(request: NextRequest) {
   try {
@@ -93,7 +94,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Token refresh error:', error);
+    logger.error('Token refresh error', undefined, error);
     return NextResponse.json(
       { message: 'Lỗi server. Vui lòng thử lại sau.' },
       { status: 500 }
