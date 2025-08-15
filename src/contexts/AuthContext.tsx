@@ -8,8 +8,13 @@ import React, {
   useCallback,
 } from "react";
 import { useRouter } from "next/navigation";
-import { setAuthToken, getAuthToken, refreshToken } from "@/core/api/tokenManager";
-import { clearCSRFToken } from "@/core/api/api";
+import {
+  setAuthToken,
+  getAuthToken,
+  refreshToken,
+  clearCSRFToken,
+} from "@/core/api/api";
+import logger from "@/lib/logger";
 
 // Types
 interface User {
@@ -58,7 +63,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Handle auth events
   useEffect(() => {
     const handleUnauthorized = () => {
-      console.log("🔑 Unauthorized event received - logging out");
+      logger.info("Unauthorized event received - logging out");
       // Only logout if not already on login page
       if (window.location.pathname !== "/login") {
         logout();
@@ -66,7 +71,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     const handleTokenRefreshFailed = () => {
-      console.log("🔄 Token refresh failed - logging out");
+      logger.info("Token refresh failed - logging out");
       // Only logout if not already on login page
       if (window.location.pathname !== "/login") {
         logout();
@@ -74,7 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     const handleLogout = () => {
-      console.log("🚪 Logout event received");
+      logger.info("Logout event received");
       logout();
     };
 
@@ -102,18 +107,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const checkAuth = useCallback(async () => {
-    console.log("🔍 AuthContext: checkAuth started");
+    logger.debug("AuthContext: checkAuth started");
     try {
       const token = getAuthToken();
-      console.log("🔍 AuthContext: token =", token ? "exists" : "null");
-      
+      logger.debug("AuthContext: token check", { hasToken: !!token });
+
       if (!token) {
-        console.log("🔍 AuthContext: No token, setting isLoading = false");
+        logger.debug("AuthContext: No token, setting isLoading = false");
         setIsLoading(false);
         return;
       }
 
-      console.log("🔍 AuthContext: Verifying token with /api/auth/me");
+      logger.debug("AuthContext: Verifying token with /api/auth/me");
       // Verify token with API
       const response = await fetch("/api/auth/me", {
         headers: {
@@ -121,28 +126,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         },
       });
 
-      console.log("🔍 AuthContext: API response status =", response.status);
+      logger.debug("AuthContext: API response status", { status: response.status });
       
       if (response.ok) {
         const apiResponse = await response.json();
-        console.log("🔍 AuthContext: API response received", apiResponse);
-        
+        logger.debug("AuthContext: API response received");
+
         // Extract user data from response.data
         const userData = apiResponse.data || apiResponse;
-        console.log("🔍 AuthContext: Extracted user data", userData);
+        logger.debug("AuthContext: Extracted user data", { userId: userData?.id });
         setUser(userData);
       } else {
-        console.log("🔍 AuthContext: Token invalid, clearing auth");
+        logger.info("AuthContext: Token invalid, clearing auth");
         // Token is invalid, remove it
         setAuthToken(null);
         setUser(null);
       }
     } catch (error) {
-      console.error("🚨 AuthContext: Auth check failed:", error);
+      logger.error("AuthContext: Auth check failed", undefined, error as Error);
       setAuthToken(null);
       setUser(null);
     } finally {
-      console.log("🔍 AuthContext: Setting isLoading = false");
+      logger.debug("AuthContext: Setting isLoading = false");
       setIsLoading(false);
     }
   }, []);
@@ -156,7 +161,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       return false;
     } catch (error) {
-      console.error("Token refresh failed:", error);
+      logger.error("Token refresh failed", undefined, error as Error);
       return false;
     }
   }, []);
@@ -197,7 +202,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { success: false, error: data.message || "Login failed" };
       }
     } catch (error) {
-      console.error("Login error:", error);
+      logger.error("Login error", undefined, error as Error);
       return { success: false, error: "Network error. Please try again." };
     } finally {
       setIsLoading(false);
@@ -230,7 +235,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { success: false, error: data.message || "Registration failed" };
       }
     } catch (error) {
-      console.error("Registration error:", error);
+      logger.error("Registration error", undefined, error as Error);
       return { success: false, error: "Network error. Please try again." };
     } finally {
       setIsLoading(false);
