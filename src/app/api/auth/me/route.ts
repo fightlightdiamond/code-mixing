@@ -24,14 +24,19 @@ export async function GET(request: NextRequest) {
     let decoded: JWTPayload;
     const authStartTime = Date.now();
     
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      throw new Error('JWT_SECRET is not configured');
+    }
+
     try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret') as JWTPayload;
+      decoded = jwt.verify(token, secret) as JWTPayload;
       log.performance('JWT verification completed', Date.now() - authStartTime, {
         endpoint: '/api/auth/me',
         userId: decoded.userId
       });
     } catch (error) {
-      log.warn('Invalid or expired JWT token', { 
+      log.warn('Invalid or expired JWT token', {
         endpoint: '/api/auth/me',
         error: error instanceof Error ? error.message : 'Unknown error'
       });
