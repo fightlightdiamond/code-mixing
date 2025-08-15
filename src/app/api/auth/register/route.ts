@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { PrismaClient } from "@prisma/client";
 import { z } from "zod";
 
 import { prisma } from "@/core/prisma";
@@ -108,7 +107,5 @@ export async function POST(request: NextRequest) {
       { message: "Lỗi server. Vui lòng thử lại sau." },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }
