@@ -3,15 +3,15 @@ import { getCSRFTokenForClient } from '@/lib/csrf';
 
 export async function GET() {
   try {
-    const { token } = getCSRFTokenForClient();
+    const { token, hash } = getCSRFTokenForClient();
     
     const response = NextResponse.json({ 
       csrfToken: token,
       message: 'CSRF token generated successfully' 
     });
 
-    // Set CSRF token in httpOnly cookie for additional security
-    response.cookies.set('csrf-token', token, {
+    // Store CSRF token hash in httpOnly cookie for verification
+    response.cookies.set('csrf-token', hash, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
