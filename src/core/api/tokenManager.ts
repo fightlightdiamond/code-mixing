@@ -105,6 +105,11 @@ class TokenManager {
     return this.cached?.refreshToken ?? null;
   }
 
+  getExpiresAtSync(): number | null {
+    this.init();
+    return this.cached?.expiresAt ?? null;
+  }
+
   isExpiringSoon(): boolean {
     this.init();
     if (!this.cached) return false;
@@ -154,3 +159,49 @@ class TokenManager {
 }
 
 export const tokenManager = TokenManager.getInstance();
+
+/* ======================================
+ * Public helpers
+ * ====================================== */
+
+export const setAuthToken = (
+  token: string | null,
+  expiresInSec?: number,
+  refreshToken?: string
+): void => {
+  if (token) tokenManager.set(token, expiresInSec, refreshToken);
+  else tokenManager.clear();
+};
+
+export const getAuthToken = (): string | null =>
+  tokenManager.getAccessTokenSync();
+
+export const getRefreshToken = (): string | null =>
+  tokenManager.getRefreshTokenSync();
+
+export const isTokenExpiringSoon = (): boolean => tokenManager.isExpiringSoon();
+
+export const getExpiresAt = (): number | null => tokenManager.getExpiresAtSync();
+
+const performRefresh = async (
+  refreshToken: string
+): Promise<RefreshTokenResponse | null> => {
+  const res = await fetch("/api/auth/refresh", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "same-origin",
+    body: JSON.stringify({ refreshToken }),
+  });
+  if (!res.ok) return null;
+  const data = (await res.json()) as RefreshTokenResponse;
+  return {
+    accessToken: data.accessToken,
+    expiresIn: data.expiresIn ?? 3600,
+    refreshToken: data.refreshToken,
+  };
+};
+
+export const refreshToken = (): Promise<string | null> =>
+  tokenManager.refresh(performRefresh);
+
+export const clearAuthToken = (): void => tokenManager.clear();

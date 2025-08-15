@@ -8,12 +8,8 @@ import React, {
   useCallback,
 } from "react";
 import { useRouter } from "next/navigation";
-import {
-  setAuthToken,
-  getAuthToken,
-  refreshToken,
-  clearCSRFToken,
-} from "@/core/api/api";
+import { setAuthToken, getAuthToken, refreshToken } from "@/core/api/tokenManager";
+import { clearCSRFToken } from "@/core/api/api";
 
 // Types
 interface User {
