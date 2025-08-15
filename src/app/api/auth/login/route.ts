@@ -41,6 +41,11 @@ export async function POST(request: NextRequest) {
     // Use the user's tenantId from the database
     const tenantId = user.tenantId;
 
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      throw new Error("JWT_SECRET is not configured");
+    }
+
     // Generate access token (shorter expiry)
     const accessToken = jwt.sign(
       {
@@ -49,7 +54,7 @@ export async function POST(request: NextRequest) {
         role: user.role,
         tenantId: tenantId,
       },
-      process.env.JWT_SECRET || "fallback-secret",
+      secret,
       { expiresIn: "15m" } // 15 minutes for access token
     );
 
@@ -59,7 +64,7 @@ export async function POST(request: NextRequest) {
         userId: user.id,
         type: "refresh",
       },
-      process.env.JWT_SECRET || "fallback-secret",
+      secret,
       { expiresIn: "7d" } // 7 days for refresh token
     );
 
