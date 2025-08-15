@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { caslGuard, RequiredRule } from "@/core/auth/casl.guard";
 import { prisma } from "@/core/prisma";
+import logger from "@/lib/logger";
 import { getUserFromRequest } from "@/core/auth/getUser";
 
 // GET /api/dashboard/stats - Lấy thống kê tổng quan hệ thống
@@ -178,7 +179,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(stats);
   } catch (error) {
-    console.error("Error fetching dashboard stats:", error);
+    logger.error("Error fetching dashboard stats", undefined, error);
     return NextResponse.json(
       { error: "Failed to fetch dashboard statistics" },
       { status: 500 }

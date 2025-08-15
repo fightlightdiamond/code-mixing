@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { caslGuardWithPolicies } from "@/core/auth/casl.guard";
 import { prisma } from "@/core/prisma";
 import { getUserFromRequest } from "@/core/auth/getUser";
+import logger from "@/lib/logger";
 
 // GET /api/tags - List tags for current tenant
 export async function GET(request: NextRequest) {
@@ -26,7 +27,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(tags);
   } catch (err) {
-    console.error("Error fetching tags:", err);
+    logger.error("Error fetching tags", undefined, err);
     return NextResponse.json(
       { error: "Failed to fetch tags" },
       { status: 500 }

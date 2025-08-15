@@ -4,6 +4,7 @@ import { prisma } from "@/core/prisma";
 import { STORY_DEFAULTS } from "@/config";
 import { generateStoryChunks, calculateStoryStats } from "@/lib/story-chunker";
 import { getUserFromRequest } from "@/core/auth/getUser";
+import logger from "@/lib/logger";
 import { z } from "zod";
 import { StoryType, DifficultyLevel } from "@prisma/client";
 
@@ -87,7 +88,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ data: stories, meta: { page, limit, total } });
   } catch (error) {
-    console.error("Error fetching stories:", error);
+    logger.error("Error fetching stories", undefined, error);
     return NextResponse.json(
       { error: "Failed to fetch stories" },
       { status: 500 }
@@ -201,7 +202,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(story, { status: 201 });
   } catch (error) {
-    console.error("Error creating story:", error);
+    logger.error("Error creating story", undefined, error);
     return NextResponse.json(
       { error: "Failed to create story" },
       { status: 500 }

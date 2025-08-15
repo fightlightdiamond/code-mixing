@@ -4,7 +4,7 @@
  * Provides helper functions for tracking learning sessions, progress, and generating insights.
  * Supports comprehensive analytics for the EdTech platform.
  */
-
+import logger from '@/lib/logger';
 import { prisma } from "@/core/prisma";
 
 export interface StartLearningSessionData {
@@ -55,7 +55,7 @@ export async function startLearningSession(data: StartLearningSessionData) {
       },
     });
   } catch (error) {
-    console.error('Failed to start learning session:', error);
+    logger.error('Failed to start learning session', undefined, error);
     throw error;
   }
 }
@@ -77,7 +77,7 @@ export async function updateLearningSession(
       },
     });
   } catch (error) {
-    console.error('Failed to update learning session:', error);
+    logger.error('Failed to update learning session', undefined, error);
     throw error;
   }
 }
@@ -110,7 +110,7 @@ export async function endLearningSession(
       interactionCount,
     });
   } catch (error) {
-    console.error('Failed to end learning session:', error);
+    logger.error('Failed to end learning session', undefined, error);
     throw error;
   }
 }
@@ -151,7 +151,7 @@ export async function getUserLearningSessions(
       skip: offset,
     });
   } catch (error) {
-    console.error('Failed to get user learning sessions:', error);
+    logger.error('Failed to get user learning sessions', undefined, error);
     return [];
   }
 }
@@ -203,7 +203,7 @@ export async function getUserLearningAnalytics(userId: string, tenantId: string)
       recentSessions,
     };
   } catch (error) {
-    console.error('Failed to get user learning analytics:', error);
+    logger.error('Failed to get user learning analytics', undefined, error);
     return {
       totalSessions: 0,
       completedSessions: 0,
@@ -250,7 +250,7 @@ export async function getCourseLearningAnalytics(courseId: string, tenantId: str
       completionRate: totalSessions > 0 ? (completedSessions / totalSessions) * 100 : 0,
     };
   } catch (error) {
-    console.error('Failed to get course learning analytics:', error);
+    logger.error('Failed to get course learning analytics', undefined, error);
     return {
       totalSessions: 0,
       uniqueUsers: 0,
@@ -330,7 +330,7 @@ export async function getTenantLearningAnalytics(tenantId: string) {
       })),
     };
   } catch (error) {
-    console.error('Failed to get tenant learning analytics:', error);
+    logger.error('Failed to get tenant learning analytics', undefined, error);
     return {
       totalSessions: 0,
       activeUsers: 0,
@@ -421,7 +421,7 @@ export async function getUserLearningStreak(userId: string, tenantId: string) {
       lastActivity: sessions[0].startedAt,
     };
   } catch (error) {
-    console.error('Failed to get user learning streak:', error);
+    logger.error('Failed to get user learning streak', undefined, error);
     return { currentStreak: 0, longestStreak: 0, lastActivity: null };
   }
 }

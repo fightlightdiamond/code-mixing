@@ -4,6 +4,7 @@ import { caslGuardWithPolicies } from "@/core/auth/casl.guard";
 import { getUserFromRequest } from "@/core/auth/getUser";
 import type { RequiredRule } from "@/types/api";
 import { ProgressStatus } from "@prisma/client";
+import logger from "@/lib/logger";
 
 // GET /api/progress/[id] - fetch specific progress record
 export async function GET(
@@ -32,7 +33,7 @@ export async function GET(
 
     return NextResponse.json(progress);
   } catch (err) {
-    console.error("Error fetching progress:", err);
+    logger.error("Error fetching progress", undefined, err);
     return NextResponse.json({ error: "Failed to fetch progress" }, { status: 500 });
   }
 }
@@ -79,7 +80,7 @@ export async function PUT(
 
     return NextResponse.json(progress);
   } catch (err) {
-    console.error("Error updating progress:", err);
+    logger.error("Error updating progress", undefined, err);
     return NextResponse.json({ error: "Failed to update progress" }, { status: 500 });
   }
 }
@@ -113,7 +114,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (err) {
-    console.error("Error deleting progress:", err);
+    logger.error("Error deleting progress", undefined, err);
     return NextResponse.json({ error: "Failed to delete progress" }, { status: 500 });
   }
 }

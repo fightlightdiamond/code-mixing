@@ -3,6 +3,7 @@ import type { UserRole } from "@prisma/client";
 
 import { prisma } from "@/core/prisma";
 import { getUserFromRequest } from "@/core/auth/getUser";
+import logger from "@/lib/logger";
 
 export async function GET(request: NextRequest) {
   try {
@@ -60,7 +61,7 @@ export async function GET(request: NextRequest) {
       tenantId: user.tenantId,
     });
   } catch (error) {
-    console.error("Auth verification error:", error);
+    logger.error("Auth verification error", undefined, error);
     return NextResponse.json(
       { message: "Lỗi server. Vui lòng thử lại sau." },
       { status: 500 }

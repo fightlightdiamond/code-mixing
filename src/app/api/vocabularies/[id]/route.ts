@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/core/prisma";
+import logger from "@/lib/logger";
 
 // PUT /api/vocabularies/[id] - Cập nhật vocabulary
 export async function PUT(
@@ -72,7 +73,7 @@ export async function PUT(
 
     return NextResponse.json(vocabulary);
   } catch (error) {
-    console.error("Error updating vocabulary:", error);
+    logger.error("Error updating vocabulary", undefined, error);
     return NextResponse.json(
       { error: "Failed to update vocabulary" },
       { status: 500 }
@@ -113,7 +114,7 @@ export async function DELETE(
 
     return NextResponse.json({ message: "Vocabulary deleted successfully" });
   } catch (error) {
-    console.error("Error deleting vocabulary:", error);
+    logger.error("Error deleting vocabulary", undefined, error);
     return NextResponse.json(
       { error: "Failed to delete vocabulary" },
       { status: 500 }

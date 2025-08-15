@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import { z } from "zod";
 import { prisma } from "@/core/prisma";
 import { rateLimit } from "@/lib/rate-limit";
+import logger from "@/lib/logger";
 
 const loginSchema = z.object({
     email: z.string().email(),
@@ -18,6 +19,7 @@ const WINDOW_MS = parseInt(
   process.env.LOGIN_RATE_LIMIT_WINDOW_MS || "60000",
   10
 );
+
 
 export async function POST(request: NextRequest) {
   try {
@@ -122,7 +124,7 @@ export async function POST(request: NextRequest) {
       token: accessToken,
     });
   } catch (error) {
-    console.error("Login error:", error);
+    logger.error("Login error", undefined, error);
     return NextResponse.json(
       { message: "Lỗi server. Vui lòng thử lại sau." },
       { status: 500 }

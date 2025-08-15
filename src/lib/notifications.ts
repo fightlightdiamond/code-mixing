@@ -7,6 +7,7 @@
 
 import { NotificationType } from '@prisma/client';
 import { prisma } from "@/core/prisma";
+import logger from '@/lib/logger';
 
 export interface CreateNotificationData {
   type: NotificationType;
@@ -40,7 +41,7 @@ export async function createNotification(data: CreateNotificationData) {
       },
     });
   } catch (error) {
-    console.error('Failed to create notification:', error);
+    logger.error('Failed to create notification', undefined, error);
     throw error;
   }
 }
@@ -157,7 +158,7 @@ export async function getUnreadNotifications(userId: string, tenantId: string) {
       take: 50,
     });
   } catch (error) {
-    console.error('Failed to get unread notifications:', error);
+    logger.error('Failed to get unread notifications', undefined, error);
     return [];
   }
 }
@@ -202,7 +203,7 @@ export async function getUserNotifications(
       totalPages: Math.ceil(total / limit),
     };
   } catch (error) {
-    console.error('Failed to get user notifications:', error);
+    logger.error('Failed to get user notifications', undefined, error);
     return {
       notifications: [],
       total: 0,
@@ -233,7 +234,7 @@ export async function markNotificationAsRead(
       },
     });
   } catch (error) {
-    console.error('Failed to mark notification as read:', error);
+    logger.error('Failed to mark notification as read', undefined, error);
     throw error;
   }
 }
@@ -254,7 +255,7 @@ export async function markAllNotificationsAsRead(userId: string, tenantId: strin
       },
     });
   } catch (error) {
-    console.error('Failed to mark all notifications as read:', error);
+    logger.error('Failed to mark all notifications as read', undefined, error);
     throw error;
   }
 }
@@ -282,7 +283,7 @@ export async function deleteOldNotifications(
 
     return result.count;
   } catch (error) {
-    console.error('Failed to delete old notifications:', error);
+    logger.error('Failed to delete old notifications', undefined, error);
     return 0;
   }
 }
@@ -318,7 +319,7 @@ export async function getNotificationStats(userId: string, tenantId: string) {
       }, {} as Record<string, number>),
     };
   } catch (error) {
-    console.error('Failed to get notification stats:', error);
+    logger.error('Failed to get notification stats', undefined, error);
     return {
       total: 0,
       unread: 0,
