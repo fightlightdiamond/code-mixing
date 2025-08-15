@@ -144,7 +144,13 @@ class ApiClient {
           throw new ApiError(message, response.status, body, `HTTP_${response.status}`);
         }
 
-        return (body as T) ?? (await response.text() as unknown as T);
+        if (body !== undefined) {
+          return body as T;
+        }
+        // For non-JSON responses, return the text content
+        // Caller should handle string responses appropriately
+        const textContent = await response.text();
+        return textContent as unknown as T;
       } catch (err) {
         lastError = err as Error;
         if (attempt < retries) {
