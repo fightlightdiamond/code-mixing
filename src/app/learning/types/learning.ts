@@ -28,11 +28,15 @@ export interface StoryChunk {
 
 // Vocabulary-related types
 export interface VocabularyData {
+  id?: string;
   word: string;
   meaning: string;
   pronunciation?: string;
   example?: string;
   audioUrl?: string;
+  userProgress?: {
+    status: "new" | "reviewing" | "mastered";
+  };
 }
 
 // Component props

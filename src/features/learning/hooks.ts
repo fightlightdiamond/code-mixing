@@ -15,6 +15,8 @@ import type {
   VocabularyLookupData,
   SubmitExerciseData,
   ExerciseResult,
+  ProgressAnalytics,
+  VocabularyUpdate,
 } from "./types";
 import type { DifficultyLevel, StoryType } from "@prisma/client";
 
@@ -102,7 +104,10 @@ export const buildProgressAnalyticsQuery = (
     queryKey: keyFactory.list("progress-analytics", { timeframe }),
     queryFn: ({ signal }) => {
       const params = timeframe ? `?timeframe=${timeframe}` : "";
-      return api<any>(`/api/learning/progress/analytics${params}`, { signal });
+      return api<ProgressAnalytics>(
+        `/api/learning/progress/analytics${params}`,
+        { signal }
+      );
     },
     staleTime: 5 * 60_000,
     gcTime: 15 * 60_000,
@@ -187,7 +192,7 @@ export function useSyncOfflineData() {
   return useMutation({
     mutationFn: (data: {
       progressUpdates: UpdateProgressData[];
-      vocabularyUpdates: any[];
+      vocabularyUpdates: VocabularyUpdate[];
     }) =>
       api("/api/learning/sync", {
         method: "POST",
