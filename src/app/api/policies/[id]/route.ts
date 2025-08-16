@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma, PrismaClient } from "@prisma/client";
 import { prisma } from "@/core/prisma";
 import { Prisma, PrismaClient } from "@prisma/client";
 import { caslGuardWithPolicies } from "@/core/auth/casl.guard";
@@ -6,6 +7,10 @@ import { getUserFromRequest } from "@/core/auth/getUser";
 import type { Prisma, PrismaClient } from "@prisma/client";
 
 type PrismaWithPolicy = PrismaClient & { resourcePolicy?: Prisma.ResourcePolicyDelegate };
+
+type PrismaWithPolicy = PrismaClient & {
+  resourcePolicy?: Prisma.ResourcePolicyDelegate;
+};
 
 // getUserFromRequest imported from core auth
 
