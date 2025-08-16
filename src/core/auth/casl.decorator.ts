@@ -7,9 +7,7 @@ export interface CheckAbilitiesOptions {
 }
 
 interface CaslDecoratorTarget {
-  constructor: {
-    caslRules?: Record<string, RequiredRule[]>;
-  };
+  constructor: { caslRules?: Record<string, RequiredRule[]> };
 }
 
 export const CheckAbilities = (...rules: RequiredRule[]) => {
