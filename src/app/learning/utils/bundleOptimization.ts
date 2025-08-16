@@ -1,4 +1,17 @@
 import { logger } from '@/lib/logger';
+
+
+export interface WebVitalsMetric {
+  id: string;
+  name: string;
+  value: number;
+  startTime?: number;
+  label?: string;
+}
+
+interface EventListenerElement {
+  _eventListeners?: Record<string, EventListener[]>;
+}
 /**
  * Bundle optimization utilities for the learning application
  */
@@ -154,7 +167,10 @@ export const performanceMonitoring = {
   },
 
   // Measure API response time
-  measureApiTime: async (apiName: string, apiCall: () => Promise<any>) => {
+  measureApiTime: async <T>(
+    apiName: string,
+    apiCall: () => Promise<T>
+  ): Promise<T> => {
     if (typeof window === "undefined" || !window.performance) {
       return apiCall();
     }
@@ -178,15 +194,13 @@ export const performanceMonitoring = {
     } catch (error) {
       const endTime = performance.now();
       logger.error(
-        `${apiName} API error after ${endTime - startTime}ms:`,
-        error
-      );
+        `${apiName} API error after ${endTime - startTime}ms:`, undefined, error as Error);
       throw error;
     }
   },
 
   // Report Core Web Vitals
-  reportWebVitals: (metric: any) => {
+  reportWebVitals: (metric: WebVitalsMetric) => {
     if (typeof window === "undefined") return;
 
     logger.info(metric);
@@ -209,7 +223,8 @@ export const memoryManagement = {
   // Clean up event listeners
   cleanupEventListeners: (element: HTMLElement, events: string[]) => {
     events.forEach((event) => {
-      const listeners = (element as any)._eventListeners?.[event] || [];
+      const listeners =
+        (element as EventListenerElement)._eventListeners?.[event] || [];
       listeners.forEach((listener: EventListener) => {
         element.removeEventListener(event, listener);
       });
@@ -217,7 +232,7 @@ export const memoryManagement = {
   },
 
   // Debounce function for performance
-  debounce: <T extends (...args: any[]) => any>(
+  debounce: <T extends (...args: unknown[]) => unknown>(
     func: T,
     wait: number,
     immediate?: boolean
@@ -240,7 +255,7 @@ export const memoryManagement = {
   },
 
   // Throttle function for performance
-  throttle: <T extends (...args: any[]) => any>(
+  throttle: <T extends (...args: unknown[]) => unknown>(
     func: T,
     limit: number
   ): ((...args: Parameters<T>) => void) => {
@@ -266,10 +281,10 @@ export const serviceWorkerUtils = {
 
     try {
       const registration = await navigator.serviceWorker.register(swUrl);
-      logger.info("Service Worker registered successfully:", registration);
+      logger.info("Service Worker registered successfully", { registration });
       return registration;
     } catch (error) {
-      logger.error("Service Worker registration failed:", error);
+      logger.error("Service Worker registration failed:", undefined, error as Error);
       return null;
     }
   },
@@ -280,7 +295,7 @@ export const serviceWorkerUtils = {
       await registration.update();
       logger.info("Service Worker updated successfully");
     } catch (error) {
-      logger.error("Service Worker update failed:", error);
+      logger.error("Service Worker update failed:", undefined, error as Error);
     }
   },
 

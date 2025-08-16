@@ -46,7 +46,7 @@ export function RequireDebug({ action, subject, children }: RequireDebugProps) {
       timestamp: new Date().toISOString()
     };
 
-    logger.info("🔍 RequireDebug Info:", debug);
+    logger.info("🔍 RequireDebug Info", debug);
 
     // Chỉ check khi đã load xong auth
     if (isLoading) {

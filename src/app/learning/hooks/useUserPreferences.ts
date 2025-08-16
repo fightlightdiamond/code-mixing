@@ -28,7 +28,9 @@ export function useUserPreferences() {
   const [preferences, setPreferences] =
     useState<UserLearningPreferences>(DEFAULT_PREFERENCES);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Load preferences from localStorage on mount
   useEffect(() => {
@@ -40,7 +42,7 @@ export function useUserPreferences() {
         setPreferences({ ...DEFAULT_PREFERENCES, ...parsed });
       }
     } catch (err) {
-      logger.error("Failed to load user preferences:", err);
+      logger.error("Failed to load user preferences:", undefined, err as Error);
       setError("Không thể tải cài đặt người dùng");
     } finally {
       setIsLoading(false);
@@ -77,22 +79,43 @@ export function useUserPreferences() {
     }
   }, [preferences.theme]);
 
-  // Save preferences to localStorage
+  // Save preferences to localStorage and server
   const savePreferences = useCallback(
     async (newPreferences: UserLearningPreferences) => {
+      setIsSaving(true);
       try {
         setError(null);
+
+        const res = await fetch("/api/user/preferences", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(newPreferences),
+        });
+
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+
         localStorage.setItem(STORAGE_KEY, JSON.stringify(newPreferences));
         setPreferences(newPreferences);
 
-        // TODO: Also save to server/database
-        // await api.updateUserPreferences(newPreferences);
+        const response = await fetch("/api/user/preferences", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(newPreferences),
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
 
         return true;
       } catch (err) {
-        logger.error("Failed to save user preferences:", err);
+        logger.error("Failed to save user preferences:", undefined, err as Error);
         setError("Không thể lưu cài đặt");
         return false;
+      } finally {
+        setIsSaving(false);
       }
     },
     []
@@ -194,6 +217,7 @@ export function useUserPreferences() {
   return {
     preferences,
     isLoading,
+    isSaving,
     error,
     savePreferences,
     updatePreference,

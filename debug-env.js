@@ -39,5 +39,7 @@ const getBaseUrl = () => {
   return `${protocol}://${host}${port !== '80' && port !== '443' ? `:${port}` : ''}`;
 };
 
-logger.info('🌐 Constructed Base URL:', getBaseUrl());
-logger.info('🚀 Server should be running on:', `http://localhost:${process.env.PORT || '3002'}`);
+logger.info('🌐 Constructed Base URL:', { url: getBaseUrl() });
+logger.info('🚀 Server should be running on:', {
+  url: `http://localhost:${process.env.PORT || '3002'}`,
+});
