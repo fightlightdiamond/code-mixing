@@ -28,11 +28,15 @@ export interface StoryChunk {
 
 // Vocabulary-related types
 export interface VocabularyData {
+  id?: string;
   word: string;
   meaning: string;
   pronunciation?: string;
   example?: string;
   audioUrl?: string;
+  userProgress?: {
+    status: "new" | "reviewing" | "mastered";
+  };
 }
 
 // Component props
@@ -223,9 +227,12 @@ export type ReviewFrequency = "daily" | "every_other_day" | "weekly";
 
 export interface SettingsPanelProps {
   preferences: UserLearningPreferences;
-  onPreferencesChange: (preferences: UserLearningPreferences) => void;
+  onPreferencesChange: (
+    preferences: UserLearningPreferences
+  ) => Promise<boolean>;
   onClose: () => void;
   className?: string;
+  isSaving?: boolean;
 }
 
 export interface PreferenceSection {

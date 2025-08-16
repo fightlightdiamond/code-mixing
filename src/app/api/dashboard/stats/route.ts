@@ -179,7 +179,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(stats);
   } catch (error) {
-    logger.error("Error fetching dashboard stats", undefined, error);
+    logger.error("Error fetching dashboard stats", undefined, error as Error);
     return NextResponse.json(
       { error: "Failed to fetch dashboard statistics" },
       { status: 500 }

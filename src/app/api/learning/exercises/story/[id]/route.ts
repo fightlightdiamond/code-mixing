@@ -4,6 +4,39 @@ import { prisma } from "@/core/prisma";
 import { getUserFromRequest } from "@/core/auth/getUser";
 import logger from "@/lib/logger";
 
+interface StoryChunk {
+  id: string;
+  chunkText: string;
+  type: string;
+  chunkOrder: number;
+}
+
+interface StoryWithChunks {
+  id: string;
+  chunks: StoryChunk[];
+}
+
+interface ExerciseChoice {
+  id: string;
+  text: string;
+}
+
+interface ExerciseQuestion {
+  id: string;
+  stem: string;
+  type: string;
+  choices: ExerciseChoice[];
+  correctAnswer?: string;
+}
+
+interface Exercise {
+  id: string;
+  type: string;
+  difficulty: string;
+  questions: ExerciseQuestion[];
+  source: string;
+}
+
 // GET /api/learning/exercises/story/[id] - Get exercises for a specific story
 export async function GET(
   request: NextRequest,
@@ -85,10 +118,12 @@ export async function GET(
     }
 
     // Generate dynamic exercises based on story content
-    const dynamicExercises = generateDynamicExercises(story);
+    const dynamicExercises: Exercise[] = generateDynamicExercises(
+      story as StoryWithChunks
+    );
 
     // Combine database exercises with dynamic exercises
-    const allExercises = [
+    const allExercises: Exercise[] = [
       ...exercises.map((exercise) => ({
         id: exercise.id,
         type: exercise.type,
@@ -128,19 +163,19 @@ export async function GET(
 }
 
 // Generate dynamic exercises based on story content
-function generateDynamicExercises(story: any) {
-  const exercises = [];
-  const chemChunks = story.chunks.filter((chunk: any) => chunk.type === "chem");
+function generateDynamicExercises(story: StoryWithChunks): Exercise[] {
+  const exercises: Exercise[] = [];
+  const chemChunks = story.chunks.filter((chunk: StoryChunk) => chunk.type === "chem");
 
   if (chemChunks.length > 0) {
     // Generate fill-in-the-blank exercises from embedded words
-    const fillBlankExercise = {
+    const fillBlankExercise: Exercise = {
       id: `dynamic-fill-blank-${story.id}`,
       type: "fill_blank",
       difficulty: "medium",
       questions: chemChunks
         .slice(0, 5)
-        .map((chunk: any, index: number) => {
+        .map((chunk: StoryChunk, index: number): ExerciseQuestion | null => {
           // Extract English words from the chunk (this is a simplified approach)
           const englishWords = extractEnglishWords(chunk.chunkText);
           const targetWord = englishWords[0]; // Use first English word
@@ -158,7 +193,7 @@ function generateDynamicExercises(story: any) {
           }
           return null;
         })
-        .filter(Boolean),
+        .filter(Boolean) as ExerciseQuestion[],
       source: "dynamic",
     };
 
@@ -167,13 +202,13 @@ function generateDynamicExercises(story: any) {
     }
 
     // Generate multiple choice exercises
-    const mcqExercise = {
+    const mcqExercise: Exercise = {
       id: `dynamic-mcq-${story.id}`,
       type: "multiple_choice",
       difficulty: "medium",
       questions: chemChunks
         .slice(0, 3)
-        .map((chunk: any, index: number) => {
+        .map((chunk: StoryChunk, index: number): ExerciseQuestion | null => {
           const englishWords = extractEnglishWords(chunk.chunkText);
           const targetWord = englishWords[0];
 
@@ -196,7 +231,7 @@ function generateDynamicExercises(story: any) {
           }
           return null;
         })
-        .filter(Boolean),
+        .filter(Boolean) as ExerciseQuestion[],
       source: "dynamic",
     };
 
