@@ -3,6 +3,7 @@ import { caslGuardWithPolicies } from "@/core/auth/casl.guard";
 import { prisma } from "@/core/prisma";
 import { getUserFromRequest } from "@/core/auth/getUser";
 import logger from "@/lib/logger";
+import { getAudioSignedUrl } from "@/lib/storage";
 import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { Readable } from "stream";
@@ -110,6 +111,16 @@ export async function GET(
         "Content-Type": ContentType || "audio/mpeg",
       },
     });
+    try {
+      const signedUrl = await getAudioSignedUrl(audio.storageKey);
+      return NextResponse.redirect(signedUrl);
+    } catch (err) {
+      logger.error("Failed to generate signed URL", { key: audio.storageKey }, err);
+      return NextResponse.json(
+        { error: "Failed to fetch story audio" },
+        { status: 500 }
+      );
+    }
   } catch (error) {
     logger.error("Error fetching story audio", { storyId: params.id }, error);
     return NextResponse.json(

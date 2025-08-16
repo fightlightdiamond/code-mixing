@@ -4,10 +4,17 @@
 
 import { NextRequest } from "next/server";
 import { GET } from "@/app/api/learning/stories/[id]/audio/route";
+import { prisma } from "@/core/prisma";
 import { getUserFromRequest } from "@/core/auth/getUser";
 import { caslGuardWithPolicies } from "@/core/auth/casl.guard";
-import { prisma } from "@/core/prisma";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { getAudioSignedUrl } from "@/lib/storage";
+
+jest.mock("@/core/prisma", () => ({
+  prisma: {
+    story: { findUnique: jest.fn() },
+    audio: { findFirst: jest.fn() },
+  },
+}));
 
 jest.mock("@/core/auth/getUser", () => ({
   getUserFromRequest: jest.fn(),
@@ -17,64 +24,51 @@ jest.mock("@/core/auth/casl.guard", () => ({
   caslGuardWithPolicies: jest.fn(),
 }));
 
-jest.mock("@/core/prisma", () => ({
-  prisma: {
-    story: { findUnique: jest.fn() },
-    audio: { findFirst: jest.fn() },
-  },
+jest.mock("@/lib/storage", () => ({
+  getAudioSignedUrl: jest.fn(),
 }));
 
-jest.mock("@aws-sdk/client-s3", () => ({
-  S3Client: jest.fn(),
-  GetObjectCommand: jest.fn(),
-}));
-
-jest.mock("@aws-sdk/s3-request-presigner", () => ({
-  getSignedUrl: jest.fn(),
-}));
-
-const mockGetUser = getUserFromRequest as jest.MockedFunction<
-  typeof getUserFromRequest
->;
-const mockCasl = caslGuardWithPolicies as jest.MockedFunction<
-  typeof caslGuardWithPolicies
->;
 const mockPrisma = prisma as any;
-const mockGetSignedUrl = getSignedUrl as jest.MockedFunction<
-  typeof getSignedUrl
->;
+const mockGetUser = getUserFromRequest as jest.MockedFunction<typeof getUserFromRequest>;
+const mockCasl = caslGuardWithPolicies as jest.MockedFunction<typeof caslGuardWithPolicies>;
+const mockGetSignedUrl = getAudioSignedUrl as jest.MockedFunction<typeof getAudioSignedUrl>;
 
 describe("/api/learning/stories/[id]/audio GET", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    process.env.AUDIO_STREAM = ""; // ensure signed URL path
-    process.env.AWS_S3_BUCKET = "test-bucket";
-    process.env.AWS_REGION = "us-east-1";
   });
 
-  it("redirects to signed URL when audio exists", async () => {
-    mockGetUser.mockResolvedValue({ id: "u1" });
+  it("redirects to signed URL", async () => {
+    mockGetUser.mockResolvedValue({ sub: "u1", tenantId: "t1" });
     mockCasl.mockResolvedValue({ allowed: true, error: null });
-    mockPrisma.story.findUnique.mockResolvedValue({
-      id: "1",
-      title: "Test",
-    });
+    mockPrisma.story.findUnique.mockResolvedValue({ id: "s1", title: "Story" });
     mockPrisma.audio.findFirst.mockResolvedValue({
       id: "a1",
-      storageKey: "file.mp3",
+      storageKey: "story/audio.mp3",
       voiceType: "original",
-      durationSec: 10,
+      durationSec: 30,
     });
-    mockGetSignedUrl.mockResolvedValue("https://signed-url/");
+    mockGetSignedUrl.mockResolvedValue("https://signed.example.com/audio.mp3");
 
-    const req = new NextRequest(
-      "http://localhost:3000/api/learning/stories/1/audio"
-    );
-
-    const res = await GET(req, { params: { id: "1" } });
+    const req = new NextRequest("http://localhost:3000/api/learning/stories/s1/audio");
+    const res = await GET(req, { params: { id: "s1" } });
 
     expect(res.status).toBe(307);
-    expect(res.headers.get("location")).toBe("https://signed-url/");
+    expect(res.headers.get("location")).toBe(
+      "https://signed.example.com/audio.mp3"
+    );
+  });
+
+  it("returns 404 when audio not found", async () => {
+    mockGetUser.mockResolvedValue({ sub: "u1", tenantId: "t1" });
+    mockCasl.mockResolvedValue({ allowed: true, error: null });
+    mockPrisma.story.findUnique.mockResolvedValue({ id: "s1", title: "Story" });
+    mockPrisma.audio.findFirst.mockResolvedValue(null);
+
+    const req = new NextRequest("http://localhost:3000/api/learning/stories/s1/audio");
+    const res = await GET(req, { params: { id: "s1" } });
+
+    expect(res.status).toBe(404);
   });
 });
 
