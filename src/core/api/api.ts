@@ -1,5 +1,6 @@
 import { ApiError } from "./errorHandling";
 import logger from "@/lib/logger";
+import { getCSRFToken } from "./csrf";
 
 /* ======================================
  * Types
@@ -186,28 +187,6 @@ class TokenManager {
 export const tokenManager = TokenManager.getInstance();
 
 /* ======================================
- * CSRF (simple cache)
- * ====================================== */
-let csrfToken: string | null = null;
-
-export const getCSRFToken = async (): Promise<string | null> => {
-  if (csrfToken) return csrfToken;
-  try {
-    const res = await fetch("/api/csrf", { credentials: "same-origin" });
-    if (!res.ok) return null;
-    const data = (await res.json()) as { csrfToken?: string };
-    csrfToken = data?.csrfToken ?? null;
-    return csrfToken;
-  } catch {
-    return null;
-  }
-};
-
-export const clearCSRFToken = () => {
-  csrfToken = null;
-};
-
-/* ======================================
  * ApiClient (fetch wrapper + interceptors)
  * ====================================== */
 class ApiClient {
@@ -391,8 +370,6 @@ export const getRefreshToken = (): string | null => tokenManager.getRefreshToken
 export const isTokenExpiringSoon = (): boolean => tokenManager.isExpiringSoon();
 
 export const refreshToken = (): Promise<string | null> => tokenManager.refresh(performRefresh);
-
-export const getCSRFTokenForClient = (): Promise<string | null> => getCSRFToken();
 
 export const getTokenStatus = (): {
   hasToken: boolean;
