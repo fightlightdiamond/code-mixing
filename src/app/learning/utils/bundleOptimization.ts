@@ -1,10 +1,12 @@
 import { logger } from '@/lib/logger';
 
-interface WebVitalsMetric {
+
+export interface WebVitalsMetric {
   id: string;
   name: string;
   value: number;
-  [key: string]: unknown;
+  startTime?: number;
+  label?: string;
 }
 
 interface EventListenerElement {
