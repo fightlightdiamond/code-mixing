@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { checkAbilities, RequiredRule } from "./casl.guard";
+
+const userSchema = z.object({
+  id: z.string(),
+  tenantId: z.string().optional(),
+  roles: z.array(z.string())
+});
 
 export function createCaslMiddleware(rules: RequiredRule[]) {
   return async (request: NextRequest) => {
@@ -11,16 +18,19 @@ export function createCaslMiddleware(rules: RequiredRule[]) {
     }
 
     try {
-      const userData = JSON.parse(user);
+      const result = userSchema.parse(JSON.parse(user));
+      const userData = {
+        sub: result.id,
+        tenantId: result.tenantId,
+        roles: result.roles,
+      };
 
-      // Check if user has required abilities
       const isAllowed = checkAbilities(rules, userData);
 
       if (!isAllowed) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       }
 
-      // User is allowed, continue with the request
       return null;
     } catch (error) {
       return NextResponse.json({ error: "Invalid user data" }, { status: 401 });
