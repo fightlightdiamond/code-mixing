@@ -25,11 +25,16 @@ const learningSessionSchema = z.object({
   endedAt: z.string().datetime().optional(),
 });
 
+export type ProgressUpdate = z.infer<typeof progressUpdateSchema>;
+export type BatchProgressUpdate = z.infer<typeof batchProgressUpdateSchema>;
+export type LearningSessionInput = z.infer<typeof learningSessionSchema>;
+
 // POST /api/learning/progress/update - Update user learning progress
 export async function POST(request: NextRequest) {
+  let user: Awaited<ReturnType<typeof getUserFromRequest>> | null = null;
   try {
     // Get user from request
-    const user = await getUserFromRequest(request);
+    user = await getUserFromRequest(request);
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -48,21 +53,66 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = await request.json();
-    const updateType = body.type || "lesson_progress"; // lesson_progress, learning_session, batch
+    const rawBody = await request.json();
+    if (typeof rawBody !== "object" || rawBody === null) {
+      return NextResponse.json(
+        { error: "Invalid request body" },
+        { status: 400 }
+      );
+    }
+
+    const body = rawBody as Record<string, unknown>;
+    const updateType =
+      typeof body.type === "string" ? body.type : "lesson_progress"; // lesson_progress, learning_session, batch
 
     let results = [];
 
     switch (updateType) {
-      case "lesson_progress":
-        results = await updateLessonProgress(user.id, body, user.tenantId);
+      case "lesson_progress": {
+        const parsed = progressUpdateSchema.safeParse(body);
+        if (!parsed.success) {
+          return NextResponse.json(
+            { error: parsed.error.message },
+            { status: 400 }
+          );
+        }
+        results = await updateLessonProgress(
+          user.id,
+          parsed.data,
+          user.tenantId
+        );
         break;
-      case "learning_session":
-        results = await updateLearningSession(user.id, body, user.tenantId);
+      }
+      case "learning_session": {
+        const parsed = learningSessionSchema.safeParse(body);
+        if (!parsed.success) {
+          return NextResponse.json(
+            { error: parsed.error.message },
+            { status: 400 }
+          );
+        }
+        results = await updateLearningSession(
+          user.id,
+          parsed.data,
+          user.tenantId
+        );
         break;
-      case "batch":
-        results = await updateBatchProgress(user.id, body, user.tenantId);
+      }
+      case "batch": {
+        const parsed = batchProgressUpdateSchema.safeParse(body);
+        if (!parsed.success) {
+          return NextResponse.json(
+            { error: parsed.error.message },
+            { status: 400 }
+          );
+        }
+        results = await updateBatchProgress(
+          user.id,
+          parsed.data,
+          user.tenantId
+        );
         break;
+      }
       default:
         return NextResponse.json(
           { error: "Invalid update type" },
@@ -87,17 +137,10 @@ export async function POST(request: NextRequest) {
 // Update lesson progress
 async function updateLessonProgress(
   userId: string,
-  data: any,
+  data: ProgressUpdate,
   tenantId?: string
 ) {
-  const validation = progressUpdateSchema.safeParse(data);
-  if (!validation.success) {
-    throw new Error(
-      `Invalid lesson progress data: ${validation.error.message}`
-    );
-  }
-
-  const { lessonId, status, lastViewedAt } = validation.data;
+  const { lessonId, status, lastViewedAt } = data;
 
   // Verify lesson exists
   const lesson = await prisma.lesson.findUnique({
@@ -154,16 +197,9 @@ async function updateLessonProgress(
 // Update learning session
 async function updateLearningSession(
   userId: string,
-  data: any,
+  data: LearningSessionInput,
   tenantId?: string
 ) {
-  const validation = learningSessionSchema.safeParse(data);
-  if (!validation.success) {
-    throw new Error(
-      `Invalid learning session data: ${validation.error.message}`
-    );
-  }
-
   const {
     storyId,
     lessonId,
@@ -171,7 +207,7 @@ async function updateLearningSession(
     interactionCount,
     startedAt,
     endedAt,
-  } = validation.data;
+  } = data;
 
   if (!storyId && !lessonId) {
     throw new Error("Either storyId or lessonId must be provided");
@@ -239,15 +275,10 @@ async function updateLearningSession(
 // Update batch progress (for offline sync)
 async function updateBatchProgress(
   userId: string,
-  data: any,
+  data: BatchProgressUpdate,
   tenantId?: string
 ) {
-  const validation = batchProgressUpdateSchema.safeParse(data);
-  if (!validation.success) {
-    throw new Error(`Invalid batch progress data: ${validation.error.message}`);
-  }
-
-  const { updates } = validation.data;
+  const { updates } = data;
   const results = [];
 
   // Process updates in transaction
