@@ -13,20 +13,29 @@ function buildUrl(baseUrl: string, params?: ListParams) {
   return `${baseUrl}?${qs.toString()}`;
 }
 
-export function makeResource<N extends EntityName, TSelectList = unknown, TSelectDetail = unknown>(name: N) {
+
+export function makeResource<
+  N extends EntityName,
+  TSelectList = unknown,
+  TSelectDetail = unknown
+>(name: N) {
+
   const def = entities[name];
 
   function useList<T = TSelectList>(params?: ListParams, profile: QueryProfileName = "list") {
     const prof = queryProfiles[profile];
     const url = buildUrl(def.baseUrl, params);
 
-    const hasSelectList = "selectList" in def && typeof def.selectList === "function";
+
+    const hasSelectList = (d: typeof def): d is typeof def & { selectList: SelectFn<T> } =>
+      "selectList" in d && typeof d.selectList === "function";
+
     const opts = queryOptions({
       queryKey: keyFactory.list(def.entity, params),
       queryFn: () => api<T>(url),
       ...prof,
       placeholderData: (prev) => prev,
-      ...(hasSelectList ? { select: def.selectList as SelectFn<T> } : {}),
+      ...(hasSelectList(def) ? { select: def.selectList as SelectFn<T> } : {}),
     });
     return useQuery(opts);
   }
@@ -35,13 +44,16 @@ export function makeResource<N extends EntityName, TSelectList = unknown, TSelec
     const prof = queryProfiles[profile];
     const url = `${def.baseUrl}/${id}`;
 
-    const hasSelectDetail = "selectDetail" in def && typeof def.selectDetail === "function";
+
+    const hasSelectDetail = (d: typeof def): d is typeof def & { selectDetail: SelectFn<T> } =>
+      "selectDetail" in d && typeof d.selectDetail === "function";
+
     const opts = queryOptions({
       queryKey: keyFactory.detail(def.entity, id),
       queryFn: () => api<T>(url),
       enabled: !!id,
       ...prof,
-      ...(hasSelectDetail ? { select: def.selectDetail as SelectFn<T> } : {}),
+      ...(hasSelectDetail(def) ? { select: def.selectDetail as SelectFn<T> } : {}),
     });
     return useQuery(opts);
   }
