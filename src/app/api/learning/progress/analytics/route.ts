@@ -45,6 +45,35 @@ interface LessonProgress {
   } | null;
 }
 
+interface LearningSession {
+  startedAt: Date;
+  timeSpentSec?: number | null;
+  interactionCount?: number | null;
+  lesson?: {
+    difficulty?: string | null;
+  } | null;
+  story?: {
+    difficulty?: string | null;
+  } | null;
+}
+
+interface VocabularyProgress {
+  status: string;
+  vocabulary?: {
+    lesson?: {
+      difficulty?: string | null;
+    } | null;
+  } | null;
+}
+
+interface LessonProgress {
+  status: string;
+  lesson?: {
+    difficulty?: string | null;
+    estimatedMinutes?: number | null;
+  } | null;
+}
+
 // GET /api/learning/progress/analytics - Get learning analytics and insights
 export async function GET(request: NextRequest) {
   try {
@@ -77,8 +106,8 @@ export async function GET(request: NextRequest) {
     const dateRanges = calculateDateRanges(period, now);
 
     // Get learning sessions data
-    const currentPeriodSessions: LearningSession[] =
-      await prisma.learningSession.findMany({
+
+    const currentPeriodSessions: LearningSession[] = await prisma.learningSession.findMany({
       where: {
         userId: user.id,
         startedAt: {
@@ -105,8 +134,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Get vocabulary progress data
-    const vocabularyProgress: VocabularyProgress[] =
-      await prisma.userVocabularyProgress.findMany({
+    const vocabularyProgress: VocabularyProgress[] = await prisma.userVocabularyProgress.findMany({
       where: {
         userId: user.id,
         lastReviewed: {
@@ -129,8 +157,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Get lesson progress data
-    const lessonProgress: LessonProgress[] =
-      await prisma.userProgress.findMany({
+    const lessonProgress: LessonProgress[] = await prisma.userProgress.findMany({
       where: {
         userId: user.id,
         updatedAt: {
@@ -175,8 +202,7 @@ export async function GET(request: NextRequest) {
 
     // Add comparison data if requested
     if (includeComparison) {
-      const previousPeriodSessions: LearningSession[] =
-        await prisma.learningSession.findMany({
+      const previousPeriodSessions: LearningSession[] = await prisma.learningSession.findMany({
         where: {
           userId: user.id,
           startedAt: {
@@ -197,8 +223,7 @@ export async function GET(request: NextRequest) {
           },
         });
 
-      const previousLessonProgress: LessonProgress[] =
-        await prisma.userProgress.findMany({
+      const previousLessonProgress: LessonProgress[] = await prisma.userProgress.findMany({
         where: {
           userId: user.id,
           updatedAt: {
