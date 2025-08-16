@@ -1,9 +1,9 @@
 // Enhanced error handling with custom error types
-export class ApiError extends Error {
+export class ApiError<T = unknown> extends Error {
   constructor(
     message: string,
     public status: number,
-    public body?: any,
+    public body?: T,
     public code?: string
   ) {
     super(message);
@@ -18,11 +18,11 @@ export class NetworkError extends Error {
   }
 }
 
-export class ValidationError extends Error {
+export class ValidationError<T = unknown> extends Error {
   constructor(
     message: string,
     public field?: string,
-    public value?: any
+    public value?: T
   ) {
     super(message);
     this.name = 'ValidationError';
