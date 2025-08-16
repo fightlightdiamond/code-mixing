@@ -68,10 +68,35 @@ export const mockVocabularyData: VocabularyData = {
   audioUrl: "/test-pronunciation.mp3",
 };
 
+export interface AccessibilitySettings {
+  highContrast: boolean;
+  reducedMotion: boolean;
+  fontSize: "small" | "medium" | "large" | "extra-large";
+  keyboardNavigation: boolean;
+  screenReaderOptimized: boolean;
+}
+
+export interface MockAudio extends Partial<HTMLAudioElement> {
+  play: jest.Mock<Promise<void>, []>;
+  pause: jest.Mock;
+  load: jest.Mock;
+  addEventListener: jest.Mock;
+  removeEventListener: jest.Mock;
+  currentTime: number;
+  duration: number;
+  paused: boolean;
+  ended: boolean;
+  volume: number;
+  muted: boolean;
+  playbackRate: number;
+  src: string;
+  preload: string;
+}
+
 // Custom render function with providers
 interface CustomRenderOptions extends Omit<RenderOptions, "wrapper"> {
   queryClient?: QueryClient;
-  initialAccessibilitySettings?: any;
+  initialAccessibilitySettings?: AccessibilitySettings;
 }
 
 export function renderWithProviders(
@@ -88,6 +113,13 @@ export function renderWithProviders(
     ...renderOptions
   }: CustomRenderOptions = {}
 ) {
+  if (initialAccessibilitySettings) {
+    window.localStorage.setItem(
+      "accessibility-settings",
+      JSON.stringify(initialAccessibilitySettings)
+    );
+  }
+
   function Wrapper({ children }: { children: React.ReactNode }) {
     return (
       <QueryClientProvider client={queryClient}>
@@ -222,8 +254,8 @@ export const mockFetch = (
 };
 
 // Mock audio elements
-export const mockAudioElement = () => {
-  const mockAudio = {
+export const mockAudioElement = (): MockAudio => {
+  const mockAudio: MockAudio = {
     play: jest.fn(() => Promise.resolve()),
     pause: jest.fn(),
     load: jest.fn(),
@@ -240,7 +272,9 @@ export const mockAudioElement = () => {
     preload: "metadata",
   };
 
-  global.HTMLAudioElement = jest.fn(() => mockAudio) as any;
+  (global as unknown as { HTMLAudioElement: { new (): HTMLAudioElement } }).HTMLAudioElement = jest.fn(
+    () => mockAudio as unknown as HTMLAudioElement
+  );
   return mockAudio;
 };
 
@@ -345,7 +379,10 @@ export const testHelpers = {
   },
 
   // Simulate audio playback
-  simulateAudioPlayback: (audioElement: any, duration: number = 1000) => {
+  simulateAudioPlayback: (
+    audioElement: HTMLAudioElement | MockAudio,
+    duration: number = 1000
+  ) => {
     audioElement.currentTime = 0;
     audioElement.paused = false;
 
