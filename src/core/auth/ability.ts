@@ -1,4 +1,4 @@
-import { AbilityBuilder } from '@casl/ability';
+import { AbilityBuilder, type RawRuleOf } from '@casl/ability';
 import { createPrismaAbility, PrismaAbility, PrismaQuery } from '@casl/prisma';
 
 // Define the types for our application
@@ -341,22 +341,16 @@ export interface AbilityContext {
   tenantId?: string;
 }
 
-// Define proper server rules interface
-export interface ServerRule {
-  action: string;
-  subject: string;
-  conditions?: PrismaQuery;
-  inverted?: boolean;
-  reason?: string;
-}
+// Define server rule type that matches CASL RawRuleOf
+export type ServerRule = RawRuleOf<AppAbility>;
 
 export function buildAbility(
-  rulesFromServer: ServerRule[] | undefined,
+  rulesFromServer: RawRuleOf<AppAbility>[] | undefined,
   ctx: AbilityContext | undefined
 ): AppAbility {
   // If rulesFromServer is provided, use them directly
   if (rulesFromServer) {
-    return createPrismaAbility(rulesFromServer as any);
+    return createPrismaAbility(rulesFromServer);
   }
 
   // Check cache first
