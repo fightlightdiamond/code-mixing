@@ -51,6 +51,7 @@ export function useVocabularyReview(
   const [reviewSchedule, setReviewSchedule] = useState<ReviewSchedule[]>([]);
   const [todayReviews, setTodayReviews] = useState<ReviewSchedule[]>([]);
   const [upcomingReviews, setUpcomingReviews] = useState<ReviewSchedule[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   // Calculate next review date based on spaced repetition algorithm
   const calculateNextReviewDate = useCallback(
@@ -311,14 +312,29 @@ export function useVocabularyReview(
             : "reviewing",
       };
 
-      // TODO: Save to backend
-      // await api.updateVocabularyProgress(updatedVocab);
+      try {
+        const response = await fetch(
+          "/api/learning/vocabulary/progress",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(updatedVocab),
+          }
+        );
 
-      // Update local state
-      const updatedProgress = [...progress];
-      updatedProgress[vocabIndex] = updatedVocab;
-      setProgress(updatedProgress);
-      generateReviewSchedule(updatedProgress);
+        if (!response.ok) {
+          throw new Error("Failed to update vocabulary progress");
+        }
+
+        const updatedProgress = [...progress];
+        updatedProgress[vocabIndex] = updatedVocab;
+        setProgress(updatedProgress);
+        generateReviewSchedule(updatedProgress);
+        setError(null);
+      } catch (err) {
+        console.error("Error updating vocabulary progress:", err);
+        setError("Không thể cập nhật tiến độ từ vựng");
+      }
     },
     [progress, calculateNextReviewDate, generateReviewSchedule, srsConfig.masteryThreshold]
   );
@@ -340,5 +356,6 @@ export function useVocabularyReview(
     getReviewRecommendations,
     updateVocabularyProgress,
     generateReviewSchedule,
+    error,
   };
 }
