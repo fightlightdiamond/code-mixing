@@ -11,6 +11,7 @@ import { useSkipLinkTarget } from "./SkipLinks";
 import type {
   StoryReaderProps,
   UserLearningPreferences,
+  StoryChunk,
 } from "../types/learning";
 
 // Lazy load image component for better performance
@@ -201,7 +202,7 @@ export const StoryReader = React.memo(function StoryReader({
   );
 
   // Memoize processed chunks for performance
-  const processedChunks = useMemo(() => {
+  const processedChunks: StoryChunk[] = useMemo(() => {
     return story.chunks.map((chunk) => ({
       ...chunk,
       processedText: processChunkText(chunk.chunkText, chunk.type === "chem"),
@@ -286,7 +287,7 @@ const LazyChunk = React.memo(function LazyChunk({
   index,
   isHighlighted,
 }: {
-  chunk: any;
+  chunk: StoryChunk;
   index: number;
   isHighlighted: boolean;
 }) {
