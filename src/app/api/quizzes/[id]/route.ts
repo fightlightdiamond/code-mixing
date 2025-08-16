@@ -1,8 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-
+import { randomUUID } from "crypto";
+import { z } from "zod";
 import { prisma } from "@/core/prisma";
 import logger from "@/lib/logger";
-import { z } from "zod";
+
+// Zod schema for question updates
+const questionSchema = z.object({
+  id: z.string().uuid().optional(),
+  question: z.string().min(1),
+  delete: z.boolean().optional(),
+});
 
 // GET /api/quizzes/[id] - Lấy chi tiết quiz
 export async function GET(
@@ -68,6 +75,26 @@ export async function PUT(
       return NextResponse.json({ error: "Invalid quiz ID" }, { status: 400 });
     }
 
+    const {
+      title,
+      description,
+      lessonId,
+      questions: questionsInput,
+    } = body;
+
+    // Validate question data if provided
+    const parsedQuestions = questionsInput
+      ? z.array(questionSchema).safeParse(questionsInput)
+      : { success: true, data: [] };
+
+    if (!parsedQuestions.success) {
+      return NextResponse.json(
+        { error: "Invalid question data", details: parsedQuestions.error.errors },
+        { status: 400 }
+      );
+    }
+
+    const questions = parsedQuestions.data;
     const questionSchema = z.object({
       id: z.string().optional(),
       question: z.string(),
@@ -118,6 +145,27 @@ export async function PUT(
         },
       });
 
+      // Handle questions: upsert or delete based on input
+      if (questions.length > 0) {
+        const deleteIds = questions
+          .filter((q) => q.id && q.delete)
+          .map((q) => q.id as string);
+
+        if (deleteIds.length > 0) {
+          await tx.question.deleteMany({
+            where: { id: { in: deleteIds }, quizId },
+          });
+        }
+
+        for (const q of questions.filter((q) => !q.delete)) {
+          const id = q.id || randomUUID();
+          await tx.question.upsert({
+            where: { id },
+            update: { question: q.question },
+            create: { id, quizId, question: q.question },
+          });
+        }
+      }
       if (questions) {
         const questionIds = questions
           .filter((q) => q.id)
