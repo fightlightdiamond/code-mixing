@@ -1,5 +1,6 @@
 "use client";
 import { logger } from '@/lib/logger';
+import { z } from "zod";
 
 import { useState, useEffect, useCallback } from "react";
 import type {
@@ -15,6 +16,77 @@ interface UseProgressOptions {
   autoSync?: boolean;
   syncInterval?: number;
 }
+
+interface StoredProgressData {
+  progress: LearningProgress | null;
+  vocabularyProgress: VocabularyProgress[];
+  levelProgress: LevelProgress | null;
+  stats: LearningStats | null;
+  lastUpdated?: string;
+}
+
+const storedProgressSchema: z.ZodType<StoredProgressData> = z.object({
+  progress: z
+    .object({
+      userId: z.string(),
+      storiesRead: z.number(),
+      vocabularyLearned: z.number(),
+      totalTimeSpent: z.number(),
+      currentStreak: z.number(),
+      longestStreak: z.number(),
+      completionPercentage: z.number(),
+      level: z.number(),
+      experiencePoints: z.number(),
+      achievements: z.array(
+        z.object({
+          id: z.string(),
+          title: z.string(),
+          description: z.string(),
+          iconUrl: z.string().optional(),
+          unlockedAt: z.string().transform((v) => new Date(v)),
+          category: z.string(),
+        })
+      ),
+      lastActivityAt: z.string().transform((v) => new Date(v)),
+    })
+    .nullable(),
+  vocabularyProgress: z.array(
+    z.object({
+      word: z.string(),
+      status: z.enum(["new", "reviewing", "mastered"]),
+      encounters: z.number(),
+      correctAnswers: z.number(),
+      totalAttempts: z.number(),
+      lastReviewed: z.string().transform((v) => new Date(v)),
+      nextReview: z.string().transform((v) => new Date(v)),
+      masteryLevel: z.number(),
+    })
+  ),
+  levelProgress: z
+    .object({
+      currentLevel: z.number(),
+      currentXP: z.number(),
+      xpToNextLevel: z.number(),
+      totalXPForCurrentLevel: z.number(),
+      nextStoryRecommendations: z.array(z.any()).optional(),
+    })
+    .partial()
+    .nullable(),
+  stats: z
+    .object({
+      storiesCompleted: z.number(),
+      vocabularyMastered: z.number(),
+      timeSpentToday: z.number(),
+      timeSpentThisWeek: z.number(),
+      timeSpentTotal: z.number(),
+      currentStreak: z.number(),
+      longestStreak: z.number(),
+      averageScore: z.number(),
+      completionRate: z.number(),
+    })
+    .nullable(),
+  lastUpdated: z.string().optional(),
+});
 
 export function useProgress({
   userId,
@@ -80,11 +152,16 @@ export function useProgress({
     try {
       const stored = localStorage.getItem(`learning-progress-${userId}`);
       if (stored) {
-        const data = JSON.parse(stored);
-        setProgress(data.progress);
-        setVocabularyProgress(data.vocabularyProgress || []);
-        setLevelProgress(data.levelProgress);
-        setStats(data.stats);
+        const result = storedProgressSchema.safeParse(JSON.parse(stored));
+        if (result.success) {
+          const data = result.data;
+          setProgress(data.progress);
+          setVocabularyProgress(data.vocabularyProgress);
+          setLevelProgress(data.levelProgress);
+          setStats(data.stats);
+        } else {
+          logger.warn("Invalid progress data in localStorage", result.error);
+        }
       }
     } catch (err) {
       logger.error("Error loading from localStorage:", err);
