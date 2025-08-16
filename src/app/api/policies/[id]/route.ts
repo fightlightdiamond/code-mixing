@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/core/prisma";
+import { Prisma, PrismaClient } from "@prisma/client";
 import { caslGuardWithPolicies } from "@/core/auth/casl.guard";
 import { getUserFromRequest } from "@/core/auth/getUser";
-import { Prisma, PrismaClient } from "@prisma/client";
+import type { Prisma, PrismaClient } from "@prisma/client";
 
 type PrismaWithPolicy = PrismaClient & { resourcePolicy?: Prisma.ResourcePolicyDelegate };
 
 // getUserFromRequest imported from core auth
+
+type PrismaWithPolicy = PrismaClient & { resourcePolicy?: Prisma.ResourcePolicyDelegate };
 
 export async function PUT(_request: NextRequest, context: { params: { id: string } }) {
   const user = await getUserFromRequest(_request);

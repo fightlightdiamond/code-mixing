@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
-    logger.error("Registration error", undefined, error);
+    logger.error("Registration error", undefined, error as Error);
     return NextResponse.json(
       { message: "Lỗi server. Vui lòng thử lại sau." },
       { status: 500 }

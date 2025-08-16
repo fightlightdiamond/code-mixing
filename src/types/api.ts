@@ -153,13 +153,13 @@ export interface UserUpdateRequest extends Partial<Omit<UserCreateRequest, 'pass
 }
 
 // Query Client Types
-export interface QueryClientData<T = any> {
+export interface QueryClientData<T> {
   pages?: T[];
-  pageParams?: any[];
+  pageParams?: unknown[];
   data?: T;
 }
 
-export interface OptimisticUpdateContext<T = any> {
+export interface OptimisticUpdateContext<T> {
   previousData?: T;
   newData: T;
   queryKey: string[];
@@ -199,7 +199,7 @@ export interface FormField {
     minLength?: number;
     maxLength?: number;
     pattern?: RegExp;
-    custom?: (value: any) => boolean | string;
+    custom?: (value: unknown) => boolean | string;
   };
 }
 
@@ -209,11 +209,11 @@ export interface FormData {
 
 // State Management Types
 export interface StoreState {
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface StoreActions {
-  [key: string]: (...args: any[]) => void;
+  [key: string]: (...args: unknown[]) => void;
 }
 
 export interface StoreSlice<T extends StoreState, A extends StoreActions> {
@@ -227,7 +227,7 @@ export interface PerformanceMetric {
   value: number;
   unit: 'ms' | 'bytes' | 'count';
   timestamp: string;
-  context?: Record<string, any>;
+  context?: Record<string, unknown>;
 }
 
 export interface QueryMetrics {
