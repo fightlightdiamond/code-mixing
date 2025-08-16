@@ -27,6 +27,18 @@ interface LearningSession {
   completed: boolean;
 }
 
+// Stored representation of a learning session in localStorage
+interface StoredSession {
+  id: string;
+  storyId: string;
+  startTime: string;
+  endTime?: string;
+  timeSpent: number;
+  wordsEncountered: string[];
+  exercisesCompleted: ExerciseResult[];
+  completed: boolean;
+}
+
 const STORAGE_KEYS = {
   LEARNING_PROGRESS: "learning_progress_offline",
   VOCABULARY_PROGRESS: "vocabulary_progress_offline",
@@ -36,6 +48,44 @@ const STORAGE_KEYS = {
   LAST_SYNC_TIME: "last_sync_time_offline",
   PENDING_SYNC: "pending_sync_offline",
 };
+
+const isStoredSession = (session: any): session is StoredSession => {
+  return (
+    session &&
+    typeof session.id === "string" &&
+    typeof session.storyId === "string" &&
+    typeof session.startTime === "string" &&
+    (session.endTime === undefined || typeof session.endTime === "string") &&
+    typeof session.timeSpent === "number" &&
+    Array.isArray(session.wordsEncountered) &&
+    Array.isArray(session.exercisesCompleted) &&
+    typeof session.completed === "boolean"
+  );
+};
+
+const parseStoredSessions = (): StoredSession[] => {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.LEARNING_SESSIONS);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(isStoredSession);
+  } catch (error) {
+    logger.error("Failed to parse stored sessions:", error);
+    return [];
+  }
+};
+
+const toStoredSession = (session: LearningSession): StoredSession => ({
+  id: session.id,
+  storyId: session.storyId,
+  startTime: session.startTime.toISOString(),
+  endTime: session.endTime?.toISOString(),
+  timeSpent: session.timeSpent,
+  wordsEncountered: session.wordsEncountered,
+  exercisesCompleted: session.exercisesCompleted,
+  completed: session.completed,
+});
 
 export function useOfflineProgress(userId: string) {
   const [offlineData, setOfflineData] = useState<OfflineProgressData>({
@@ -149,17 +199,14 @@ export function useOfflineProgress(userId: string) {
       setCurrentSession(updatedSession);
 
       // Save session to localStorage
-      const sessions = JSON.parse(
-        localStorage.getItem(STORAGE_KEYS.LEARNING_SESSIONS) || "[]"
-      );
-      const sessionIndex = sessions.findIndex(
-        (s: LearningSession) => s.id === updatedSession.id
-      );
+      const sessions = parseStoredSessions();
+      const stored = toStoredSession(updatedSession);
+      const sessionIndex = sessions.findIndex((s) => s.id === stored.id);
 
       if (sessionIndex >= 0) {
-        sessions[sessionIndex] = updatedSession;
+        sessions[sessionIndex] = stored;
       } else {
-        sessions.push(updatedSession);
+        sessions.push(stored);
       }
 
       localStorage.setItem(
@@ -372,9 +419,7 @@ export function useOfflineProgress(userId: string) {
       vocabularyProgress: offlineData.vocabularyProgress,
       exerciseResults: offlineData.exerciseResults,
       learningStats: offlineData.learningStats,
-      sessions: JSON.parse(
-        localStorage.getItem(STORAGE_KEYS.LEARNING_SESSIONS) || "[]"
-      ),
+      sessions: parseStoredSessions(),
     };
   }, [offlineData]);
 
@@ -418,9 +463,7 @@ export function useOfflineProgress(userId: string) {
 
   // Calculate learning streak
   const calculateStreak = useCallback(() => {
-    const sessions = JSON.parse(
-      localStorage.getItem(STORAGE_KEYS.LEARNING_SESSIONS) || "[]"
-    );
+    const sessions = parseStoredSessions();
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -432,7 +475,7 @@ export function useOfflineProgress(userId: string) {
       const dayEnd = new Date(currentDate);
       dayEnd.setHours(23, 59, 59, 999);
 
-      const hasSessionOnDay = sessions.some((session: LearningSession) => {
+      const hasSessionOnDay = sessions.some((session) => {
         const sessionDate = new Date(session.startTime);
         return (
           sessionDate >= dayStart && sessionDate <= dayEnd && session.completed
