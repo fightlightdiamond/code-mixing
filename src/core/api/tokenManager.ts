@@ -1,3 +1,6 @@
+"use client";
+
+// Client-side token management using localStorage; avoids server-only APIs.
 import type { TokenData, RefreshTokenResponse } from "./types";
 
 /* ======================================
