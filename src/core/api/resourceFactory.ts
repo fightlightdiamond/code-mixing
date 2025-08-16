@@ -1,4 +1,4 @@
-import { queryOptions, useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { queryOptions, useQuery, useMutation, useQueryClient, SelectFn } from "@tanstack/react-query";
 import { api } from "./api";
 import { queryProfiles, QueryProfileName } from "./queryConfig";
 import { keyFactory } from "./keyFactory";
@@ -13,35 +13,41 @@ function buildUrl(baseUrl: string, params?: ListParams) {
   return `${baseUrl}?${qs.toString()}`;
 }
 
-export function makeResource<N extends EntityName>(name: N) {
+export function makeResource<
+  N extends EntityName,
+  TSelectList = unknown,
+  TSelectDetail = unknown
+>(name: N) {
   const def = entities[name];
 
-  function useList<T = unknown>(params?: ListParams, profile: QueryProfileName = "list") {
+  function useList<T = TSelectList>(params?: ListParams, profile: QueryProfileName = "list") {
     const prof = queryProfiles[profile];
     const url = buildUrl(def.baseUrl, params);
 
-    const hasSelectList = ("selectList" in def) && typeof (def as any).selectList === "function";
+    const hasSelectList = (d: typeof def): d is typeof def & { selectList: SelectFn<T> } =>
+      "selectList" in d && typeof d.selectList === "function";
     const opts = queryOptions({
       queryKey: keyFactory.list(def.entity, params),
       queryFn: () => api<T>(url),
       ...prof,
       placeholderData: (prev) => prev,
-      ...(hasSelectList ? { select: (def as any).selectList as any } : {}),
+      ...(hasSelectList(def) ? { select: def.selectList as SelectFn<T> } : {}),
     });
     return useQuery(opts);
   }
 
-  function useDetail<T = unknown>(id: string | number, profile: QueryProfileName = "detail") {
+  function useDetail<T = TSelectDetail>(id: string | number, profile: QueryProfileName = "detail") {
     const prof = queryProfiles[profile];
     const url = `${def.baseUrl}/${id}`;
 
-    const hasSelectDetail = ("selectDetail" in def) && typeof (def as any).selectDetail === "function";
+    const hasSelectDetail = (d: typeof def): d is typeof def & { selectDetail: SelectFn<T> } =>
+      "selectDetail" in d && typeof d.selectDetail === "function";
     const opts = queryOptions({
       queryKey: keyFactory.detail(def.entity, id),
       queryFn: () => api<T>(url),
       enabled: !!id,
       ...prof,
-      ...(hasSelectDetail ? { select: (def as any).selectDetail as any } : {}),
+      ...(hasSelectDetail(def) ? { select: def.selectDetail as SelectFn<T> } : {}),
     });
     return useQuery(opts);
   }
