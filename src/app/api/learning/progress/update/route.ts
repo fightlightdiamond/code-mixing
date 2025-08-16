@@ -55,6 +55,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
+
     const rawBody = await request.json();
     if (typeof rawBody !== "object" || rawBody === null) {
       return NextResponse.json(
@@ -67,50 +68,54 @@ export async function POST(request: NextRequest) {
     const updateType =
       typeof body.type === "string" ? body.type : "lesson_progress"; // lesson_progress, learning_session, batch
 
-    let results = [];
+
+    let results: unknown[] = [];
 
     switch (updateType) {
       case "lesson_progress": {
-        const parsed = progressUpdateSchema.safeParse(body);
-        if (!parsed.success) {
+        const validation = progressUpdateSchema.safeParse(body);
+        if (!validation.success) {
           return NextResponse.json(
-            { error: parsed.error.message },
+            { error: `Invalid lesson progress data: ${validation.error.message}` },
+
             { status: 400 }
           );
         }
         results = await updateLessonProgress(
           user.id,
-          parsed.data,
+          validation.data,
           user.tenantId
         );
         break;
       }
       case "learning_session": {
-        const parsed = learningSessionSchema.safeParse(body);
-        if (!parsed.success) {
+
+        const validation = learningSessionSchema.safeParse(body);
+        if (!validation.success) {
           return NextResponse.json(
-            { error: parsed.error.message },
+            { error: `Invalid learning session data: ${validation.error.message}` },
             { status: 400 }
           );
         }
         results = await updateLearningSession(
           user.id,
-          parsed.data,
+          validation.data,
           user.tenantId
         );
         break;
       }
       case "batch": {
-        const parsed = batchProgressUpdateSchema.safeParse(body);
-        if (!parsed.success) {
+
+        const validation = batchProgressUpdateSchema.safeParse(body);
+        if (!validation.success) {
           return NextResponse.json(
-            { error: parsed.error.message },
+            { error: `Invalid batch progress data: ${validation.error.message}` },
             { status: 400 }
           );
         }
         results = await updateBatchProgress(
           user.id,
-          parsed.data,
+          validation.data,
           user.tenantId
         );
         break;
