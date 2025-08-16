@@ -1,7 +1,7 @@
 import { logger } from '@/lib/logger';
 import { NextRequest } from "next/server";
-import jwt from "jsonwebtoken";
 import type { JWTPayload } from "@/types/api";
+import { verifyJwt } from "@/core/auth/jwt";
 
 export interface UserContext {
   sub: string;
@@ -49,6 +49,7 @@ export async function getUserFromRequest(
       algorithms: ["HS256"],
       ignoreExpiration: false,
     }) as JWTPayload;
+
     return {
       sub: decoded.userId,
       tenantId: decoded.tenantId,

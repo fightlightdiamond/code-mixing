@@ -172,13 +172,19 @@ export const dev = process.env.NODE_ENV === 'development' ? {
  * Global configuration function
  * Call this once in your app initialization
  */
-export function configureApi(config: {
+export interface ApiConfig {
   baseUrl?: string;
   defaultHeaders?: Record<string, string>;
   timeout?: number;
   enableMonitoring?: boolean;
   enableAnalytics?: boolean;
-}) {
+}
+
+declare global {
+  var __API_CONFIG__: ApiConfig | undefined;
+}
+
+export function configureApi(config: ApiConfig) {
   // Apply global configuration
   if (config.enableMonitoring && process.env.NODE_ENV === 'development') {
     logger.info('🔍 API monitoring enabled');
@@ -187,9 +193,20 @@ export function configureApi(config: {
   if (config.enableAnalytics && process.env.NODE_ENV === 'production') {
     logger.info('📊 API analytics enabled');
   }
-  
+
   // Store config for use by other modules
-  (globalThis as any).__API_CONFIG__ = config;
+  globalThis.__API_CONFIG__ = config;
+}
+
+/**
+ * Get global API configuration
+ */
+export function getApiConfig(): ApiConfig {
+  const config = globalThis.__API_CONFIG__;
+  if (!config) {
+    throw new Error('API not configured');
+  }
+  return config;
 }
 
 /**

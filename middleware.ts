@@ -1,7 +1,17 @@
 import { logger } from '@/lib/logger';
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { verifyJwt } from "@/core/auth/jwt";
+import type { JWTPayload } from "@/types/api";
 import jwt from "jsonwebtoken";
+import logger from "@/lib/logger";
+
+interface JwtPayload {
+  userId: string;
+  role: string;
+  email: string;
+  tenantId?: string;
+}
 
 // Security headers
 const securityHeaders = {
@@ -85,13 +95,8 @@ export function middleware(request: NextRequest) {
     }
 
     try {
-      const secret = process.env.JWT_SECRET;
-      if (!secret) {
-        throw new Error("JWT_SECRET is not configured");
-      }
-
       // Verify token
-      const decoded = jwt.verify(token, secret) as any;
+      const decoded = verifyJwt<JWTPayload>(token);
       const userRole = decoded.role;
       const tenantId = decoded.tenantId;
 
@@ -116,6 +121,7 @@ export function middleware(request: NextRequest) {
     } catch (error) {
       // Invalid token, redirect to login
       logger.error("Token verification failed:", error);
+
       return NextResponse.redirect(new URL("/login", request.url));
     }
   }
