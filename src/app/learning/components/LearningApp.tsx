@@ -55,12 +55,13 @@ import type {
   LearningStory,
   Exercise,
   VocabularyData,
+  ExerciseResult,
 } from "../types/learning";
 
 interface LearningAppProps {
   story: LearningStory;
   onStoryComplete?: (storyId: string) => void;
-  onExerciseComplete?: (results: any[]) => void;
+  onExerciseComplete?: (results: ExerciseResult[]) => void;
   className?: string;
 }
 
@@ -167,7 +168,7 @@ export const LearningApp = React.memo(function LearningApp({
     onStoryComplete?.(story.id);
   };
 
-  const handleExerciseComplete = (results: unknown[]) => {
+  const handleExerciseComplete = (results: ExerciseResult[]) => {
     onExerciseComplete?.(results);
     setActivePanel("progress");
   };
