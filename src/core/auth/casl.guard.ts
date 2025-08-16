@@ -3,6 +3,7 @@ import { buildAbility } from "./ability";
 import { AuthLogger } from "./auth.logger";
 import { subject as caslSubject } from "@casl/ability";
 import { PrismaQuery } from "@casl/prisma";
+import { Prisma, PrismaClient } from "@prisma/client";
 import { prisma } from "../prisma";
 
 export interface RequiredRule {
@@ -13,6 +14,8 @@ export interface RequiredRule {
 }
 
 type UserCtx = { sub: string; tenantId?: string; roles: string[] };
+
+type PrismaWithPolicy = PrismaClient & { resourcePolicy?: Prisma.ResourcePolicyDelegate };
 
 export function checkAbilities(
   rules: RequiredRule[],
@@ -117,7 +120,7 @@ export async function caslGuardWithPolicies(
 
     const subjects = Array.from(new Set(rules.map((r) => r.subject)));
     for (const subject of subjects) {
-      const repo = (prisma as unknown as { resourcePolicy?: { findMany: (args: unknown) => Promise<Array<{ effect: string; conditions: unknown }>> } }).resourcePolicy;
+      const repo = (prisma as PrismaWithPolicy).resourcePolicy;
       if (!repo) {
         // Client not generated for ResourcePolicy yet; skip ABAC and allow RBAC result
         break;

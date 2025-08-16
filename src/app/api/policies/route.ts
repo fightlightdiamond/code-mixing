@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/core/prisma";
+import { Prisma, PrismaClient } from "@prisma/client";
 import { caslGuardWithPolicies } from "@/core/auth/casl.guard";
 import { getUserFromRequest } from "@/core/auth/getUser";
 import type { Prisma, PrismaClient } from "@prisma/client";
@@ -8,6 +9,8 @@ import type { Prisma, PrismaClient } from "@prisma/client";
 type PrismaWithPolicy = PrismaClient & { resourcePolicy?: Prisma.ResourcePolicyDelegate };
 
 // getUserFromRequest imported from core auth
+
+type PrismaWithPolicy = PrismaClient & { resourcePolicy?: Prisma.ResourcePolicyDelegate };
 
 export async function GET(request: NextRequest) {
   const user = await getUserFromRequest(request);
