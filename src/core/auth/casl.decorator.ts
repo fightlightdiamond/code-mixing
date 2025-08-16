@@ -6,8 +6,18 @@ export interface CheckAbilitiesOptions {
   rules: RequiredRule[];
 }
 
+interface CaslDecoratorTarget {
+  constructor: {
+    caslRules?: Record<string, RequiredRule[]>;
+  };
+}
+
 export const CheckAbilities = (...rules: RequiredRule[]) => {
-  return (target: any, propertyKey: string, descriptor: PropertyDescriptor) => {
+  return (
+    target: CaslDecoratorTarget,
+    propertyKey: string,
+    descriptor: PropertyDescriptor,
+  ) => {
     // For Next.js API routes, we'll store the metadata differently
     // This is a simplified approach for demonstration
     if (!target.constructor.caslRules) {

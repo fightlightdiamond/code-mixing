@@ -118,10 +118,12 @@ export async function GET(
     }
 
     // Generate dynamic exercises based on story content
-    const dynamicExercises = generateDynamicExercises(story);
+    const dynamicExercises: Exercise[] = generateDynamicExercises(
+      story as StoryWithChunks
+    );
 
     // Combine database exercises with dynamic exercises
-    const allExercises = [
+    const allExercises: Exercise[] = [
       ...exercises.map((exercise) => ({
         id: exercise.id,
         type: exercise.type,
