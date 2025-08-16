@@ -8,7 +8,7 @@ import React, {
   useCallback,
 } from "react";
 import { useRouter } from "next/navigation";
-import { setAuthToken, getAuthToken, refreshToken } from "@/core/api/api";
+import { setAuthToken, getAuthToken, refreshToken } from "@/core/api/tokenManager";
 import { clearCSRFToken } from "@/core/api/csrf";
 import logger from "@/lib/logger";
 

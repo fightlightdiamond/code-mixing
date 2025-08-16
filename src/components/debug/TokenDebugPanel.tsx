@@ -2,7 +2,7 @@
 import { logger } from '@/lib/logger';
 
 import { useState, useEffect } from 'react';
-import { getTokenStatus, refreshToken } from '@/core/api/api';
+import { getTokenStatus, refreshToken } from '@/core/api/tokenManager';
 import { useAuth } from '@/contexts/AuthContext';
 
 export function TokenDebugPanel() {
