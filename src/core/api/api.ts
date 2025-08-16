@@ -215,7 +215,9 @@ class ApiClient {
 
   async request(input: RequestInfo, init?: RequestInit): Promise<string>;
   async request<T>(input: RequestInfo, init?: RequestInit): Promise<T>;
+
   async request<T>(input: RequestInfo, init?: RequestInit): Promise<T> {
+
     try {
       let config: RequestInit & { url: string } = {
         ...init,
@@ -271,6 +273,7 @@ class ApiClient {
         );
       }
       return text as unknown as T;
+
     } catch (err) {
       let e = err as Error;
       for (const i of this.errorInterceptors) {
@@ -399,20 +402,24 @@ export const isTokenExpiringSoon = (): boolean => tokenManager.isExpiringSoon();
 
 export const refreshToken = (): Promise<string | null> => tokenManager.refresh(performRefresh);
 
-export const getTokenStatus = (): {
-  hasToken: boolean;
+export interface TokenStatus {
+  hasAccessToken: boolean;
+  accessTokenLength: number;
+  hasRefreshToken: boolean;
+  refreshTokenLength: number;
   isExpiringSoon: boolean;
-  expiresAt: number | null;
-  refreshInFlight: boolean;
-} => {
+}
+
+export const getTokenStatus = (): TokenStatus => {
   const access = tokenManager.getAccessTokenSync();
   const refresh = tokenManager.getRefreshTokenSync();
-  const expiring = tokenManager.isExpiringSoon();
+
   return {
-    hasToken: !!access || !!refresh,
-    isExpiringSoon: expiring,
-    expiresAt: tokenManager.getExpiresAtSync(),
-    refreshInFlight: tokenManager.getRefreshInFlight() !== null,
+    hasAccessToken: !!access,
+    accessTokenLength: access?.length ?? 0,
+    hasRefreshToken: !!refresh,
+    refreshTokenLength: refresh?.length ?? 0,
+    isExpiringSoon: tokenManager.isExpiringSoon(),
   };
 };
 
