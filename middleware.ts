@@ -1,17 +1,8 @@
-import { logger } from '@/lib/logger';
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { verifyJwt } from "@/core/auth/jwt";
 import type { JWTPayload } from "@/types/api";
-import jwt from "jsonwebtoken";
 import logger from "@/lib/logger";
-
-interface JwtPayload {
-  userId: string;
-  role: string;
-  email: string;
-  tenantId?: string;
-}
 
 // Security headers
 const securityHeaders = {
