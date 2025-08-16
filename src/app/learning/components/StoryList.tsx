@@ -18,6 +18,7 @@ import type {
   StoryListProps,
   StoryFilters,
   UserLearningPreferences,
+  LearningStory as Story,
 } from "../types/learning";
 import type { DifficultyLevel, StoryType } from "@prisma/client";
 
@@ -104,7 +105,7 @@ export function StoryList({
 
   // Calculate how well a story matches user preferences
   const calculateRecommendationScore = (
-    story: any,
+    story: Story,
     preferences: UserLearningPreferences
   ): number => {
     let score = 0;
@@ -130,7 +131,10 @@ export function StoryList({
     return score;
   };
 
-  const updateFilter = (key: keyof StoryFilters, value: any) => {
+  const updateFilter = (
+    key: keyof StoryFilters,
+    value: string | number | DifficultyLevel | StoryType | undefined
+  ) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
   };
 
