@@ -33,7 +33,6 @@ export type LearningSessionInput = z.infer<typeof learningSessionSchema>;
 // POST /api/learning/progress/update - Update user learning progress
 export async function POST(request: NextRequest) {
   let user: User | null = null;
-
   try {
     // Get user from request
     user = await getUserFromRequest(request);

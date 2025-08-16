@@ -3,8 +3,8 @@ import { caslGuardWithPolicies } from "@/core/auth/casl.guard";
 import { prisma } from "@/core/prisma";
 import { getUserFromRequest } from "@/core/auth/getUser";
 import logger from "@/lib/logger";
-import { LearningSession, ProgressStatus, VocabStatus } from "@prisma/client";
 import type { User } from "@/types/api";
+import { LearningSession, ProgressStatus, VocabStatus } from "@prisma/client";
 
 interface LessonProgressItem {
   id: string;
@@ -72,6 +72,8 @@ interface UserProgressResponse {
 }
 
 // GET /api/learning/progress/user - Get comprehensive user learning progress
+export async function GET(request: NextRequest) {
+  let user: User | null = null;
 export async function GET(
   request: NextRequest
 ): Promise<NextResponse<UserProgressResponse>> {
