@@ -217,13 +217,15 @@ class ApiClient {
   async request<T>(input: RequestInfo, init?: RequestInit): Promise<T>;
   async request<T>(input: RequestInfo, init?: RequestInit): Promise<T | string> {
     try {
+      const headers = new Headers(init?.headers);
+      if (!headers.has("Content-Type") && !(init?.body instanceof FormData)) {
+        headers.set("Content-Type", "application/json");
+      }
+
       let config: RequestInit & { url: string } = {
         ...init,
         url: this.resolveURL(input),
-        headers: {
-          "Content-Type": "application/json",
-          ...(init?.headers || {}),
-        },
+        headers,
         signal: init?.signal,
       };
 
