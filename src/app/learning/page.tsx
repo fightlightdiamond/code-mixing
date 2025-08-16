@@ -72,6 +72,7 @@ function LearningPageContent() {
   const {
     preferences,
     isLoading: preferencesLoading,
+    isSaving: preferencesSaving,
     savePreferences,
     getStoryFilters,
   } = useUserPreferences();
@@ -153,13 +154,23 @@ function LearningPageContent() {
   const handlePreferencesChange = async (
     newPreferences: typeof preferences
   ) => {
-    await savePreferences(newPreferences);
+    const success = await savePreferences(newPreferences);
+    if (!success) {
+      alert("Không thể lưu cài đặt");
+    }
+    return success;
   };
 
   const handleAcceptDifficultyChange = async (
     newLevel: typeof preferences.difficultyLevel
   ) => {
-    await savePreferences({ ...preferences, difficultyLevel: newLevel });
+    const success = await savePreferences({
+      ...preferences,
+      difficultyLevel: newLevel,
+    });
+    if (!success) {
+      alert("Không thể lưu cài đặt");
+    }
   };
 
   const handleStartVocabularyReview = () => {
@@ -572,6 +583,7 @@ function LearningPageContent() {
               preferences={preferences}
               onPreferencesChange={handlePreferencesChange}
               onClose={handleCloseSettings}
+              isSaving={preferencesSaving}
             />
           )}
 
