@@ -2,8 +2,7 @@
  * Centralized logging system for the application
  * Replaces scattered console.log statements with structured logging
  */
-
-import * as Sentry from "@sentry/nextjs";
+import LogRocket, { isLogRocketEnabled } from './logrocket';
 
 export enum LogLevel {
   DEBUG = 0,
@@ -89,19 +88,11 @@ class Logger {
         break;
     }
 
-    // Send high-severity logs to external service in production
-    if (
-      !this.isDevelopment &&
-      level >= LogLevel.ERROR &&
-      process.env.SENTRY_DSN
-    ) {
+    if (!this.isDevelopment && level >= LogLevel.ERROR && isLogRocketEnabled) {
       if (error) {
-        Sentry.captureException(error, { extra: context });
+        LogRocket.captureException(error, { extra: context });
       } else {
-        Sentry.captureMessage(message, {
-          level: "error",
-          extra: context,
-        });
+        LogRocket.captureMessage(formattedMessage, { extra: context });
       }
     }
   }
