@@ -153,6 +153,7 @@ export function validateObject(
   obj: Record<string, unknown>,
   rules: ValidationRules
 ): Record<string, string[]> {
+
   const errors: Record<string, string[]> = {};
 
   for (const [field, rule] of Object.entries(rules)) {
