@@ -50,7 +50,7 @@ export function checkAbilities(
           failedRules.push(rule);
         }
       } catch (ruleError) {
-        logger.error(`Error checking rule ${rule.action}:${rule.subject}:`, ruleError);
+        logger.error(`Error checking rule ${rule.action}:${rule.subject}:`, undefined, ruleError as Error);
         failedRules.push(rule);
       }
     }
@@ -60,7 +60,7 @@ export function checkAbilities(
       failedRules
     };
   } catch (error) {
-    logger.error('Error in checkAbilities:', error);
+    logger.error('Error in checkAbilities:', undefined, error as Error);
     return {
       allowed: false,
       failedRules: rules
@@ -148,7 +148,9 @@ export async function caslGuardWithPolicies(
     return { allowed: true };
   } catch (policyErr) {
     if (process.env.NODE_ENV === "development") {
-      logger.warn("ABAC policy evaluation failed, continuing with RBAC only:", policyErr);
+      logger.warn("ABAC policy evaluation failed, continuing with RBAC only:", {
+        error: policyErr instanceof Error ? policyErr.message : String(policyErr),
+      });
     }
     return { allowed: true };
   }
@@ -223,7 +225,7 @@ export function caslGuard(
       : { allowed: false, error: "Insufficient permissions", failedRules };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    logger.error("Authorization check failed:", errorMessage);
+    logger.error("Authorization check failed:", { error: errorMessage });
     
     // Log the error for debugging
     if (user?.sub) {

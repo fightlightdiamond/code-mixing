@@ -4,6 +4,7 @@ import { prisma } from "@/core/prisma";
 import { getUserFromRequest } from "@/core/auth/getUser";
 import logger from "@/lib/logger";
 import { LearningSession, ProgressStatus, VocabStatus } from "@prisma/client";
+import type { User } from "@/types/api";
 
 interface LessonProgressItem {
   id: string;
@@ -74,9 +75,12 @@ interface UserProgressResponse {
 export async function GET(
   request: NextRequest
 ): Promise<NextResponse<UserProgressResponse>> {
+
+  let user: User | null = null;
+
   try {
     // Get user from request
-    const user = await getUserFromRequest(request);
+    user = await getUserFromRequest(request);
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
