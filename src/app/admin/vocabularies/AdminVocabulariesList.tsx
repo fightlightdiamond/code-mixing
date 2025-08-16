@@ -41,7 +41,7 @@ export default function AdminVocabulariesList() {
       await createMutation.mutateAsync(data);
       setShowCreateModal(false);
     } catch (error) {
-      logger.error("Error creating vocabulary:", undefined, error);
+      logger.error("Error creating vocabulary:", undefined, error as Error);
     }
   };
 
@@ -53,7 +53,7 @@ export default function AdminVocabulariesList() {
       setShowEditModal(false);
       setSelectedId(null);
     } catch (error) {
-      logger.error("Error updating vocabulary:", undefined, error);
+      logger.error("Error updating vocabulary:", undefined, error as Error);
     }
   };
 
@@ -63,7 +63,7 @@ export default function AdminVocabulariesList() {
     try {
       await deleteMutation.mutateAsync(id);
     } catch (error) {
-      logger.error("Error deleting vocabulary:", undefined, error);
+      logger.error("Error deleting vocabulary:", undefined, error as Error);
     }
   };
 

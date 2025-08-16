@@ -197,7 +197,7 @@ export const AudioPlayer = React.memo(function AudioPlayer({
       progressActions.updatePosition(audio.currentTime);
     } else {
       audio.play().catch((error) => {
-        logger.error("Error playing audio:", undefined, error);
+        logger.error("Error playing audio:", undefined, error as Error);
         setAudioState((prev) => ({
           ...prev,
           error: "Không thể phát âm thanh",

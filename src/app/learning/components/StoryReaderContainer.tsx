@@ -78,14 +78,14 @@ export function StoryReaderContainer({
       try {
         await submitExerciseResult(result);
       } catch (error) {
-        logger.error("Failed to submit exercise result:", undefined, error);
+        logger.error("Failed to submit exercise result:", undefined, error as Error);
       }
     },
     [submitExerciseResult]
   );
 
   const handleExercisesComplete = useCallback((results: ExerciseResult[]) => {
-    logger.info("All exercises completed:", results);
+    logger.info("All exercises completed", { results });
     setStoryCompleted(true);
     // Here you could update user progress, show completion animation, etc.
   }, []);

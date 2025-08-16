@@ -24,7 +24,7 @@ export function TokenRefreshProvider({ children }: TokenRefreshProviderProps) {
       logger.info("🔄 Token refreshed successfully");
     },
     onRefreshError: (error) => {
-      logger.error("🔄 Token refresh failed:", undefined, error);
+      logger.error("🔄 Token refresh failed:", undefined, error as Error);
     },
   });
 

@@ -233,13 +233,11 @@ export function VocabularyPopup({
                   <Button
                     variant="outline"
                     size="sm"
-                    className={cn(
-                      "flex-1 text-xs",
-                      currentStatus === "reviewing" &&
-                        "bg-green-100 border-green-200 text-green-800"
-                    )}
-                    disabled={updatingStatus === "reviewing"}
-                    onClick={() => updateVocabularyStatus("reviewing")}
+                    className="flex-1 text-xs"
+                    onClick={() => {
+                      // TODO: Mark as learning/reviewing
+                      logger.info("Mark as learning", { word });
+                    }}
                   >
                     {updatingStatus === "reviewing" ? (
                       <Loader2 className="h-3 w-3 animate-spin" />
@@ -250,13 +248,11 @@ export function VocabularyPopup({
                   <Button
                     variant="outline"
                     size="sm"
-                    className={cn(
-                      "flex-1 text-xs",
-                      currentStatus === "mastered" &&
-                        "bg-green-100 border-green-200 text-green-800"
-                    )}
-                    disabled={updatingStatus === "mastered"}
-                    onClick={() => updateVocabularyStatus("mastered")}
+                    className="flex-1 text-xs"
+                    onClick={() => {
+                      // TODO: Mark as mastered
+                      logger.info("Mark as mastered", { word });
+                    }}
                   >
                     {updatingStatus === "mastered" ? (
                       <Loader2 className="h-3 w-3 animate-spin" />
@@ -274,12 +270,10 @@ export function VocabularyPopup({
                 <Button
                   variant="outline"
                   size="sm"
-                  className={cn(
-                    currentStatus === "new" &&
-                      "bg-green-100 border-green-200 text-green-800"
-                  )}
-                  disabled={updatingStatus === "new" || currentStatus === "new"}
-                  onClick={() => updateVocabularyStatus("new")}
+                  onClick={() => {
+                    // TODO: Add to vocabulary list for manual definition
+                    logger.info("Add to vocabulary list", { word });
+                  }}
                 >
                   {updatingStatus === "new" ? (
                     <Loader2 className="h-4 w-4 animate-spin" />

@@ -46,14 +46,14 @@ export function useOfflineManager() {
       navigator.serviceWorker
         .register("/sw.js")
         .then((registration) => {
-          logger.info("Service Worker registered:", registration);
+          logger.info("Service Worker registered", { registration });
           setOfflineStatus((prev) => ({ ...prev, isServiceWorkerReady: true }));
 
           // Get initial cache status
           getCacheStatus();
         })
         .catch((error) => {
-          logger.error("Service Worker registration failed:", undefined, error);
+          logger.error("Service Worker registration failed:", undefined, error as Error);
         });
     }
   }, []);
@@ -91,7 +91,7 @@ export function useOfflineManager() {
       setOfflineStatus((prev) => ({ ...prev, cacheStatus }));
       return cacheStatus;
     } catch (error) {
-      logger.error("Failed to get cache status:", undefined, error);
+      logger.error("Failed to get cache status:", undefined, error as Error);
       return null;
     }
   }, [offlineStatus.isServiceWorkerReady]);
@@ -191,7 +191,7 @@ export function useOfflineManager() {
               } catch (error) {
                 logger.warn(
                   `Failed to cache audio for word: ${vocab.word}`,
-                  error
+                  { error: String(error) }
                 );
               }
             }
@@ -212,7 +212,7 @@ export function useOfflineManager() {
 
         return true;
       } catch (error) {
-        logger.error("Failed to download story:", undefined, error);
+        logger.error("Failed to download story:", undefined, error as Error);
 
         setDownloadQueue((prev) =>
           prev.map((item) =>
@@ -280,7 +280,7 @@ export function useOfflineManager() {
 
         return true;
       } catch (error) {
-        logger.error("Failed to clear cache:", undefined, error);
+        logger.error("Failed to clear cache:", undefined, error as Error);
         return false;
       }
     },
@@ -296,7 +296,7 @@ export function useOfflineManager() {
       // For now, we'll return an empty array
       return [];
     } catch (error) {
-      logger.error("Failed to get offline stories:", undefined, error);
+      logger.error("Failed to get offline stories:", undefined, error as Error);
       return [];
     }
   }, [offlineStatus.cacheStatus]);

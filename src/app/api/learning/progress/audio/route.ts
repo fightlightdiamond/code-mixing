@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
         ? JSON.parse(progress.metadata as string).bookmarks || []
         : [];
     } catch (error) {
-      logger.error("Error parsing bookmarks:", undefined, error);
+      logger.error("Error parsing bookmarks:", undefined, error as Error);
     }
 
     return NextResponse.json({
@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
       lastUpdated: progress.updatedAt,
     });
   } catch (error) {
-    logger.error("Error fetching audio progress:", undefined, error);
+    logger.error("Error fetching audio progress:", undefined, error as Error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    logger.error("Error saving audio progress:", undefined, error);
+    logger.error("Error saving audio progress:", undefined, error as Error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -156,7 +156,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    logger.error("Error clearing audio progress:", undefined, error);
+    logger.error("Error clearing audio progress:", undefined, error as Error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

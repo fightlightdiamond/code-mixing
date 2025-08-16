@@ -22,7 +22,7 @@ export async function GET() {
 
     return response;
   } catch (error) {
-    logger.error('CSRF token generation error', undefined, error);
+    logger.error('CSRF token generation error', undefined, error as Error);
     return NextResponse.json(
       { message: 'Failed to generate CSRF token' },
       { status: 500 }

@@ -88,7 +88,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ data: stories, meta: { page, limit, total } });
   } catch (error) {
-    logger.error("Error fetching stories", undefined, error);
+    logger.error("Error fetching stories", undefined, error as Error);
     return NextResponse.json(
       { error: "Failed to fetch stories" },
       { status: 500 }
@@ -202,7 +202,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(story, { status: 201 });
   } catch (error) {
-    logger.error("Error creating story", undefined, error);
+    logger.error("Error creating story", undefined, error as Error);
     return NextResponse.json(
       { error: "Failed to create story" },
       { status: 500 }

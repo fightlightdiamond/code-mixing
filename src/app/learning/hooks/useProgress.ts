@@ -82,7 +82,7 @@ export function useProgress({
         setStats(statsData);
       }
     } catch (err) {
-      logger.error("Error loading progress:", undefined, err);
+      logger.error("Error loading progress:", undefined, err as Error);
       setError("Không thể tải tiến độ học tập");
 
       // Load from localStorage as fallback
@@ -109,7 +109,7 @@ export function useProgress({
         }
       }
     } catch (err) {
-      logger.error("Error loading from localStorage:", undefined, err);
+      logger.error("Error loading from localStorage:", undefined, err as Error);
     }
   }, [userId]);
 
@@ -125,7 +125,7 @@ export function useProgress({
       };
       localStorage.setItem(`learning-progress-${userId}`, JSON.stringify(data));
     } catch (err) {
-      logger.error("Error saving to localStorage:", undefined, err);
+      logger.error("Error saving to localStorage:", undefined, err as Error);
     }
   }, [userId, progress, vocabularyProgress, levelProgress, stats]);
 
@@ -157,7 +157,7 @@ export function useProgress({
           saveToLocalStorage();
         }
       } catch (err) {
-        logger.error("Error updating story completion:", undefined, err);
+        logger.error("Error updating story completion:", undefined, err as Error);
       }
     },
     [userId, saveToLocalStorage]
@@ -198,8 +198,7 @@ export function useProgress({
         // Update overall progress
         loadProgress();
       } catch (err) {
-        logger.error("Error updating vocabulary progress:", err);
-        setError("Không thể cập nhật tiến độ từ vựng");
+        logger.error("Error updating vocabulary progress:", undefined, err as Error);
       }
     },
     [userId, loadProgress]
@@ -286,7 +285,7 @@ export function useProgress({
           loadProgress();
         }
       } catch (err) {
-        logger.error("Error marking vocabulary as mastered:", undefined, err);
+        logger.error("Error marking vocabulary as mastered:", undefined, err as Error);
       }
     },
     [userId, loadProgress]
