@@ -5,6 +5,10 @@ import React, { ReactNode } from 'react';
 import { apiClient } from './api';
 
 // Mock API responses - using unknown instead of any for better type safety
+interface GlobalWithFetch {
+  fetch: typeof fetch;
+}
+
 export interface MockResponse<T = unknown> {
   data?: T;
   error?: Error;
@@ -178,17 +182,17 @@ export const integrationTestHelpers = {
   setupTestEnvironment: () => {
     const mockClient = new MockApiClient();
     const queryClient = createTestQueryClient();
-    
+
     // Replace global fetch with mock
-    const originalFetch = global.fetch;
-    // Cast to satisfy TS overloads in different environments
-    (globalThis as any).fetch = mockClient.mockFetch.bind(mockClient) as any;
-    
+    const originalFetch = (globalThis as GlobalWithFetch).fetch;
+    (globalThis as GlobalWithFetch).fetch =
+      mockClient.mockFetch.bind(mockClient) as typeof fetch;
+
     return {
       mockClient,
       queryClient,
       cleanup: () => {
-        (globalThis as any).fetch = originalFetch as any;
+        (globalThis as GlobalWithFetch).fetch = originalFetch;
         queryClient.clear();
         mockClient.clearMocks();
       },

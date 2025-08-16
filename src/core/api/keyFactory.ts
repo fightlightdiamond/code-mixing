@@ -42,7 +42,7 @@ function normalizeParams<T extends Record<string, unknown>>(params: T): T {
   const normalized: Record<string, unknown> = {};
 
   // Sort keys for consistent ordering
-  const sortedKeys = Object.keys(params).sort();
+  const sortedKeys = Object.keys(params).sort() as (keyof T)[];
 
   for (const key of sortedKeys) {
     const value = params[key as keyof T];
@@ -52,7 +52,7 @@ function normalizeParams<T extends Record<string, unknown>>(params: T): T {
 
     // Normalize arrays
     if (Array.isArray(value)) {
-      normalized[key] = [...value].sort();
+      normalized[key as string] = [...value].sort();
     }
     // Normalize objects
     else if (value && typeof value === 'object') {
@@ -60,7 +60,7 @@ function normalizeParams<T extends Record<string, unknown>>(params: T): T {
     }
     // Keep primitives as-is
     else {
-      normalized[key] = value;
+      normalized[key as string] = value;
     }
   }
 

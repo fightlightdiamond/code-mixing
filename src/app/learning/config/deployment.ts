@@ -2,6 +2,9 @@
  * Deployment configuration for the learning application
  */
 
+import type { NextConfig } from "next";
+import type { Configuration as WebpackConfig } from "webpack";
+
 export interface DeploymentConfig {
   environment: "development" | "staging" | "production";
   apiBaseUrl: string;
@@ -123,7 +126,7 @@ export const getOptimizationConfig = () => {
 
       // Bundle analyzer
       ...(config.performance.enableBundleAnalysis && {
-        webpack: (config: any) => {
+        webpack: ((config: WebpackConfig): WebpackConfig => {
           if (process.env.ANALYZE === "true") {
             const { BundleAnalyzerPlugin } = require("webpack-bundle-analyzer");
             config.plugins.push(
@@ -134,7 +137,7 @@ export const getOptimizationConfig = () => {
             );
           }
           return config;
-        },
+        }) as NextConfig["webpack"],
       }),
     },
 

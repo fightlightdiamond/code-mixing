@@ -21,6 +21,45 @@ export function VocabularyPopup({
   const [adjustedPosition, setAdjustedPosition] = useState(position);
   const { audioState, playPronunciation, stopPronunciation } =
     useVocabularyAudio();
+  const [currentStatus, setCurrentStatus] = useState<
+    "new" | "reviewing" | "mastered" | null
+  >(vocabularyData?.userProgress?.status ?? null);
+  const [updatingStatus, setUpdatingStatus] = useState<
+    "new" | "reviewing" | "mastered" | null
+  >(null);
+
+  useEffect(() => {
+    setCurrentStatus(vocabularyData?.userProgress?.status ?? null);
+  }, [vocabularyData]);
+
+  const updateVocabularyStatus = async (
+    status: "new" | "reviewing" | "mastered"
+  ) => {
+    setUpdatingStatus(status);
+    try {
+      const response = await fetch("/api/learning/vocabulary/progress", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          vocabularyId: vocabularyData?.id,
+          word,
+          status,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Request failed with status ${response.status}`);
+      }
+
+      setCurrentStatus(status);
+    } catch (error) {
+      logger.error("Failed to update vocabulary status", { word, status }, error);
+    } finally {
+      setUpdatingStatus(null);
+    }
+  };
 
   // Adjust popup position to stay within viewport
   useEffect(() => {
@@ -194,24 +233,36 @@ export function VocabularyPopup({
                   <Button
                     variant="outline"
                     size="sm"
-                    className="flex-1 text-xs"
-                    onClick={() => {
-                      // TODO: Mark as learning/reviewing
-                      logger.info("Mark as learning:", word);
-                    }}
+                    className={cn(
+                      "flex-1 text-xs",
+                      currentStatus === "reviewing" &&
+                        "bg-green-100 border-green-200 text-green-800"
+                    )}
+                    disabled={updatingStatus === "reviewing"}
+                    onClick={() => updateVocabularyStatus("reviewing")}
                   >
-                    Đang học
+                    {updatingStatus === "reviewing" ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      "Đang học"
+                    )}
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
-                    className="flex-1 text-xs"
-                    onClick={() => {
-                      // TODO: Mark as mastered
-                      logger.info("Mark as mastered:", word);
-                    }}
+                    className={cn(
+                      "flex-1 text-xs",
+                      currentStatus === "mastered" &&
+                        "bg-green-100 border-green-200 text-green-800"
+                    )}
+                    disabled={updatingStatus === "mastered"}
+                    onClick={() => updateVocabularyStatus("mastered")}
                   >
-                    Đã thuộc
+                    {updatingStatus === "mastered" ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      "Đã thuộc"
+                    )}
                   </Button>
                 </div>
               </div>
@@ -223,12 +274,20 @@ export function VocabularyPopup({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => {
-                    // TODO: Add to vocabulary list for manual definition
-                    logger.info("Add to vocabulary list:", word);
-                  }}
+                  className={cn(
+                    currentStatus === "new" &&
+                      "bg-green-100 border-green-200 text-green-800"
+                  )}
+                  disabled={updatingStatus === "new" || currentStatus === "new"}
+                  onClick={() => updateVocabularyStatus("new")}
                 >
-                  Thêm vào danh sách từ vựng
+                  {updatingStatus === "new" ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : currentStatus === "new" ? (
+                    "Đã thêm"
+                  ) : (
+                    "Thêm vào danh sách từ vựng"
+                  )}
                 </Button>
               </div>
             )}

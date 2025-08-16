@@ -18,21 +18,26 @@ interface SyncStatus {
   nextAutoSync: Date | null;
 }
 
-interface SyncConflict {
+interface SyncConflict<T> {
   type:
     | "learning_progress"
     | "vocabulary_progress"
     | "exercise_results"
     | "learning_stats";
-  localData: any;
-  serverData: any;
+  localData: T;
+  serverData: T;
   field: string;
   resolution?: "local" | "server" | "merge";
 }
 
+type AnySyncConflict =
+  | SyncConflict<LearningProgress>
+  | SyncConflict<VocabularyProgress>
+  | SyncConflict<unknown>;
+
 interface SyncResult {
   success: boolean;
-  conflicts: SyncConflict[];
+  conflicts: AnySyncConflict[];
   syncedItems: {
     learningProgress: boolean;
     vocabularyProgress: number;
@@ -66,7 +71,7 @@ export function useDataSync(userId: string) {
     nextAutoSync: null,
   });
 
-  const [conflicts, setConflicts] = useState<SyncConflict[]>([]);
+  const [conflicts, setConflicts] = useState<AnySyncConflict[]>([]);
   const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const retryCountRef = useRef(0);
 
@@ -209,7 +214,17 @@ export function useDataSync(userId: string) {
   );
 
   // Perform the actual sync operations
-  const performSync = async (pendingData: any): Promise<SyncResult> => {
+  interface PendingSyncData {
+    learningProgress: LearningProgress | null;
+    vocabularyProgress: VocabularyProgress[];
+    exerciseResults: ExerciseResult[];
+    learningStats: LearningStats | null;
+    sessions: unknown[];
+  }
+
+  const performSync = async (
+    pendingData: PendingSyncData | null
+  ): Promise<SyncResult> => {
     const result: SyncResult = {
       success: true,
       conflicts: [],
@@ -220,6 +235,8 @@ export function useDataSync(userId: string) {
         learningStats: false,
       },
     };
+
+    if (!pendingData) return result;
 
     // Step 1: Sync learning progress
     setSyncStatus((prev) => ({
@@ -243,7 +260,7 @@ export function useDataSync(userId: string) {
           result.syncedItems.learningProgress = true;
         }
       } catch (error) {
-        logger.error("Failed to sync learning progress:", error);
+        logger.error("Failed to sync learning progress:", undefined, error);
       }
     }
 
@@ -272,7 +289,7 @@ export function useDataSync(userId: string) {
           result.syncedItems.vocabularyProgress = merged.length;
         }
       } catch (error) {
-        logger.error("Failed to sync vocabulary progress:", error);
+        logger.error("Failed to sync vocabulary progress:", undefined, error);
       }
     }
 
@@ -288,7 +305,7 @@ export function useDataSync(userId: string) {
         await uploadExerciseResults(pendingData.exerciseResults);
         result.syncedItems.exerciseResults = pendingData.exerciseResults.length;
       } catch (error) {
-        logger.error("Failed to sync exercise results:", error);
+        logger.error("Failed to sync exercise results:", undefined, error);
       }
     }
 
@@ -310,7 +327,7 @@ export function useDataSync(userId: string) {
         await uploadLearningStats(mergedStats);
         result.syncedItems.learningStats = true;
       } catch (error) {
-        logger.error("Failed to sync learning stats:", error);
+        logger.error("Failed to sync learning stats:", undefined, error);
       }
     }
 
@@ -325,7 +342,7 @@ export function useDataSync(userId: string) {
       try {
         await uploadLearningSessions(pendingData.sessions);
       } catch (error) {
-        logger.error("Failed to sync learning sessions:", error);
+        logger.error("Failed to sync learning sessions:", undefined, error);
       }
     }
 
@@ -435,7 +452,7 @@ export function useDataSync(userId: string) {
     if (!response.ok) throw new Error("Failed to upload learning stats");
   };
 
-  const uploadLearningSessions = async (sessions: any[]) => {
+  const uploadLearningSessions = async (sessions: unknown[]) => {
     const response = await fetch("/api/learning/sessions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -448,17 +465,17 @@ export function useDataSync(userId: string) {
   const detectLearningProgressConflicts = (
     local: LearningProgress,
     server: LearningProgress | null
-  ): SyncConflict[] => {
+  ): SyncConflict<LearningProgress>[] => {
     if (!server) return [];
 
-    const conflicts: SyncConflict[] = [];
+    const conflicts: SyncConflict<LearningProgress>[] = [];
 
     // Check for conflicts in key fields
     if (local.storiesRead !== server.storiesRead) {
       conflicts.push({
         type: "learning_progress",
-        localData: local.storiesRead,
-        serverData: server.storiesRead,
+        localData: local,
+        serverData: server,
         field: "storiesRead",
       });
     }
@@ -466,8 +483,8 @@ export function useDataSync(userId: string) {
     if (local.vocabularyLearned !== server.vocabularyLearned) {
       conflicts.push({
         type: "learning_progress",
-        localData: local.vocabularyLearned,
-        serverData: server.vocabularyLearned,
+        localData: local,
+        serverData: server,
         field: "vocabularyLearned",
       });
     }
@@ -479,7 +496,7 @@ export function useDataSync(userId: string) {
     local: VocabularyProgress[],
     server: VocabularyProgress[]
   ) => {
-    const conflicts: SyncConflict[] = [];
+    const conflicts: SyncConflict<VocabularyProgress>[] = [];
     const merged: VocabularyProgress[] = [];
     const serverMap = new Map(server.map((v) => [v.word, v]));
 
@@ -555,41 +572,66 @@ export function useDataSync(userId: string) {
   };
 
   const uploadConflictResolution = async (
-    conflict: SyncConflict,
-    data: any
+    conflict: AnySyncConflict,
+    data: unknown
   ) => {
     // Implementation depends on conflict type
     logger.info("Uploading conflict resolution:", conflict, data);
   };
 
-  const updateLocalData = async (conflict: SyncConflict, data: any) => {
+  const updateLocalData = async <T>(
+    conflict: SyncConflict<T>,
+    data: T
+  ) => {
     // Update local data based on conflict type
     switch (conflict.type) {
       case "learning_progress":
-        updateLearningProgress({ [conflict.field]: data });
+        updateLearningProgress({
+          [conflict.field]: (data as LearningProgress)[
+            conflict.field as keyof LearningProgress
+          ],
+        } as Partial<LearningProgress>);
         break;
-      case "vocabulary_progress":
-        updateVocabularyProgress(conflict.field, data);
+      case "vocabulary_progress": {
+        const vocab = data as VocabularyProgress;
+        updateVocabularyProgress(vocab.word, {
+          [conflict.field]: vocab[
+            conflict.field as keyof VocabularyProgress
+          ] as unknown,
+        } as Partial<VocabularyProgress>);
         break;
+      }
       case "learning_stats":
-        updateLearningStats({ [conflict.field]: data });
+        updateLearningStats({
+          [conflict.field]: (data as LearningStats)[
+            conflict.field as keyof LearningStats
+          ],
+        } as Partial<LearningStats>);
         break;
     }
   };
 
-  const mergeConflictData = (conflict: SyncConflict): any => {
+  const mergeConflictData = <T>(conflict: SyncConflict<T>): T => {
     // Intelligent merging based on conflict type and field
     switch (conflict.type) {
-      case "learning_progress":
-        if (
-          conflict.field === "storiesRead" ||
-          conflict.field === "vocabularyLearned"
-        ) {
-          return Math.max(conflict.localData, conflict.serverData);
+      case "learning_progress": {
+        const field = conflict.field as keyof LearningProgress;
+        if (field === "storiesRead" || field === "vocabularyLearned") {
+          const localValue = (conflict.localData as LearningProgress)[
+            field
+          ] as number;
+          const serverValue = (conflict.serverData as LearningProgress)[
+            field
+          ] as number;
+          return {
+            ...(conflict.localData as LearningProgress),
+            [field]: Math.max(localValue, serverValue),
+          } as T;
         }
-        break;
+        return conflict.localData;
+      }
       default:
-        return conflict.localData; // Default to local data
+        return conflict.localData;
     }
   };
 

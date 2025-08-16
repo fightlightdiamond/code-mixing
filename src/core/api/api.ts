@@ -213,7 +213,9 @@ class ApiClient {
     return url; // prefer relative path on client
   }
 
-  async request<T = unknown>(input: RequestInfo, init?: RequestInit): Promise<T> {
+  async request(input: RequestInfo, init?: RequestInit): Promise<string>;
+  async request<T>(input: RequestInfo, init?: RequestInit): Promise<T>;
+  async request<T>(input: RequestInfo, init?: RequestInit): Promise<T | string> {
     try {
       let config: RequestInit & { url: string } = {
         ...init,
@@ -240,12 +242,21 @@ class ApiClient {
 
       if (!response.ok) {
         type ErrorBody = { message?: string; error?: string; [k: string]: unknown };
-        const obj = (typeof body === "object" && body !== null) ? (body as ErrorBody) : undefined;
+        const obj = (typeof body === "object" && body !== null)
+          ? (body as ErrorBody)
+          : undefined;
         const message = obj?.message || obj?.error || `HTTP ${response.status}`;
-        throw new ApiError(message, response.status, body, `HTTP_${response.status}`);
+        throw new ApiError<ErrorBody | undefined>(
+          message,
+          response.status,
+          obj,
+          `HTTP_${response.status}`
+        );
       }
 
-      return (body as T) ?? (await response.text() as unknown as T);
+      if (isJson) return body as T;
+      const text = await response.text();
+      return text;
     } catch (err) {
       let e = err as Error;
       for (const i of this.errorInterceptors) {
@@ -371,20 +382,24 @@ export const isTokenExpiringSoon = (): boolean => tokenManager.isExpiringSoon();
 
 export const refreshToken = (): Promise<string | null> => tokenManager.refresh(performRefresh);
 
-export const getTokenStatus = (): {
-  hasToken: boolean;
+export interface TokenStatus {
+  hasAccessToken: boolean;
+  accessTokenLength: number;
+  hasRefreshToken: boolean;
+  refreshTokenLength: number;
   isExpiringSoon: boolean;
-  expiresAt: number | null;
-  refreshInFlight: boolean;
-} => {
+}
+
+export const getTokenStatus = (): TokenStatus => {
   const access = tokenManager.getAccessTokenSync();
   const refresh = tokenManager.getRefreshTokenSync();
-  const expiring = tokenManager.isExpiringSoon();
+
   return {
-    hasToken: !!access || !!refresh,
-    isExpiringSoon: expiring,
-    expiresAt: tokenManager.getExpiresAtSync(),
-    refreshInFlight: tokenManager.getRefreshInFlight() !== null,
+    hasAccessToken: !!access,
+    accessTokenLength: access?.length ?? 0,
+    hasRefreshToken: !!refresh,
+    refreshTokenLength: refresh?.length ?? 0,
+    isExpiringSoon: tokenManager.isExpiringSoon(),
   };
 };
 
