@@ -45,14 +45,6 @@ export async function POST(request: NextRequest) {
       }
       const { email, password } = parsed.data;
 
-    // Validate input
-    if (!email || !password) {
-      return NextResponse.json(
-        { message: "Dữ liệu không hợp lệ", errors: parsed.error.flatten() },
-        { status: 400 }
-      );
-    }
-
     // Find user by email
     const user = await prisma.user.findUnique({
       where: { email },
