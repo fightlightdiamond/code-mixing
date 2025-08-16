@@ -3,11 +3,19 @@ import { logger } from '@/lib/logger';
 
 import React, { useState, useEffect, Suspense } from "react";
 // Error boundary implementation (simplified)
+interface ErrorBoundaryProps {
+  children: React.ReactNode;
+  FallbackComponent: React.ComponentType<{
+    error: Error;
+    resetErrorBoundary: () => void;
+  }>;
+}
+
 class ErrorBoundary extends React.Component<
-  { children: React.ReactNode; FallbackComponent: React.ComponentType<any> },
+  ErrorBoundaryProps,
   { hasError: boolean; error?: Error }
 > {
-  constructor(props: any) {
+  constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false };
   }
@@ -55,12 +63,13 @@ import type {
   LearningStory,
   Exercise,
   VocabularyData,
+  ExerciseResult,
 } from "../types/learning";
 
 interface LearningAppProps {
   story: LearningStory;
   onStoryComplete?: (storyId: string) => void;
-  onExerciseComplete?: (results: any[]) => void;
+  onExerciseComplete?: (results: ExerciseResult[]) => void;
   className?: string;
 }
 
@@ -167,7 +176,7 @@ export const LearningApp = React.memo(function LearningApp({
     onStoryComplete?.(story.id);
   };
 
-  const handleExerciseComplete = (results: unknown[]) => {
+  const handleExerciseComplete = (results: ExerciseResult[]) => {
     onExerciseComplete?.(results);
     setActivePanel("progress");
   };
