@@ -199,7 +199,7 @@ export interface FormField {
     minLength?: number;
     maxLength?: number;
     pattern?: RegExp;
-    custom?: (value: any) => boolean | string;
+    custom?: (value: unknown) => boolean | string;
   };
 }
 
@@ -209,11 +209,11 @@ export interface FormData {
 
 // State Management Types
 export interface StoreState {
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface StoreActions {
-  [key: string]: (...args: any[]) => void;
+  [key: string]: (...args: unknown[]) => void;
 }
 
 export interface StoreSlice<T extends StoreState, A extends StoreActions> {
