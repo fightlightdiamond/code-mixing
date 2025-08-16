@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import { z } from "zod";
 
 import { prisma } from "@/core/prisma";
+import logger from "@/lib/logger";
 
 // Validation schema
 const registerSchema = z.object({
@@ -57,6 +58,11 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      throw new Error("JWT_SECRET is not configured");
+    }
+
     // Generate access token (shorter expiry)
     const accessToken = jwt.sign(
       {
@@ -65,7 +71,7 @@ export async function POST(request: NextRequest) {
         role: user.role,
         tenantId: user.tenantId,
       },
-      process.env.JWT_SECRET || "fallback-secret",
+      secret,
       { expiresIn: "15m" }
     );
 
@@ -75,7 +81,7 @@ export async function POST(request: NextRequest) {
         userId: user.id,
         type: "refresh",
       },
-      process.env.JWT_SECRET || "fallback-secret",
+      secret,
       { expiresIn: "7d" }
     );
 
@@ -102,7 +108,7 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
-    console.error("Registration error:", error);
+    logger.error("Registration error", undefined, error);
     return NextResponse.json(
       { message: "Lỗi server. Vui lòng thử lại sau." },
       { status: 500 }

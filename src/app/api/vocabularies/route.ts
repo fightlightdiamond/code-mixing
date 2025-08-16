@@ -1,6 +1,7 @@
 import { Prisma, LearningLevel } from "@prisma/client";
 import { prisma } from "@/core/prisma"; // Đường dẫn tới Prisma instance của bạn
 import { NextRequest, NextResponse } from "next/server";
+import logger from "@/lib/logger";
 
 export async function getVocabularies(params: {
   search?: string;
@@ -66,7 +67,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(vocabularies);
   } catch (error) {
-    console.error("Error fetching vocabularies:", error);
+    logger.error("Error fetching vocabularies", undefined, error);
     return NextResponse.json(
       { error: "Failed to fetch vocabularies" },
       { status: 500 }

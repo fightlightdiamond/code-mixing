@@ -6,6 +6,7 @@
  */
 
 import { PrismaClient, Prisma } from '@prisma/client';
+import logger from '@/lib/logger';
 
 const prisma = new PrismaClient();
 
@@ -38,7 +39,7 @@ export async function createAuditLog(data: AuditLogData) {
       },
     });
   } catch (error) {
-    console.error('Failed to create audit log:', error);
+    logger.error('Failed to create audit log', undefined, error);
     // Don't throw - audit logging should not break main functionality
     return null;
   }
@@ -172,7 +173,7 @@ export async function getAuditLogs(
       take: limit,
     });
   } catch (error) {
-    console.error('Failed to get audit logs:', error);
+    logger.error('Failed to get audit logs', undefined, error);
     return [];
   }
 }
@@ -197,7 +198,7 @@ export async function getUserAuditLogs(
       take: limit,
     });
   } catch (error) {
-    console.error('Failed to get user audit logs:', error);
+    logger.error('Failed to get user audit logs', undefined, error);
     return [];
   }
 }
@@ -224,7 +225,7 @@ export async function cleanupAuditLogs(
 
     return result.count;
   } catch (error) {
-    console.error('Failed to cleanup audit logs:', error);
+    logger.error('Failed to cleanup audit logs', undefined, error);
     return 0;
   }
 }

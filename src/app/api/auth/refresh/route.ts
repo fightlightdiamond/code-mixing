@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 
 import { prisma } from "@/core/prisma";
+import logger from "@/lib/logger";
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,9 +22,14 @@ export async function POST(request: NextRequest) {
       roles?: string[];
     }
     
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      throw new Error('JWT_SECRET is not configured');
+    }
+
     let decoded: CustomJwtPayload;
     try {
-      decoded = jwt.verify(refreshToken, process.env.JWT_SECRET || 'fallback-secret') as CustomJwtPayload;
+      decoded = jwt.verify(refreshToken, secret) as CustomJwtPayload;
     } catch (error) {
       return NextResponse.json(
         { message: 'Refresh token không hợp lệ hoặc đã hết hạn' },
@@ -59,7 +65,7 @@ export async function POST(request: NextRequest) {
         role: user.role,
         tenantId: user.tenantId,
       },
-      process.env.JWT_SECRET || 'fallback-secret',
+      secret,
       { expiresIn: '15m' } // Shorter expiry for access token
     );
 
@@ -69,7 +75,7 @@ export async function POST(request: NextRequest) {
         userId: user.id,
         type: 'refresh',
       },
-      process.env.JWT_SECRET || 'fallback-secret',
+      secret,
       { expiresIn: '7d' }
     );
 
@@ -88,7 +94,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Token refresh error:', error);
+    logger.error('Token refresh error', undefined, error);
     return NextResponse.json(
       { message: 'Lỗi server. Vui lòng thử lại sau.' },
       { status: 500 }

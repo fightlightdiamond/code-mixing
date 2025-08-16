@@ -1,17 +1,54 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-
+import { z } from "zod";
 import { prisma } from "@/core/prisma";
+import { rateLimit } from "@/lib/rate-limit";
+import logger from "@/lib/logger";
+
+const loginSchema = z.object({
+    email: z.string().email(),
+    password: z.string().min(1, "Mật khẩu là bắt buộc"),
+});
+
+const MAX_ATTEMPTS = parseInt(
+  process.env.LOGIN_RATE_LIMIT_MAX || "5",
+  10
+);
+const WINDOW_MS = parseInt(
+  process.env.LOGIN_RATE_LIMIT_WINDOW_MS || "60000",
+  10
+);
+
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password } = await request.json();
+    const ip =
+      request.ip ||
+      request.headers.get("x-forwarded-for")?.split(",")[0] ||
+      "unknown";
+    const allowed = rateLimit(ip, { max: MAX_ATTEMPTS, windowMs: WINDOW_MS });
+    if (!allowed) {
+      return NextResponse.json(
+        { message: "Too many login attempts. Please try again later." },
+        { status: 429 }
+      );
+    }
+
+      const body = await request.json();
+      const parsed = loginSchema.safeParse(body);
+      if (!parsed.success) {
+          return NextResponse.json(
+              { message: "Dữ liệu không hợp lệ", errors: parsed.error.flatten() },
+              { status: 400 }
+          );
+      }
+      const { email, password } = parsed.data;
 
     // Validate input
     if (!email || !password) {
       return NextResponse.json(
-        { message: "Email và mật khẩu là bắt buộc" },
+        { message: "Dữ liệu không hợp lệ", errors: parsed.error.flatten() },
         { status: 400 }
       );
     }
@@ -40,6 +77,11 @@ export async function POST(request: NextRequest) {
     // Use the user's tenantId from the database
     const tenantId = user.tenantId;
 
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      throw new Error("JWT_SECRET is not configured");
+    }
+
     // Generate access token (shorter expiry)
     const accessToken = jwt.sign(
       {
@@ -48,7 +90,7 @@ export async function POST(request: NextRequest) {
         role: user.role,
         tenantId: tenantId,
       },
-      process.env.JWT_SECRET || "fallback-secret",
+      secret,
       { expiresIn: "15m" } // 15 minutes for access token
     );
 
@@ -58,7 +100,7 @@ export async function POST(request: NextRequest) {
         userId: user.id,
         type: "refresh",
       },
-      process.env.JWT_SECRET || "fallback-secret",
+      secret,
       { expiresIn: "7d" } // 7 days for refresh token
     );
 
@@ -82,7 +124,7 @@ export async function POST(request: NextRequest) {
       token: accessToken,
     });
   } catch (error) {
-    console.error("Login error:", error);
+    logger.error("Login error", undefined, error);
     return NextResponse.json(
       { message: "Lỗi server. Vui lòng thử lại sau." },
       { status: 500 }

@@ -4,6 +4,7 @@ import type { Prisma, StoryType } from "@prisma/client";
 
 import { prisma } from "@/core/prisma";
 import { getUserFromRequest } from "@/core/auth/getUser";
+import logger from "@/lib/logger";
 
 // GET /api/stories/[id] - Lấy thông tin chi tiết story
 export async function GET(
@@ -63,7 +64,7 @@ export async function GET(
 
     return NextResponse.json(story);
   } catch (error) {
-    console.error("Error fetching story:", error);
+    logger.error("Error fetching story", undefined, error);
     return NextResponse.json(
       { error: "Failed to fetch story" },
       { status: 500 }
@@ -182,7 +183,7 @@ export async function PUT(
 
     return NextResponse.json(story);
   } catch (error) {
-    console.error("Error updating story:", error);
+    logger.error("Error updating story", undefined, error);
     return NextResponse.json(
       { error: "Failed to update story" },
       { status: 500 }
@@ -234,7 +235,7 @@ export async function DELETE(
 
     return NextResponse.json({ message: "Story deleted successfully" });
   } catch (error) {
-    console.error("Error deleting story:", error);
+    logger.error("Error deleting story", undefined, error);
     return NextResponse.json(
       { error: "Failed to delete story" },
       { status: 500 }

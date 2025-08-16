@@ -3,7 +3,7 @@ import { prisma } from "@/core/prisma";
 import { caslGuardWithPolicies } from "@/core/auth/casl.guard";
 import { buildAbility } from "@/core/auth/ability";
 import { accessibleBy } from "@casl/prisma";
-import { log } from "@/lib/logger";
+import logger, { log } from "@/lib/logger";
 import { getUserFromRequest } from "@/core/auth/getUser";
 import type { ApiResponse, User, DatabaseWhereClause, RequiredRule } from "@/types/api";
 import bcrypt from "bcryptjs";
@@ -106,7 +106,7 @@ export async function GET(request: NextRequest) {
     
     return NextResponse.json(response);
   } catch (error) {
-    console.error("Error fetching users:", error);
+    logger.error("Error fetching users", undefined, error);
     return NextResponse.json(
       { error: "Failed to fetch users" },
       { status: 500 }
@@ -181,7 +181,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(userRecord, { status: 201 });
   } catch (error) {
-    console.error("Error creating user:", error);
+    logger.error("Error creating user", undefined, error);
     return NextResponse.json(
       { error: "Failed to create user" },
       { status: 500 }

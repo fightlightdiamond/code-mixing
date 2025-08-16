@@ -3,7 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { Prisma, LearningLevel } from "@prisma/client";
 import { caslGuard, RequiredRule } from "@/core/auth/casl.guard";
 import { prisma } from "@/core/prisma";
-import { getUserFromRequest } from "@/lib/auth";
+import logger from "@/lib/logger";
+import { getUserFromRequest } from "@/core/auth/getUser";
 
 // GET /api/lessons
 export async function GET(request: NextRequest) {
@@ -77,7 +78,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(lessons);
   } catch (err) {
-    console.error("Error fetching lessons:", err);
+    logger.error("Error fetching lessons", undefined, err);
     return NextResponse.json({ error: "Failed to fetch lessons" }, { status: 500 });
   }
 }
@@ -163,7 +164,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(lesson, { status: 201 });
   } catch (err) {
-    console.error("Error creating lesson:", err);
+    logger.error("Error creating lesson", undefined, err);
     return NextResponse.json({ error: "Failed to create lesson" }, { status: 500 });
   }
 }

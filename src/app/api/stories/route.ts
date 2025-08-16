@@ -1,9 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { caslGuardWithPolicies } from "@/core/auth/casl.guard";
 import { prisma } from "@/core/prisma";
-import { isValidStoryType, VALID_STORY_TYPES, STORY_DEFAULTS } from "@/config";
+import { STORY_DEFAULTS } from "@/config";
 import { generateStoryChunks, calculateStoryStats } from "@/lib/story-chunker";
 import { getUserFromRequest } from "@/core/auth/getUser";
+import logger from "@/lib/logger";
+import { z } from "zod";
+import { StoryType, DifficultyLevel } from "@prisma/client";
+
+const storySchema = z.object({
+  title: z.string().min(1),
+  content: z.string().min(1),
+  lessonId: z.number().int().positive().optional(),
+  storyType: z.nativeEnum(StoryType).optional(),
+  difficulty: z.nativeEnum(DifficultyLevel).optional(),
+  estimatedMinutes: z.number().int().positive().optional(),
+  chemRatio: z.number().min(0).max(1).optional(),
+});
 
 // GET /api/stories - Lấy danh sách stories với search và filter
 export async function GET(request: NextRequest) {
@@ -31,6 +44,13 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search") || "";
     const lessonId = searchParams.get("lessonId");
+    const page = Math.max(parseInt(searchParams.get("page") || "1", 10), 1);
+    let limit = parseInt(searchParams.get("limit") || "20", 10);
+    if (isNaN(limit) || limit < 1) {
+      limit = 20;
+    }
+    limit = Math.min(limit, 100);
+    const skip = (page - 1) * limit;
 
     // Build where clause for search
     const where: any = {};
@@ -49,7 +69,8 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Get stories
+    const total = await prisma.story.count({ where });
+
     const stories = await prisma.story.findMany({
       where,
       include: {
@@ -61,12 +82,13 @@ export async function GET(request: NextRequest) {
         },
       },
       orderBy: { createdAt: "desc" },
-      take: 100, // Limit to 100 stories for now
+      skip,
+      take: limit,
     });
 
-    return NextResponse.json(stories);
+    return NextResponse.json({ data: stories, meta: { page, limit, total } });
   } catch (error) {
-    console.error("Error fetching stories:", error);
+    logger.error("Error fetching stories", undefined, error);
     return NextResponse.json(
       { error: "Failed to fetch stories" },
       { status: 500 }
@@ -97,7 +119,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = await request.json();
+    const json = await request.json();
+    const validationResult = storySchema.safeParse(json);
+
+    if (!validationResult.success) {
+      return NextResponse.json(
+        { error: "Invalid request body", details: validationResult.error.errors },
+        { status: 400 }
+      );
+    }
+
     const {
       title,
       content,
@@ -106,27 +137,7 @@ export async function POST(request: NextRequest) {
       difficulty,
       estimatedMinutes,
       chemRatio,
-    } = body;
-
-    // Validate required fields
-    if (!title || !content) {
-      return NextResponse.json(
-        { error: "Title and content are required" },
-        { status: 400 }
-      );
-    }
-
-    // Validate storyType if provided
-    if (storyType && !isValidStoryType(storyType)) {
-      return NextResponse.json(
-        {
-          error: `Invalid storyType. Must be one of: ${VALID_STORY_TYPES.join(
-            ", "
-          )}`,
-        },
-        { status: 400 }
-      );
-    }
+    } = validationResult.data;
 
     // Check if lesson exists if lessonId is provided
     if (lessonId) {
@@ -191,7 +202,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(story, { status: 201 });
   } catch (error) {
-    console.error("Error creating story:", error);
+    logger.error("Error creating story", undefined, error);
     return NextResponse.json(
       { error: "Failed to create story" },
       { status: 500 }

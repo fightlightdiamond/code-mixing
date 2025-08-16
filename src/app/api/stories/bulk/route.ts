@@ -2,7 +2,31 @@ import { NextRequest, NextResponse } from "next/server";
 import { caslGuardWithPolicies } from "@/core/auth/casl.guard";
 import { prisma } from "@/core/prisma";
 import { StoryType, DifficultyLevel, ContentStatus } from "@prisma/client";
-import { getUserFromRequest } from "@/lib/auth";
+import logger from "@/lib/logger";
+import { getUserFromRequest } from "@/core/auth/getUser";
+import { z } from "zod";
+
+const bulkUpdateSchema = z.object({
+  ids: z.array(z.string()).min(1),
+  data: z
+    .object({
+      title: z.string().min(1).optional(),
+      content: z.string().min(1).optional(),
+      storyType: z.nativeEnum(StoryType).optional(),
+      difficulty: z.nativeEnum(DifficultyLevel).optional(),
+      estimatedMinutes: z.number().int().positive().optional(),
+      chemRatio: z.number().min(0).optional(),
+      lessonId: z.number().int().positive().optional(),
+      status: z.nativeEnum(ContentStatus).optional(),
+    })
+    .refine((val) => Object.keys(val).length > 0, {
+      message: "No fields to update",
+    }),
+});
+
+const bulkDeleteSchema = z.object({
+  ids: z.array(z.string()).min(1),
+});
 
 // PUT /api/stories/bulk - bulk update stories
 export async function PUT(request: NextRequest) {
@@ -18,72 +42,26 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: error || "Forbidden" }, { status: 403 });
     }
 
-    const body = await request.json();
-    const ids: string[] = body?.ids ?? [];
-    const data = body?.data ?? {};
+    const json = await request.json();
+    const validationResult = bulkUpdateSchema.safeParse(json);
 
-    if (!Array.isArray(ids) || ids.length === 0) {
-      return NextResponse.json({ error: "ids is required" }, { status: 400 });
-    }
-
-    // Validate enums
-    if (data.storyType && !Object.values(StoryType).includes(data.storyType)) {
+    if (!validationResult.success) {
       return NextResponse.json(
-        { error: `Invalid storyType: ${data.storyType}` },
-        { status: 400 }
-      );
-    }
-    if (data.difficulty && !Object.values(DifficultyLevel).includes(data.difficulty)) {
-      return NextResponse.json(
-        { error: `Invalid difficulty: ${data.difficulty}` },
-        { status: 400 }
-      );
-    }
-    if (data.status && !Object.values(ContentStatus).includes(data.status)) {
-      return NextResponse.json(
-        { error: `Invalid status: ${data.status}` },
+        { error: "Invalid request body", details: validationResult.error.errors },
         { status: 400 }
       );
     }
 
-    const updateData: Record<string, unknown> = {};
-    if (data.title !== undefined) updateData.title = data.title;
-    if (data.content !== undefined) updateData.content = data.content;
+    const { ids, data } = validationResult.data;
 
-    // Validate non-empty strings for text fields
-    if (
-      updateData.title !== undefined &&
-      typeof updateData.title === 'string' &&
-      updateData.title.trim() === ''
-    ) {
-      return NextResponse.json({ error: "title cannot be empty" }, { status: 400 });
-    }
-    if (
-      updateData.content !== undefined &&
-      typeof updateData.content === 'string' &&
-      updateData.content.trim() === ''
-    ) {
-      return NextResponse.json({ error: "content cannot be empty" }, { status: 400 });
-    }
-
-    if (data.storyType !== undefined) updateData.storyType = data.storyType;
-    if (data.difficulty !== undefined) updateData.difficulty = data.difficulty;
-    if (data.estimatedMinutes !== undefined) updateData.estimatedMinutes = data.estimatedMinutes;
-    if (data.chemRatio !== undefined) updateData.chemRatio = data.chemRatio;
-    if (data.lessonId !== undefined) updateData.lessonId = data.lessonId;
-    if (data.status !== undefined) updateData.status = data.status;
-
-    if (Object.keys(updateData).length === 0) {
-      return NextResponse.json({ error: "No fields to update" }, { status: 400 });
-    }
     const result = await prisma.story.updateMany({
       where: { id: { in: ids }, tenantId: user.tenantId ?? undefined },
-      data: updateData,
+      data,
     });
 
     return NextResponse.json({ count: result.count });
   } catch (err) {
-    console.error("Error bulk updating stories:", err);
+    logger.error("Error bulk updating stories", undefined, err);
     return NextResponse.json(
       { error: "Failed to bulk update stories" },
       { status: 500 }
@@ -105,11 +83,17 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: error || "Forbidden" }, { status: 403 });
     }
 
-    const body = await request.json();
-    const ids: string[] = body?.ids ?? [];
-    if (!Array.isArray(ids) || ids.length === 0) {
-      return NextResponse.json({ error: "ids is required" }, { status: 400 });
+    const json = await request.json();
+    const validationResult = bulkDeleteSchema.safeParse(json);
+
+    if (!validationResult.success) {
+      return NextResponse.json(
+        { error: "Invalid request body", details: validationResult.error.errors },
+        { status: 400 }
+      );
     }
+
+    const { ids } = validationResult.data;
 
     const MAX_BULK_DELETE = 100;
     if (ids.length > MAX_BULK_DELETE) {
@@ -125,7 +109,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ count: result.count });
   } catch (err) {
-    console.error("Error bulk deleting stories:", err);
+    logger.error("Error bulk deleting stories", undefined, err);
     return NextResponse.json(
       { error: "Failed to bulk delete stories" },
       { status: 500 }

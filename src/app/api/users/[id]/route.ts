@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/core/prisma";
+import logger from "@/lib/logger";
 
 // PUT /api/users/[id] - Cập nhật user
 export async function PUT(
@@ -59,7 +60,7 @@ export async function PUT(
 
     return NextResponse.json(user);
   } catch (error) {
-    console.error("Error updating user:", error);
+    logger.error("Error updating user", undefined, error);
     return NextResponse.json(
       { error: "Failed to update user" },
       { status: 500 }
@@ -94,7 +95,7 @@ export async function DELETE(
 
     return NextResponse.json({ message: "User deleted successfully" });
   } catch (error) {
-    console.error("Error deleting user:", error);
+    logger.error("Error deleting user", undefined, error);
     return NextResponse.json(
       { error: "Failed to delete user" },
       { status: 500 }

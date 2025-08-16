@@ -3,6 +3,7 @@ import type { UserRole } from "@prisma/client";
 
 import { prisma } from "@/core/prisma";
 import { getUserFromRequest } from "@/core/auth/getUser";
+import logger from "@/lib/logger";
 
 export async function GET(request: NextRequest) {
   try {
@@ -19,6 +20,7 @@ export async function GET(request: NextRequest) {
         name: true,
         email: true,
         role: true,
+        tenantId: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -31,17 +33,21 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // For now, we'll use a default tenant ID since the schema doesn't have tenantId
-    // In a real implementation, you would fetch the tenantId from the database
-    const tenantId = "default-tenant-id";
-
     // Return user data with tenant information
-    const userData = {
+    const userData: {
+      id: string;
+      name: string | null;
+      email: string;
+      role: UserRole;
+      tenantId: string | null;
+      createdAt: Date;
+      updatedAt: Date;
+    } = {
       id: user.id,
       name: user.name,
       email: user.email,
       role: user.role,
-      tenantId: tenantId,
+      tenantId: user.tenantId,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     };
@@ -52,10 +58,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       user: userData,
       roles,
-      tenantId,
+      tenantId: user.tenantId,
     });
   } catch (error) {
-    console.error("Auth verification error:", error);
+    logger.error("Auth verification error", undefined, error);
     return NextResponse.json(
       { message: "Lỗi server. Vui lòng thử lại sau." },
       { status: 500 }
