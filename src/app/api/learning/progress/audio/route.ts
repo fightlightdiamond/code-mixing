@@ -2,6 +2,21 @@ import { logger } from '@/lib/logger';
 import { NextRequest, NextResponse } from "next/server";
 import { getUser } from "@/core/auth/getUser";
 import { prisma } from "@/core/prisma";
+import { z } from "zod";
+
+const audioProgressSchema = z.object({
+  storyId: z.string(),
+  position: z.number().nonnegative(),
+  bookmarks: z
+    .array(
+      z.object({
+        id: z.string(),
+        position: z.number().nonnegative(),
+        note: z.string().optional(),
+      })
+    )
+    .optional(),
+});
 
 // GET /api/learning/progress/audio?storyId=xxx
 export async function GET(request: NextRequest) {
@@ -71,19 +86,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
-    const { storyId, position, bookmarks } = body;
-
-    if (!storyId || typeof position !== "number") {
+    const json = await request.json();
+    const validation = audioProgressSchema.safeParse(json);
+    if (!validation.success) {
       return NextResponse.json(
-        { error: "Story ID and position are required" },
+        { error: "Invalid audio progress data", details: validation.error.errors },
         { status: 400 }
       );
     }
 
+    const { storyId, position, bookmarks } = validation.data;
+
     // Prepare metadata with bookmarks
     const metadata = {
-      bookmarks: bookmarks || [],
+      bookmarks: bookmarks ?? [],
       lastUpdated: new Date(),
     };
 
