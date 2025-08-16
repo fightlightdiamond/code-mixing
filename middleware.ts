@@ -1,6 +1,14 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import jwt from "jsonwebtoken";
+import logger from "@/lib/logger";
+
+interface JwtPayload {
+  userId: string;
+  role: string;
+  email: string;
+  tenantId?: string;
+}
 
 // Security headers
 const securityHeaders = {
@@ -90,7 +98,13 @@ export function middleware(request: NextRequest) {
       }
 
       // Verify token
-      const decoded = jwt.verify(token, secret) as any;
+      const decoded = jwt.verify(token, secret) as JwtPayload;
+
+      if (!decoded.userId || !decoded.role || !decoded.email) {
+        logger.error("Invalid token payload", undefined);
+        return NextResponse.redirect(new URL("/login", request.url));
+      }
+
       const userRole = decoded.role;
       const tenantId = decoded.tenantId;
 
@@ -114,7 +128,7 @@ export function middleware(request: NextRequest) {
       return addSecurityHeaders(response);
     } catch (error) {
       // Invalid token, redirect to login
-      console.error("Token verification failed:", error);
+      logger.error("Token verification failed", undefined, error as Error);
       return NextResponse.redirect(new URL("/login", request.url));
     }
   }
