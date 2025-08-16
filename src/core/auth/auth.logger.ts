@@ -45,7 +45,7 @@ export class AuthLogger {
     allowed: boolean,
     metadata?: Record<string, unknown>
   ) {
-    console.info(`[AUTH] Authorization check:`, {
+    logger.info(`[AUTH] Authorization check:`, {
       userId,
       tenantId,
       action,

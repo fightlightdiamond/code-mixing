@@ -33,7 +33,7 @@ export function useExercises(storyId: string): UseExercisesReturn {
       const data = await response.json();
       setExercises(data.exercises || []);
     } catch (err) {
-      logger.error("Error fetching exercises:", err);
+      logger.error("Error fetching exercises:", undefined, err as Error);
       setError(err instanceof Error ? err.message : "Failed to load exercises");
 
       // Fallback to mock exercises for development
@@ -65,9 +65,9 @@ export function useExercises(storyId: string): UseExercisesReturn {
       }
 
       const data = await response.json();
-      logger.info("Exercise result submitted:", data);
+      logger.info("Exercise result submitted", { data });
     } catch (err) {
-      logger.error("Error submitting exercise result:", err);
+      logger.error("Error submitting exercise result:", undefined, err as Error);
       // Don't throw error to avoid breaking user experience
       // Results will be cached locally and can be synced later
     }

@@ -58,7 +58,7 @@ export class LessonController {
 
       return NextResponse.json(lesson);
     } catch (error) {
-      logger.error("Error fetching lesson", undefined, error);
+      logger.error("Error fetching lesson", undefined, error as Error);
       return NextResponse.json({ error: "Failed to fetch lesson" }, { status: 500 });
     }
   }
@@ -99,7 +99,7 @@ export class LessonController {
 
       return NextResponse.json(updatedLesson);
     } catch (error) {
-      logger.error("Error updating lesson", undefined, error);
+      logger.error("Error updating lesson", undefined, error as Error);
       return NextResponse.json({ error: "Failed to update lesson" }, { status: 500 });
     }
   }
@@ -116,7 +116,7 @@ export class LessonController {
       await prisma.lesson.delete({ where: { id: lessonId } });
       return NextResponse.json({ message: "Lesson deleted successfully" });
     } catch (error) {
-      logger.error("Error deleting lesson", undefined, error);
+      logger.error("Error deleting lesson", undefined, error as Error);
       return NextResponse.json({ error: "Failed to delete lesson" }, { status: 500 });
     }
   }

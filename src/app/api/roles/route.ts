@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/core/prisma";
+import { Prisma } from "@prisma/client";
 import { caslGuardWithPolicies } from "@/core/auth/casl.guard";
 import { getUserFromRequest } from "@/core/auth/getUser";
 
@@ -15,7 +17,7 @@ export async function GET(request: NextRequest) {
   const slug = searchParams.get("slug") || undefined;
   const tenantScope = searchParams.get("tenantScope") || undefined;
 
-  const where: any = {};
+  const where: Prisma.RoleWhereInput = {};
   if (q) {
     where.OR = [
       { name: { contains: q, mode: "insensitive" } },
