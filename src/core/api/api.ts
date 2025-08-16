@@ -8,7 +8,9 @@ import { getCSRFToken } from "./csrf";
 // Enhanced request configuration interface
 export interface ApiRequestConfig extends RequestInit {
     url: string;
+    /** Milliseconds before the request is aborted */
     timeout?: number;
+    /** Number of retry attempts for transient failures */
     retries?: number;
 }
 
@@ -213,56 +215,98 @@ class ApiClient {
     return url; // prefer relative path on client
   }
 
-  async request(input: RequestInfo, init?: RequestInit): Promise<string>;
-  async request<T>(input: RequestInfo, init?: RequestInit): Promise<T>;
-  async request<T>(input: RequestInfo, init?: RequestInit): Promise<T | string> {
-    try {
-      let config: RequestInit & { url: string } = {
-        ...init,
-        url: this.resolveURL(input),
-        headers: {
-          "Content-Type": "application/json",
-          ...(init?.headers || {}),
-        },
-        signal: init?.signal,
-      };
+  async request(input: RequestInfo, init?: ApiRequestConfig): Promise<string>;
+  async request<T>(input: RequestInfo, init?: ApiRequestConfig): Promise<T>;
+  async request<T>(input: RequestInfo, init?: ApiRequestConfig): Promise<T | string> {
+    const maxRetries = init?.retries ?? 0;
+    let attempt = 0;
 
-      for (const i of this.requestInterceptors) {
-        config = await i(config);
-      }
+    while (true) {
+      try {
+        let config: ApiRequestConfig = {
+          ...init,
+          url: this.resolveURL(input),
+          headers: {
+            "Content-Type": "application/json",
+            ...(init?.headers || {}),
+          },
+          signal: init?.signal,
+        };
 
-      let response = await fetch(config.url, config);
+        for (const i of this.requestInterceptors) {
+          config = await i(config);
+        }
 
-      for (const i of this.responseInterceptors) {
-        response = await i(response);
-      }
+        const controller = new AbortController();
+        if (config.signal) {
+          if (config.signal.aborted) controller.abort(config.signal.reason);
+          else config.signal.addEventListener("abort", () => controller.abort());
+        }
 
-      const isJson = response.headers.get("content-type")?.includes("application/json");
-      const body: unknown = isJson ? await response.json().catch(() => undefined) : undefined;
-
-      if (!response.ok) {
-        type ErrorBody = { message?: string; error?: string; [k: string]: unknown };
-        const obj = (typeof body === "object" && body !== null)
-          ? (body as ErrorBody)
+        const timeoutId = config.timeout
+          ? setTimeout(() => controller.abort(), config.timeout)
           : undefined;
-        const message = obj?.message || obj?.error || `HTTP ${response.status}`;
-        throw new ApiError<ErrorBody | undefined>(
-          message,
-          response.status,
-          obj,
-          `HTTP_${response.status}`
-        );
-      }
 
-      if (isJson) return body as T;
-      const text = await response.text();
-      return text;
-    } catch (err) {
-      let e = err as Error;
-      for (const i of this.errorInterceptors) {
-        e = await i(e);
+        let response: Response;
+        try {
+          const { url, timeout: _timeout, retries: _retries, signal: _signal, ...rest } = config;
+          response = await fetch(url, { ...rest, signal: controller.signal });
+        } finally {
+          if (timeoutId) clearTimeout(timeoutId);
+        }
+
+        for (const i of this.responseInterceptors) {
+          response = await i(response);
+        }
+
+        const isJson = response.headers
+          .get("content-type")
+          ?.includes("application/json");
+        const body: unknown = isJson
+          ? await response.json().catch(() => undefined)
+          : undefined;
+
+        if (!response.ok) {
+          if (attempt < maxRetries && response.status >= 500) {
+            attempt++;
+            continue;
+          }
+
+          type ErrorBody = { message?: string; error?: string; [k: string]: unknown };
+          const obj =
+            typeof body === "object" && body !== null ? (body as ErrorBody) : undefined;
+          const message = obj?.message || obj?.error || `HTTP ${response.status}`;
+          let error: Error = new ApiError<ErrorBody | undefined>(
+            message,
+            response.status,
+            obj,
+            `HTTP_${response.status}`
+          );
+          for (const i of this.errorInterceptors) {
+            error = await i(error);
+          }
+          throw error;
+        }
+
+        if (isJson) return body as T;
+        const text = await response.text();
+        return text;
+      } catch (err) {
+        if (
+          attempt < maxRetries &&
+          err instanceof Error &&
+          ["AbortError", "FetchError"].includes(err.name)
+        ) {
+          attempt++;
+          continue;
+        }
+
+        let e = err as Error;
+        for (const i of this.errorInterceptors) {
+          e = await i(e);
+        }
+        throw e;
       }
-      throw e;
     }
   }
 }

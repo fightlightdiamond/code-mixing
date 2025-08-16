@@ -819,6 +819,15 @@ The application provides comprehensive API documentation:
 - **Error Handling**: Standardized error responses
 - **Rate Limiting**: API usage guidelines
 
+#### Api Client Usage
+
+The internal `apiClient` supports per-request timeouts and automatic retries for transient failures:
+
+```ts
+// Abort after 5s and retry twice on network or 5xx errors
+await apiClient.request('/endpoint', { timeout: 5000, retries: 2 });
+```
+
 ### 🔧 Development Tools
 
 - **Prisma Studio**: Database GUI at `http://localhost:5555`
