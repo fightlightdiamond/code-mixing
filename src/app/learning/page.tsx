@@ -2,6 +2,7 @@
 import { logger } from '@/lib/logger';
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Require } from "@/core/auth/Require";
 import { FadeIn } from "@/components/ui/fade-in";
 import {
@@ -52,6 +53,7 @@ export default function LearningPage() {
 }
 
 function LearningPageContent() {
+  const router = useRouter();
   const [viewMode, setViewMode] = useState<ViewMode>("dashboard");
   const [selectedStory, setSelectedStory] = useState<LearningStory | null>(
     null
@@ -161,8 +163,8 @@ function LearningPageContent() {
   };
 
   const handleStartVocabularyReview = () => {
-    // TODO: Navigate to vocabulary review page
     logger.info("Starting vocabulary review...");
+    router.push("/learning/vocabulary");
   };
 
   const handleShowDownloadManager = () => {
