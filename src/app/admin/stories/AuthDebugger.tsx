@@ -1,6 +1,5 @@
 "use client";
 import { logger } from '@/lib/logger';
-
 import { useAuth } from "@/contexts/AuthContext";
 import { useAbility } from "@/core/auth/AbilityProvider";
 import { useEffect, useState } from "react";
@@ -40,7 +39,7 @@ export default function AuthDebugger() {
         name: user.name,
         email: user.email,
         role: user.role,
-        tenantId: user.tenantId
+        tenantId: user.tenantId ?? null,
       } : null,
       permissions: {
         canReadStory: ability.can('read', 'Story'),
@@ -48,10 +47,10 @@ export default function AuthDebugger() {
         canCreateStory: ability.can('create', 'Story'),
         canUpdateStory: ability.can('update', 'Story'),
         canDeleteStory: ability.can('delete', 'Story'),
-      }
+      },
     };
 
-    logger.info("🔍 Auth Debug Info:", debug);
+    logger.info("🔍 Auth Debug Info", debug);
     setDebugInfo(debug);
   }, [user, isLoading, isAuthenticated, ability]);
 

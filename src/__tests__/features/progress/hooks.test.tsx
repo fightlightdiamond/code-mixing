@@ -11,6 +11,7 @@ import {
   useUpdateProgress,
   useDeleteProgress,
 } from "@/features/progress/hooks";
+import type { UserProgress as Progress } from "@/features/progress/hooks";
 import { api } from "@/core/api/api";
 
 // Mock API
@@ -67,7 +68,7 @@ describe("Progress Hooks", () => {
   });
 
   it("lists progress records", async () => {
-    const mockList = [] as any[];
+    const mockList: Progress[] = [];
     mockApi.mockResolvedValueOnce(mockList);
 
     const wrapper = createWrapper();
