@@ -28,7 +28,7 @@ jest.mock("@/lib/storage", () => ({
   getAudioSignedUrl: jest.fn(),
 }));
 
-const mockPrisma = prisma as any;
+const mockPrisma = prisma as jest.Mocked<typeof prisma>;
 const mockGetUser = getUserFromRequest as jest.MockedFunction<typeof getUserFromRequest>;
 const mockCasl = caslGuardWithPolicies as jest.MockedFunction<typeof caslGuardWithPolicies>;
 const mockGetSignedUrl = getAudioSignedUrl as jest.MockedFunction<typeof getAudioSignedUrl>;
