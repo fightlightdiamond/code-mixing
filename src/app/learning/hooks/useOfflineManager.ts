@@ -30,6 +30,8 @@ interface DownloadProgress {
   error?: string;
 }
 
+interface ServiceWorkerResponse<T> { data?: T; error?: string }
+
 export function useOfflineManager() {
   const [offlineStatus, setOfflineStatus] = useState<OfflineStatus>({
     isOnline: typeof navigator !== "undefined" ? navigator.onLine : true,
@@ -139,7 +141,7 @@ export function useOfflineManager() {
         // Cache the story data
         await sendMessageToServiceWorker<
           { type: "CACHE_STORY"; data: LearningStory },
-          { success: boolean; error?: string }
+          { success: boolean }
         >({
           type: "CACHE_STORY",
           data: storyData,
@@ -159,7 +161,7 @@ export function useOfflineManager() {
               type: "CACHE_AUDIO";
               data: { url: string; storyId: string };
             },
-            { success: boolean; error?: string }
+            { success: boolean }
           >({
             type: "CACHE_AUDIO",
             data: { url: storyData.audioUrl, storyId: story.id },
@@ -183,7 +185,7 @@ export function useOfflineManager() {
                     type: "CACHE_AUDIO";
                     data: { url: string; word: string };
                   },
-                  { success: boolean; error?: string }
+                  { success: boolean }
                 >({
                   type: "CACHE_AUDIO",
                   data: { url: vocab.audioUrl, word: vocab.word },
@@ -337,12 +339,12 @@ async function sendMessageToServiceWorker<TRequest, TResponse>(
   return new Promise<TResponse>((resolve, reject) => {
     const messageChannel = new MessageChannel();
 
-    messageChannel.port1.onmessage = (event) => {
-      if ((event.data as any)?.error) {
-        reject(new Error((event.data as any).error));
-      } else {
-        resolve(event.data as TResponse);
-      }
+    messageChannel.port1.onmessage = (
+      event: MessageEvent<ServiceWorkerResponse<TResponse>>
+    ) => {
+      const { data, error } = event.data || {};
+      if (error) reject(new Error(error));
+      else resolve(data as TResponse);
     };
 
     navigator.serviceWorker.controller.postMessage(message, [
