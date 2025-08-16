@@ -71,13 +71,84 @@ interface UserProgressResponse {
   recentSessions?: LearningSession[];
 }
 
+interface LessonProgressItem {
+  id: string;
+  lessonId: string;
+  lesson: {
+    id: string;
+    title: string;
+    difficulty: string;
+    estimatedMinutes: number | null;
+    course: {
+      id: string;
+      title: string;
+    };
+  };
+  status: "not_started" | "in_progress" | "completed" | "paused";
+  lastViewedAt: Date | null;
+  updatedAt: Date;
+}
+
+interface VocabularyProgressItem {
+  id: string;
+  vocabulary: {
+    id: string;
+    word: string;
+    meaning: string;
+    lesson: {
+      id: string;
+      title: string;
+    };
+  };
+  status: "new" | "reviewing" | "mastered";
+  lastReviewed: Date | null;
+}
+
+interface ProgressStats {
+  totalLessons: number;
+  completedLessons: number;
+  inProgressLessons: number;
+  totalVocabulary: number;
+  masteredVocabulary: number;
+  reviewingVocabulary: number;
+  newVocabulary: number;
+  totalTimeSpent: number;
+  totalInteractions: number;
+  learningStreak: number;
+  averageSessionTime: number;
+}
+
+interface Achievement {
+  type: string;
+  title: string;
+  description: string;
+  earnedAt: Date;
+}
+
+interface LevelProgression {
+  currentLevel: number;
+  totalPoints: number;
+  pointsToNextLevel: number;
+  completedLessons: number;
+  masteredVocabulary: number;
+}
+
+interface UserProgressResponse {
+  userId: string;
+  timeframe: string;
+  stats: ProgressStats;
+  levelProgression: LevelProgression;
+  recentAchievements: Achievement[];
+  lessonProgress?: LessonProgressItem[];
+  vocabularyProgress?: VocabularyProgressItem[];
+  recentSessions?: unknown[];
+}
+
 // GET /api/learning/progress/user - Get comprehensive user learning progress
-export async function GET(request: NextRequest) {
-  let user: User | null = null;
+
 export async function GET(
   request: NextRequest
 ): Promise<NextResponse<UserProgressResponse>> {
-
   let user: User | null = null;
 
   try {
@@ -109,7 +180,7 @@ export async function GET(
     let dateFilter = {};
     if (timeframe !== "all") {
       const now = new Date();
-      let startDate = new Date();
+      const startDate = new Date();
 
       switch (timeframe) {
         case "week":
@@ -319,7 +390,7 @@ async function calculateLearningStreak(userId: string): Promise<number> {
   if (sessions.length === 0) return 0;
 
   let streak = 0;
-  let currentDate = new Date();
+  const currentDate = new Date();
   currentDate.setHours(0, 0, 0, 0);
 
   // Group sessions by date
@@ -344,7 +415,7 @@ async function calculateLearningStreak(userId: string): Promise<number> {
 function calculateLevelProgression(
   lessonProgress: LessonProgressItem[],
   vocabularyProgress: VocabularyProgressItem[]
-) {
+): LevelProgression {
   const completedLessons = lessonProgress.filter(
     (p) => p.status === "completed"
   ).length;
