@@ -6,13 +6,33 @@ import { useAbility } from "@/core/auth/AbilityProvider";
 import { useEffect, useState } from "react";
 import { logger } from "@/lib/logger";
 
+interface AuthDebugInfo {
+  timestamp: string;
+  isLoading: boolean;
+  isAuthenticated: boolean;
+  user: {
+    id: string;
+    name: string | null;
+    email: string | null;
+    role: string;
+    tenantId: string | null;
+  } | null;
+  permissions: {
+    canReadStory: boolean;
+    canManageStory: boolean;
+    canCreateStory: boolean;
+    canUpdateStory: boolean;
+    canDeleteStory: boolean;
+  };
+}
+
 export default function AuthDebugger() {
   const { user, isLoading, isAuthenticated } = useAuth();
   const ability = useAbility();
-  const [debugInfo, setDebugInfo] = useState<any>({});
+  const [debugInfo, setDebugInfo] = useState<AuthDebugInfo | null>(null);
 
   useEffect(() => {
-    const debug = {
+    const debug: AuthDebugInfo = {
       timestamp: new Date().toISOString(),
       isLoading,
       isAuthenticated,
@@ -21,7 +41,7 @@ export default function AuthDebugger() {
         name: user.name,
         email: user.email,
         role: user.role,
-        tenantId: user.tenantId
+        tenantId: user.tenantId ?? null,
       } : null,
       permissions: {
         canReadStory: ability.can('read', 'Story'),
@@ -29,7 +49,7 @@ export default function AuthDebugger() {
         canCreateStory: ability.can('create', 'Story'),
         canUpdateStory: ability.can('update', 'Story'),
         canDeleteStory: ability.can('delete', 'Story'),
-      }
+      },
     };
 
     logger.info("Auth Debug Info", debug);
@@ -81,7 +101,7 @@ export default function AuthDebugger() {
         <div className="bg-white p-4 rounded border">
           <h3 className="font-semibold text-gray-800 mb-3">Story Permissions</h3>
           <div className="space-y-2 text-sm">
-            {Object.entries(debugInfo.permissions || {}).map(([key, value]) => (
+            {Object.entries(debugInfo?.permissions || {}).map(([key, value]) => (
               <div key={key}>
                 <strong>{key}:</strong> 
                 <span className={value ? "text-green-600 ml-2" : "text-red-600 ml-2"}>
@@ -121,7 +141,7 @@ export default function AuthDebugger() {
         <ul className="text-sm text-yellow-700 space-y-1">
           {isLoading && <li>• Auth is loading - Wait for auth state to initialize</li>}
           {!isLoading && !user && <li>• User not found - Check if login is working or auth token is valid</li>}
-          {user && !debugInfo.permissions?.canReadStory && (
+          {user && !debugInfo?.permissions?.canReadStory && (
             <li>• No Story read permission - Check if user role "{user.role}" has Story permissions in ability.ts</li>
           )}
           {!ability && <li>• AbilityProvider not working - Check AuthContextBridge integration</li>}
