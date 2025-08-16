@@ -120,7 +120,7 @@ export function middleware(request: NextRequest) {
       return addSecurityHeaders(response);
     } catch (error) {
       // Invalid token, redirect to login
-      logger.error("Token verification failed:", error);
+      logger.error("Token verification failed:", undefined, error);
 
       return NextResponse.redirect(new URL("/login", request.url));
     }

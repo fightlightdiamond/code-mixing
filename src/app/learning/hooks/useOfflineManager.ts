@@ -53,7 +53,7 @@ export function useOfflineManager() {
           getCacheStatus();
         })
         .catch((error) => {
-          logger.error("Service Worker registration failed:", error);
+          logger.error("Service Worker registration failed:", undefined, error);
         });
     }
   }, []);
@@ -91,7 +91,7 @@ export function useOfflineManager() {
       setOfflineStatus((prev) => ({ ...prev, cacheStatus }));
       return cacheStatus;
     } catch (error) {
-      logger.error("Failed to get cache status:", error);
+      logger.error("Failed to get cache status:", undefined, error);
       return null;
     }
   }, [offlineStatus.isServiceWorkerReady]);
@@ -212,7 +212,7 @@ export function useOfflineManager() {
 
         return true;
       } catch (error) {
-        logger.error("Failed to download story:", error);
+        logger.error("Failed to download story:", undefined, error);
 
         setDownloadQueue((prev) =>
           prev.map((item) =>
@@ -280,7 +280,7 @@ export function useOfflineManager() {
 
         return true;
       } catch (error) {
-        logger.error("Failed to clear cache:", error);
+        logger.error("Failed to clear cache:", undefined, error);
         return false;
       }
     },
@@ -296,7 +296,7 @@ export function useOfflineManager() {
       // For now, we'll return an empty array
       return [];
     } catch (error) {
-      logger.error("Failed to get offline stories:", error);
+      logger.error("Failed to get offline stories:", undefined, error);
       return [];
     }
   }, [offlineStatus.cacheStatus]);
