@@ -213,7 +213,9 @@ class ApiClient {
     return url; // prefer relative path on client
   }
 
-  async request<T = unknown>(input: RequestInfo, init?: RequestInit): Promise<T> {
+  async request(input: RequestInfo, init?: RequestInit): Promise<string>;
+  async request<T>(input: RequestInfo, init?: RequestInit): Promise<T>;
+  async request<T>(input: RequestInfo, init?: RequestInit): Promise<T | string> {
     try {
       let config: RequestInit & { url: string } = {
         ...init,
@@ -245,7 +247,9 @@ class ApiClient {
         throw new ApiError(message, response.status, body, `HTTP_${response.status}`);
       }
 
-      return (body as T) ?? (await response.text() as unknown as T);
+      if (isJson) return body as T;
+      const text = await response.text();
+      return text;
     } catch (err) {
       let e = err as Error;
       for (const i of this.errorInterceptors) {
