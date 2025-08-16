@@ -1,4 +1,5 @@
 "use client";
+import { logger } from '@/lib/logger';
 
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
@@ -75,7 +76,7 @@ export default function AdminStoriesManagement() {
       await createMutation.mutateAsync(data);
       setShowCreateModal(false);
     } catch (error) {
-      console.error("Error creating story:", error);
+      logger.error("Error creating story:", error);
     }
   };
 
@@ -85,7 +86,7 @@ export default function AdminStoriesManagement() {
       await updateMutation.mutateAsync({ id: editingStory.id, data });
       setEditingStory(null);
     } catch (error) {
-      console.error("Error updating story:", error);
+      logger.error("Error updating story:", error);
     }
   };
 
@@ -94,7 +95,7 @@ export default function AdminStoriesManagement() {
     try {
       await deleteMutation.mutateAsync(id);
     } catch (error) {
-      console.error("Error deleting story:", error);
+      logger.error("Error deleting story:", error);
     }
   };
 
@@ -105,7 +106,7 @@ export default function AdminStoriesManagement() {
       setSelectedIds([]);
       setShowBulkActions(false);
     } catch (error) {
-      console.error("Error bulk updating stories:", error);
+      logger.error("Error bulk updating stories:", error);
     }
   };
 
@@ -117,7 +118,7 @@ export default function AdminStoriesManagement() {
       setSelectedIds([]);
       setShowBulkActions(false);
     } catch (error) {
-      console.error("Error bulk deleting stories:", error);
+      logger.error("Error bulk deleting stories:", error);
     }
   };
 

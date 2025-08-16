@@ -1,4 +1,5 @@
 "use client";
+import { logger } from '@/lib/logger';
 
 import { useState, useEffect, useCallback } from "react";
 import type {
@@ -64,7 +65,7 @@ export function useProgress({
         setStats(statsData);
       }
     } catch (err) {
-      console.error("Error loading progress:", err);
+      logger.error("Error loading progress:", err);
       setError("Không thể tải tiến độ học tập");
 
       // Load from localStorage as fallback
@@ -86,7 +87,7 @@ export function useProgress({
         setStats(data.stats);
       }
     } catch (err) {
-      console.error("Error loading from localStorage:", err);
+      logger.error("Error loading from localStorage:", err);
     }
   }, [userId]);
 
@@ -102,7 +103,7 @@ export function useProgress({
       };
       localStorage.setItem(`learning-progress-${userId}`, JSON.stringify(data));
     } catch (err) {
-      console.error("Error saving to localStorage:", err);
+      logger.error("Error saving to localStorage:", err);
     }
   }, [userId, progress, vocabularyProgress, levelProgress, stats]);
 
@@ -134,7 +135,7 @@ export function useProgress({
           saveToLocalStorage();
         }
       } catch (err) {
-        console.error("Error updating story completion:", err);
+        logger.error("Error updating story completion:", err);
       }
     },
     [userId, saveToLocalStorage]
@@ -174,7 +175,7 @@ export function useProgress({
           loadProgress();
         }
       } catch (err) {
-        console.error("Error updating vocabulary progress:", err);
+        logger.error("Error updating vocabulary progress:", err);
       }
     },
     [userId, loadProgress]
@@ -261,7 +262,7 @@ export function useProgress({
           loadProgress();
         }
       } catch (err) {
-        console.error("Error marking vocabulary as mastered:", err);
+        logger.error("Error marking vocabulary as mastered:", err);
       }
     },
     [userId, loadProgress]

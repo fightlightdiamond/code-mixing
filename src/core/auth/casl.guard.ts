@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { buildAbility } from "./ability";
 import { AuthLogger } from "./auth.logger";
 import { subject as caslSubject } from "@casl/ability";
@@ -49,7 +50,7 @@ export function checkAbilities(
           failedRules.push(rule);
         }
       } catch (ruleError) {
-        console.error(`Error checking rule ${rule.action}:${rule.subject}:`, ruleError);
+        logger.error(`Error checking rule ${rule.action}:${rule.subject}:`, ruleError);
         failedRules.push(rule);
       }
     }
@@ -59,7 +60,7 @@ export function checkAbilities(
       failedRules
     };
   } catch (error) {
-    console.error('Error in checkAbilities:', error);
+    logger.error('Error in checkAbilities:', error);
     return {
       allowed: false,
       failedRules: rules
@@ -147,7 +148,7 @@ export async function caslGuardWithPolicies(
     return { allowed: true };
   } catch (policyErr) {
     if (process.env.NODE_ENV === "development") {
-      console.warn("ABAC policy evaluation failed, continuing with RBAC only:", policyErr);
+      logger.warn("ABAC policy evaluation failed, continuing with RBAC only:", policyErr);
     }
     return { allowed: true };
   }
@@ -222,7 +223,7 @@ export function caslGuard(
       : { allowed: false, error: "Insufficient permissions", failedRules };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error("Authorization check failed:", errorMessage);
+    logger.error("Authorization check failed:", errorMessage);
     
     // Log the error for debugging
     if (user?.sub) {

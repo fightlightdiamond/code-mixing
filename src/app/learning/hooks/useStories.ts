@@ -1,4 +1,5 @@
 "use client";
+import { logger } from '@/lib/logger';
 
 import { useState, useEffect, useCallback } from "react";
 import type { LearningStory, StoryFilters } from "../types/learning";
@@ -56,7 +57,7 @@ export function useStories(options: UseStoriesOptions = {}): UseStoriesReturn {
       const data = await response.json();
       setStories(data);
     } catch (err) {
-      console.error("Error fetching stories:", err);
+      logger.error("Error fetching stories:", err);
       setError(
         err instanceof Error ? err.message : "Không thể tải danh sách truyện"
       );
@@ -101,7 +102,7 @@ export function useStory(storyId: string | null) {
       const data = await response.json();
       setStory(data);
     } catch (err) {
-      console.error("Error fetching story:", err);
+      logger.error("Error fetching story:", err);
       setError(err instanceof Error ? err.message : "Không thể tải truyện");
       setStory(null);
     } finally {

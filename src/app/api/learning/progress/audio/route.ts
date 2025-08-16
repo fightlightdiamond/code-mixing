@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { NextRequest, NextResponse } from "next/server";
 import { getUser } from "@/core/auth/getUser";
 import { prisma } from "@/core/prisma";
@@ -44,7 +45,7 @@ export async function GET(request: NextRequest) {
         ? JSON.parse(progress.metadata as string).bookmarks || []
         : [];
     } catch (error) {
-      console.error("Error parsing bookmarks:", error);
+      logger.error("Error parsing bookmarks:", error);
     }
 
     return NextResponse.json({
@@ -54,7 +55,7 @@ export async function GET(request: NextRequest) {
       lastUpdated: progress.updatedAt,
     });
   } catch (error) {
-    console.error("Error fetching audio progress:", error);
+    logger.error("Error fetching audio progress:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -119,7 +120,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Error saving audio progress:", error);
+    logger.error("Error saving audio progress:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -155,7 +156,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error clearing audio progress:", error);
+    logger.error("Error clearing audio progress:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

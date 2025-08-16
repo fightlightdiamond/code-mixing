@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { isTokenExpiringSoon, refreshToken } from '@/core/api/api';
@@ -33,8 +34,8 @@ interface UseTokenRefreshOptions {
  * ```tsx
  * function App() {
  *   useTokenRefresh({
- *     onRefreshSuccess: () => console.log('Token refreshed'),
- *     onRefreshError: (error) => console.error('Refresh failed:', error)
+ *     onRefreshSuccess: () => logger.info('Token refreshed'),
+ *     onRefreshError: (error) => logger.error('Refresh failed:', error)
  *   });
  *   
  *   return <div>App content</div>;
@@ -60,18 +61,18 @@ export function useTokenRefresh(options: UseTokenRefreshOptions = {}) {
 
     try {
       isRefreshingRef.current = true;
-      console.log('🔄 Performing token refresh...');
+      logger.info('🔄 Performing token refresh...');
       
       const newToken = await refreshToken();
       
       if (newToken) {
-        console.log('✅ Token refresh successful');
+        logger.info('✅ Token refresh successful');
         onRefreshSuccess?.();
       } else {
         throw new Error('Token refresh returned null');
       }
     } catch (error) {
-      console.error('❌ Token refresh failed:', error);
+      logger.error('❌ Token refresh failed:', error);
       onRefreshError?.(error as Error);
       
       // If refresh fails, logout the user
@@ -87,7 +88,7 @@ export function useTokenRefresh(options: UseTokenRefreshOptions = {}) {
     }
 
     if (isTokenExpiringSoon()) {
-      console.log('⏰ Token expiring soon, refreshing...');
+      logger.info('⏰ Token expiring soon, refreshing...');
       await performRefresh();
     }
   }, [isAuthenticated, autoRefresh, performRefresh]);
@@ -168,14 +169,14 @@ export function useEnsureFreshToken() {
     }
 
     if (isTokenExpiringSoon()) {
-      console.log('🔄 Ensuring fresh token...');
+      logger.info('🔄 Ensuring fresh token...');
       const newToken = await refreshToken();
       
       if (!newToken) {
         throw new Error('Failed to refresh token');
       }
       
-      console.log('✅ Fresh token ensured');
+      logger.info('✅ Fresh token ensured');
     }
   }, [isAuthenticated]);
 }

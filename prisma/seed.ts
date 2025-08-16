@@ -1,10 +1,11 @@
+import { logger } from '@/lib/logger';
 import bcrypt from "bcryptjs";
 
 import { prisma } from "@/core/prisma";
 import { ContentStatus, ProgressStatus, DifficultyLevel } from "@/types/schema";
 
 async function main() {
-  console.log("🌱 Starting seed...");
+  logger.info("🌱 Starting seed...");
 
   // Create default tenant
   const defaultTenant = await prisma.tenant.create({
@@ -83,10 +84,10 @@ async function main() {
     },
   });
 
-  console.log("✅ Users created");
+  logger.info("✅ Users created");
 
   // ===== IAM: Permissions, Roles, Assignments, Policies =====
-  console.log("🌱 Seeding IAM (Permissions, Roles, Assignments, Policies)...");
+  logger.info("🌱 Seeding IAM (Permissions, Roles, Assignments, Policies)...");
 
   // Seed permissions (resource x action)
   const resources = [
@@ -201,7 +202,7 @@ async function main() {
     });
   } catch (error) {
     // Ignore duplicate entries
-    console.log('Admin role assignment already exists');
+    logger.info('Admin role assignment already exists');
   }
 
   // Assign coach user to editor role
@@ -213,7 +214,7 @@ async function main() {
       },
     });
   } catch (error) {
-    console.log('Coach editor role assignment already exists');
+    logger.info('Coach editor role assignment already exists');
   }
 
   // Assign students to viewer role
@@ -225,7 +226,7 @@ async function main() {
       },
     });
   } catch (error) {
-    console.log('Student1 viewer role assignment already exists');
+    logger.info('Student1 viewer role assignment already exists');
   }
 
   try {
@@ -236,7 +237,7 @@ async function main() {
       },
     });
   } catch (error) {
-    console.log('Student2 viewer role assignment already exists');
+    logger.info('Student2 viewer role assignment already exists');
   }
 
   // Sample deny-first policy: deny delete Story if not admin
@@ -256,7 +257,7 @@ async function main() {
     },
   }).catch(() => void 0);
 
-  console.log("✅ IAM seeded");
+  logger.info("✅ IAM seeded");
 
   // Create sample course
   const course1 = await prisma.course.create({
@@ -304,7 +305,7 @@ async function main() {
     },
   });
 
-  console.log("✅ Lessons created");
+  logger.info("✅ Lessons created");
 
   // Create sample story with Jewish embedding method
   const story1 = await prisma.story.create({
@@ -358,7 +359,7 @@ async function main() {
     ],
   });
 
-  console.log("✅ Stories and chunks created");
+  logger.info("✅ Stories and chunks created");
 
   // Create vocabulary
   await prisma.vocabulary.createMany({
@@ -401,7 +402,7 @@ async function main() {
     ],
   });
 
-  console.log("✅ Vocabulary created");
+  logger.info("✅ Vocabulary created");
 
   // Create grammar points
   await prisma.grammarPoint.createMany({
@@ -427,7 +428,7 @@ async function main() {
     ],
   });
 
-  console.log("✅ Grammar points created");
+  logger.info("✅ Grammar points created");
 
   // Create sample exercise
   const exercise1 = await prisma.exercise.create({
@@ -483,7 +484,7 @@ async function main() {
     ],
   });
 
-  console.log("✅ Quiz created");
+  logger.info("✅ Quiz created");
 
   // Create sample audio files
   await prisma.audio.createMany({
@@ -509,7 +510,7 @@ async function main() {
     ],
   });
 
-  console.log("✅ Audio files created");
+  logger.info("✅ Audio files created");
 
   // Create sample user progress
   const vocab1 = await prisma.vocabulary.findFirst({
@@ -539,7 +540,7 @@ async function main() {
     });
   }
 
-  console.log("✅ User progress created");
+  logger.info("✅ User progress created");
 
   // Create sample user results
   await prisma.userResult.create({
@@ -552,7 +553,7 @@ async function main() {
     },
   });
 
-  console.log("✅ User results created");
+  logger.info("✅ User results created");
 
   // Create sample feedback
   await prisma.feedback.create({
@@ -565,7 +566,7 @@ async function main() {
     },
   });
 
-  console.log("✅ Feedback created");
+  logger.info("✅ Feedback created");
 
   // Create sample reflection
   await prisma.reflection.create({
@@ -580,22 +581,22 @@ async function main() {
     },
   });
 
-  console.log("✅ Reflection created");
+  logger.info("✅ Reflection created");
 
-  console.log("🎉 Seed completed successfully!");
-  console.log("\n📊 Summary:");
-  console.log(`- Tenants: ${await prisma.tenant.count()}`);
-  console.log(`- Users: ${await prisma.user.count()}`);
-  console.log(`- Courses: ${await prisma.course.count()}`);
-  console.log(`- Units: ${await prisma.unit.count()}`);
-  console.log(`- Lessons: ${await prisma.lesson.count()}`);
-  console.log(`- Stories: ${await prisma.story.count()}`);
-  console.log(`- Vocabulary: ${await prisma.vocabulary.count()}`);
-  console.log(`- Quizzes: ${await prisma.quiz.count()}`);
+  logger.info("🎉 Seed completed successfully!");
+  logger.info("\n📊 Summary:");
+  logger.info(`- Tenants: ${await prisma.tenant.count()}`);
+  logger.info(`- Users: ${await prisma.user.count()}`);
+  logger.info(`- Courses: ${await prisma.course.count()}`);
+  logger.info(`- Units: ${await prisma.unit.count()}`);
+  logger.info(`- Lessons: ${await prisma.lesson.count()}`);
+  logger.info(`- Stories: ${await prisma.story.count()}`);
+  logger.info(`- Vocabulary: ${await prisma.vocabulary.count()}`);
+  logger.info(`- Quizzes: ${await prisma.quiz.count()}`);
 }
 
 main()
   .catch((e) => {
-    console.error("❌ Seed failed:", e);
+    logger.error("❌ Seed failed:", e);
     process.exit(1);
   });

@@ -1,4 +1,5 @@
 "use client";
+import { logger } from '@/lib/logger';
 
 import React, {
   createContext,
@@ -79,7 +80,7 @@ export function AccessibilityProvider({
         const parsed = JSON.parse(savedSettings);
         setSettings((prev) => ({ ...prev, ...parsed }));
       } catch (error) {
-        console.warn("Failed to parse saved accessibility settings:", error);
+        logger.warn("Failed to parse saved accessibility settings:", error);
       }
     }
 

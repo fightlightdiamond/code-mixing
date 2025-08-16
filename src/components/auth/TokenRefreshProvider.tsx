@@ -1,4 +1,5 @@
 "use client";
+import { logger } from '@/lib/logger';
 
 import { useTokenRefresh } from "@/hooks/useTokenRefresh";
 import { useAuth } from "@/contexts/AuthContext";
@@ -20,10 +21,10 @@ export function TokenRefreshProvider({ children }: TokenRefreshProviderProps) {
     checkInterval: 60000, // Check every minute
     autoRefresh: true,
     onRefreshSuccess: () => {
-      console.log("🔄 Token refreshed successfully");
+      logger.info("🔄 Token refreshed successfully");
     },
     onRefreshError: (error) => {
-      console.error("🔄 Token refresh failed:", error);
+      logger.error("🔄 Token refresh failed:", error);
     },
   });
 
@@ -33,7 +34,7 @@ export function TokenRefreshProvider({ children }: TokenRefreshProviderProps) {
 
     const handleVisibilityChange = async () => {
       if (document.visibilityState === "visible") {
-        console.log("📱 Page became visible, checking token status...");
+        logger.info("📱 Page became visible, checking token status...");
         // Just log for now, the main useTokenRefresh hook will handle refresh
       }
     };

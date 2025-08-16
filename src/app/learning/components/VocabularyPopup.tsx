@@ -1,4 +1,5 @@
 "use client";
+import { logger } from '@/lib/logger';
 
 import React, { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
@@ -196,7 +197,7 @@ export function VocabularyPopup({
                     className="flex-1 text-xs"
                     onClick={() => {
                       // TODO: Mark as learning/reviewing
-                      console.log("Mark as learning:", word);
+                      logger.info("Mark as learning:", word);
                     }}
                   >
                     Đang học
@@ -207,7 +208,7 @@ export function VocabularyPopup({
                     className="flex-1 text-xs"
                     onClick={() => {
                       // TODO: Mark as mastered
-                      console.log("Mark as mastered:", word);
+                      logger.info("Mark as mastered:", word);
                     }}
                   >
                     Đã thuộc
@@ -224,7 +225,7 @@ export function VocabularyPopup({
                   size="sm"
                   onClick={() => {
                     // TODO: Add to vocabulary list for manual definition
-                    console.log("Add to vocabulary list:", word);
+                    logger.info("Add to vocabulary list:", word);
                   }}
                 >
                   Thêm vào danh sách từ vựng

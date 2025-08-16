@@ -1,6 +1,7 @@
+import { logger } from '@/lib/logger';
 // Debug script to check environment variables
-console.log('🔍 Environment Variables Check:');
-console.log('================================');
+logger.info('🔍 Environment Variables Check:');
+logger.info('================================');
 
 const envVars = {
   'NODE_ENV': process.env.NODE_ENV,
@@ -16,10 +17,10 @@ const envVars = {
 
 Object.entries(envVars).forEach(([key, value]) => {
   const status = value ? '✅' : '❌';
-  console.log(`${status} ${key}: ${value || 'NOT SET'}`);
+  logger.info(`${status} ${key}: ${value || 'NOT SET'}`);
 });
 
-console.log('================================');
+logger.info('================================');
 
 // Test URL construction
 const getBaseUrl = () => {
@@ -38,5 +39,5 @@ const getBaseUrl = () => {
   return `${protocol}://${host}${port !== '80' && port !== '443' ? `:${port}` : ''}`;
 };
 
-console.log('🌐 Constructed Base URL:', getBaseUrl());
-console.log('🚀 Server should be running on:', `http://localhost:${process.env.PORT || '3002'}`);
+logger.info('🌐 Constructed Base URL:', getBaseUrl());
+logger.info('🚀 Server should be running on:', `http://localhost:${process.env.PORT || '3002'}`);

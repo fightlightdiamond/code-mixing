@@ -1,4 +1,5 @@
 "use client";
+import { logger } from '@/lib/logger';
 
 import React, { useState, useEffect, Suspense } from "react";
 // Error boundary implementation (simplified)
@@ -128,7 +129,7 @@ export const LearningApp = React.memo(function LearningApp({
           setExercises(data.exercises || []);
         }
       } catch (error) {
-        console.error("Failed to load exercises:", error);
+        logger.error("Failed to load exercises:", error);
       }
     };
 
@@ -152,7 +153,7 @@ export const LearningApp = React.memo(function LearningApp({
         setVocabularyPopup((prev) => (prev ? { ...prev, data } : null));
       }
     } catch (error) {
-      console.error("Failed to load vocabulary data:", error);
+      logger.error("Failed to load vocabulary data:", error);
     }
   };
 

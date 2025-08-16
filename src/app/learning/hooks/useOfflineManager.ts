@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { useState, useEffect, useCallback } from "react";
 import type { LearningStory } from "../types/learning";
 
@@ -45,14 +46,14 @@ export function useOfflineManager() {
       navigator.serviceWorker
         .register("/sw.js")
         .then((registration) => {
-          console.log("Service Worker registered:", registration);
+          logger.info("Service Worker registered:", registration);
           setOfflineStatus((prev) => ({ ...prev, isServiceWorkerReady: true }));
 
           // Get initial cache status
           getCacheStatus();
         })
         .catch((error) => {
-          console.error("Service Worker registration failed:", error);
+          logger.error("Service Worker registration failed:", error);
         });
     }
   }, []);
@@ -89,7 +90,7 @@ export function useOfflineManager() {
       setOfflineStatus((prev) => ({ ...prev, cacheStatus }));
       return cacheStatus;
     } catch (error) {
-      console.error("Failed to get cache status:", error);
+      logger.error("Failed to get cache status:", error);
       return null;
     }
   }, [offlineStatus.isServiceWorkerReady]);
@@ -172,7 +173,7 @@ export function useOfflineManager() {
                   data: { url: vocab.audioUrl, word: vocab.word },
                 });
               } catch (error) {
-                console.warn(
+                logger.warn(
                   `Failed to cache audio for word: ${vocab.word}`,
                   error
                 );
@@ -195,7 +196,7 @@ export function useOfflineManager() {
 
         return true;
       } catch (error) {
-        console.error("Failed to download story:", error);
+        logger.error("Failed to download story:", error);
 
         setDownloadQueue((prev) =>
           prev.map((item) =>
@@ -255,7 +256,7 @@ export function useOfflineManager() {
 
         return true;
       } catch (error) {
-        console.error("Failed to clear cache:", error);
+        logger.error("Failed to clear cache:", error);
         return false;
       }
     },
@@ -271,7 +272,7 @@ export function useOfflineManager() {
       // For now, we'll return an empty array
       return [];
     } catch (error) {
-      console.error("Failed to get offline stories:", error);
+      logger.error("Failed to get offline stories:", error);
       return [];
     }
   }, [offlineStatus.cacheStatus]);

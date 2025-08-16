@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import {
   queryOptions,
   useMutation,
@@ -57,17 +58,17 @@ export const buildUsersListQuery = (params?: { search?: string }, enabled: boole
       const url = `${baseUrl}/api/users${
         params?.search ? `?search=${encodeURIComponent(params.search)}` : ""
       }`;
-      console.log('🌐 [QUERY] API URL:', url, '(context:', typeof window !== 'undefined' ? 'client' : 'server', ')');
+      logger.info('🌐 [QUERY] API URL:', url, '(context:', typeof window !== 'undefined' ? 'client' : 'server', ')');
       
       // Fetch API response with new format
       const response = await api<ApiResponse<User[]>>(url, { signal });
       
       // Extract users array from API response for backward compatibility
       if (response.success && response.data) {
-        console.log('✅ [QUERY] API response successful, extracted', response.data.length, 'users');
+        logger.info('✅ [QUERY] API response successful, extracted', response.data.length, 'users');
         return response.data; // Return just the users array
       } else {
-        console.error('❌ [QUERY] API response failed:', response);
+        logger.error('❌ [QUERY] API response failed:', response);
         throw new Error(response.message || 'Failed to fetch users');
       }
     },

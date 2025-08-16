@@ -1,4 +1,5 @@
 "use client";
+import { logger } from '@/lib/logger';
 
 import { useAbility } from "@/core/auth/AbilityProvider";
 import { useRouter } from "next/navigation";
@@ -24,7 +25,7 @@ export function Require({ action, subject, children }: RequireProps) {
 
     // AUTHENTICATION CHECK: Nếu chưa có user → redirect login
     if (!user) {
-      console.log("🔐 No user found, redirecting to login...");
+      logger.info("🔐 No user found, redirecting to login...");
       router.push("/login");
       return;
     }
@@ -54,7 +55,7 @@ export function Require({ action, subject, children }: RequireProps) {
       }
       router.push("/unauthorized");
     } else {
-      console.log("✅ Permission granted!");
+      logger.info("✅ Permission granted!");
       setChecked(true);
     }
   }, [ability, action, subject, router, user, isLoading]);
