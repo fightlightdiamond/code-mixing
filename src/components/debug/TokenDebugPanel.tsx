@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { getTokenStatus, refreshToken } from '@/core/api/api';
+import { getTokenStatus, refreshToken, TokenStatus } from '@/core/api/api';
 import { useAuth } from '@/contexts/AuthContext';
+import { logger } from '@/lib/logger';
 
 export function TokenDebugPanel() {
-  const [tokenStatus, setTokenStatus] = useState<any>(null);
+  const [tokenStatus, setTokenStatus] = useState<TokenStatus | null>(null);
   const [isVisible, setIsVisible] = useState(false);
   const { isAuthenticated, user } = useAuth();
 
@@ -28,16 +29,16 @@ export function TokenDebugPanel() {
 
   const handleManualRefresh = async () => {
     try {
-      console.log('🔄 Manual token refresh triggered');
+      logger.info('Manual token refresh triggered');
       const newToken = await refreshToken();
       if (newToken) {
-        console.log('✅ Manual refresh successful');
+        logger.info('Manual refresh successful');
         updateStatus();
       } else {
-        console.log('❌ Manual refresh failed');
+        logger.error('Manual refresh failed');
       }
     } catch (error) {
-      console.error('❌ Manual refresh error:', error);
+      logger.error('Manual refresh error', undefined, error instanceof Error ? error : undefined);
     }
   };
 
