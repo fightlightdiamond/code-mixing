@@ -223,9 +223,12 @@ export type ReviewFrequency = "daily" | "every_other_day" | "weekly";
 
 export interface SettingsPanelProps {
   preferences: UserLearningPreferences;
-  onPreferencesChange: (preferences: UserLearningPreferences) => void;
+  onPreferencesChange: (
+    preferences: UserLearningPreferences
+  ) => Promise<boolean>;
   onClose: () => void;
   className?: string;
+  isSaving?: boolean;
 }
 
 export interface PreferenceSection {

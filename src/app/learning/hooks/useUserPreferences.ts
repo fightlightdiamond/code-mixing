@@ -28,6 +28,7 @@ export function useUserPreferences() {
   const [preferences, setPreferences] =
     useState<UserLearningPreferences>(DEFAULT_PREFERENCES);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Load preferences from localStorage on mount
@@ -80,19 +81,34 @@ export function useUserPreferences() {
   // Save preferences to localStorage
   const savePreferences = useCallback(
     async (newPreferences: UserLearningPreferences) => {
+      setIsSaving(true);
       try {
         setError(null);
+
+        const res = await fetch("/api/user/preferences", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(newPreferences),
+        });
+
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+
         localStorage.setItem(STORAGE_KEY, JSON.stringify(newPreferences));
         setPreferences(newPreferences);
-
-        // TODO: Also save to server/database
-        // await api.updateUserPreferences(newPreferences);
 
         return true;
       } catch (err) {
         logger.error("Failed to save user preferences:", err);
-        setError("Không thể lưu cài đặt");
+        setError(
+          err instanceof TypeError
+            ? "Lỗi kết nối mạng"
+            : "Không thể lưu cài đặt"
+        );
         return false;
+      } finally {
+        setIsSaving(false);
       }
     },
     []
@@ -194,6 +210,7 @@ export function useUserPreferences() {
   return {
     preferences,
     isLoading,
+    isSaving,
     error,
     savePreferences,
     updatePreference,
