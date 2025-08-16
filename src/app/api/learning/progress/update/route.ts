@@ -4,6 +4,7 @@ import { prisma } from "@/core/prisma";
 import { getUserFromRequest } from "@/core/auth/getUser";
 import logger from "@/lib/logger";
 import { z } from "zod";
+import type { User } from "@/types/api";
 
 // Validation schemas
 const progressUpdateSchema = z.object({
@@ -31,7 +32,8 @@ export type LearningSessionInput = z.infer<typeof learningSessionSchema>;
 
 // POST /api/learning/progress/update - Update user learning progress
 export async function POST(request: NextRequest) {
-  let user: Awaited<ReturnType<typeof getUserFromRequest>> | null = null;
+  let user: User | null = null;
+
   try {
     // Get user from request
     user = await getUserFromRequest(request);
