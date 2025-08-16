@@ -4,6 +4,10 @@ import type { QueryKey } from '@tanstack/react-query';
 import React, { ReactNode } from 'react';
 import { apiClient } from './api';
 
+interface GlobalWithFetch {
+  fetch: typeof fetch;
+}
+
 // Mock API responses - using unknown instead of any for better type safety
 interface GlobalWithFetch {
   fetch: typeof fetch;
@@ -185,9 +189,10 @@ export const integrationTestHelpers = {
 
     // Replace global fetch with mock
     const originalFetch = (globalThis as GlobalWithFetch).fetch;
-    (globalThis as GlobalWithFetch).fetch =
-      mockClient.mockFetch.bind(mockClient) as typeof fetch;
-
+    
+    // Cast to satisfy TS overloads in different environments
+    (globalThis as GlobalWithFetch).fetch = mockClient.mockFetch.bind(mockClient) as typeof fetch;
+    
     return {
       mockClient,
       queryClient,
