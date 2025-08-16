@@ -177,7 +177,7 @@ export function useOfflineProgress(userId: string) {
   // Start a new learning session
   const startLearningSession = useCallback((storyId: string) => {
     const session: LearningSession = {
-      id: `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: `session_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`,
       storyId,
       startTime: new Date(),
       timeSpent: 0,
