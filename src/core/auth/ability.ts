@@ -341,6 +341,7 @@ export interface AbilityContext {
   tenantId?: string;
 }
 
+
 // Define server rule type that matches CASL RawRuleOf
 export type ServerRule = RawRuleOf<AppAbility>;
 

@@ -61,7 +61,7 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json({ count: result.count });
   } catch (err) {
-    logger.error("Error bulk updating stories", undefined, err);
+    logger.error("Error bulk updating stories", undefined, err as Error);
     return NextResponse.json(
       { error: "Failed to bulk update stories" },
       { status: 500 }
@@ -109,7 +109,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ count: result.count });
   } catch (err) {
-    logger.error("Error bulk deleting stories", undefined, err);
+    logger.error("Error bulk deleting stories", undefined, err as Error);
     return NextResponse.json(
       { error: "Failed to bulk delete stories" },
       { status: 500 }

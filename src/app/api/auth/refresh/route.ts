@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    logger.error('Token refresh error', undefined, error);
+    logger.error('Token refresh error', undefined, error as Error);
     return NextResponse.json(
       { message: 'Lỗi server. Vui lòng thử lại sau.' },
       { status: 500 }
