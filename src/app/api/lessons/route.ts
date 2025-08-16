@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(lessons);
   } catch (err) {
-    logger.error("Error fetching lessons", undefined, err);
+    logger.error("Error fetching lessons", undefined, err as Error);
     return NextResponse.json({ error: "Failed to fetch lessons" }, { status: 500 });
   }
 }
@@ -164,7 +164,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(lesson, { status: 201 });
   } catch (err) {
-    logger.error("Error creating lesson", undefined, err);
+    logger.error("Error creating lesson", undefined, err as Error);
     return NextResponse.json({ error: "Failed to create lesson" }, { status: 500 });
   }
 }

@@ -126,7 +126,7 @@ export const getOptimizationConfig = () => {
 
       // Bundle analyzer
       ...(config.performance.enableBundleAnalysis && {
-        webpack: ((config: WebpackConfig) => {
+        webpack: ((config: WebpackConfig): WebpackConfig => {
           if (process.env.ANALYZE === "true") {
             const { BundleAnalyzerPlugin } = require("webpack-bundle-analyzer");
             config.plugins = config.plugins || [];
