@@ -215,7 +215,9 @@ class ApiClient {
 
   async request(input: RequestInfo, init?: RequestInit): Promise<string>;
   async request<T>(input: RequestInfo, init?: RequestInit): Promise<T>;
-  async request<T>(input: RequestInfo, init?: RequestInit): Promise<T | string> {
+
+  async request<T>(input: RequestInfo, init?: RequestInit): Promise<T> {
+
     try {
       let config: RequestInit & { url: string } = {
         ...init,
@@ -237,26 +239,41 @@ class ApiClient {
         response = await i(response);
       }
 
-      const isJson = response.headers.get("content-type")?.includes("application/json");
-      const body: unknown = isJson ? await response.json().catch(() => undefined) : undefined;
+      const isJson = response.headers
+        .get("content-type")
+        ?.includes("application/json");
 
+      if (isJson) {
+        const body = await response.json().catch(() => undefined);
+
+        if (!response.ok) {
+          type ErrorBody = {
+            message?: string;
+            error?: string;
+            [k: string]: unknown;
+          };
+          const obj =
+            typeof body === "object" && body !== null
+              ? (body as ErrorBody)
+              : undefined;
+          const message = obj?.message || obj?.error || `HTTP ${response.status}`;
+          throw new ApiError(message, response.status, body, `HTTP_${response.status}`);
+        }
+
+        return body as T;
+      }
+
+      const text = await response.text();
       if (!response.ok) {
-        type ErrorBody = { message?: string; error?: string; [k: string]: unknown };
-        const obj = (typeof body === "object" && body !== null)
-          ? (body as ErrorBody)
-          : undefined;
-        const message = obj?.message || obj?.error || `HTTP ${response.status}`;
-        throw new ApiError<ErrorBody | undefined>(
-          message,
+        throw new ApiError(
+          text || `HTTP ${response.status}`,
           response.status,
-          obj,
+          text,
           `HTTP_${response.status}`
         );
       }
+      return text as unknown as T;
 
-      if (isJson) return body as T;
-      const text = await response.text();
-      return text;
     } catch (err) {
       let e = err as Error;
       for (const i of this.errorInterceptors) {
@@ -363,9 +380,12 @@ apiClient.addErrorInterceptor(async (error) => {
 /* ======================================
  * Public API (giữ tên export để không vỡ import cũ)
  * ====================================== */
-// Note: Use <T,> to avoid JSX parsing issues in environments that parse TS as TSX
-export const api = <T = unknown,>(input: RequestInfo, init?: RequestInit): Promise<T> =>
-    apiClient.request<T>(input, init);
+// Note: Use overloads to default text responses to string
+export function api(input: RequestInfo, init?: RequestInit): Promise<string>;
+export function api<T>(input: RequestInfo, init?: RequestInit): Promise<T>;
+export function api<T>(input: RequestInfo, init?: RequestInit): Promise<T> {
+    return apiClient.request<T>(input, init);
+}
 
 export const setAuthToken = (
     token: string | null,
