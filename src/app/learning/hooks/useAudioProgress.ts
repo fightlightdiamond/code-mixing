@@ -49,10 +49,12 @@ export function useAudioProgress({
           setProgress({
             ...parsedProgress,
             lastUpdated: new Date(parsedProgress.lastUpdated),
-            bookmarks: parsedProgress.bookmarks.map((bookmark: AudioBookmark) => ({
-              ...bookmark,
-              timestamp: new Date(bookmark.timestamp),
-            })),
+            bookmarks: parsedProgress.bookmarks.map(
+              (bookmark: AudioBookmark) => ({
+                ...bookmark,
+                timestamp: new Date(bookmark.timestamp),
+              })
+            ),
           });
         }
 
@@ -75,10 +77,13 @@ export function useAudioProgress({
                 storyId,
                 currentPosition: serverProgress.currentPosition,
                 lastUpdated: serverTimestamp,
-                bookmarks: serverProgress.bookmarks.map((bookmark: AudioBookmark) => ({
-                  ...bookmark,
-                  timestamp: new Date(bookmark.timestamp),
-                })),
+                bookmarks: serverProgress.bookmarks.map(
+                  (bookmark: AudioBookmark) => ({
+                    ...bookmark,
+                    timestamp: new Date(bookmark.timestamp),
+                  })
+                ),
+
               };
               setProgress(mergedProgress);
 
