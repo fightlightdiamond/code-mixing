@@ -56,7 +56,12 @@ export function makeResource<N extends EntityName>(name: N) {
     });
   }
 
-  function useUpdate<TBody extends object, TResp = unknown>(
+  function useUpdate<
+    TBody extends object,
+    TResp = unknown,
+    TList extends { id: string | number } = { id: string | number },
+    TDetail extends object = TList
+  >(
     invalidate: (vars: { id: string | number; body: TBody }) => ReadonlyArray<string> = () => def.tags
   ) {
     const qc = useQueryClient();
@@ -67,26 +72,26 @@ export function makeResource<N extends EntityName>(name: N) {
       onMutate: async (vars) => {
         await qc.cancelQueries({ queryKey: [def.entity] });
 
-        const prevList = qc.getQueriesData<any>({ queryKey: [def.entity] });
-        const prevDetail = qc.getQueryData<any>(keyFactory.detail(def.entity, vars.id));
+        const prevList = qc.getQueriesData<TList[]>({ queryKey: [def.entity] });
+        const prevDetail = qc.getQueryData<TDetail>(keyFactory.detail(def.entity, vars.id));
 
-        qc.setQueriesData<any>({ queryKey: [def.entity] }, (old: any) => {
+        qc.setQueriesData<TList[]>({ queryKey: [def.entity] }, (old) => {
           if (!old) return old;
-          return old.map((item: any) => item.id === vars.id ? { ...item, ...vars.body } : item);
+          return old.map((item) => item.id === vars.id ? { ...item, ...vars.body } as TList : item);
         });
 
-        qc.setQueryData<any>(keyFactory.detail(def.entity, vars.id), (old: any) => {
+        qc.setQueryData<TDetail>(keyFactory.detail(def.entity, vars.id), (old) => {
           if (!old) return old;
-          return { ...old, ...vars.body };
+          return { ...old, ...vars.body } as TDetail;
         });
 
         return { prevList, prevDetail };
       },
 
       onError: (_err, vars, ctx) => {
-        ctx?.prevList?.forEach(([key, data]) => qc.setQueryData(key, data));
+        ctx?.prevList?.forEach(([key, data]) => qc.setQueryData<TList[]>(key, data));
         if (ctx?.prevDetail) {
-          qc.setQueryData(keyFactory.detail(def.entity, vars.id), ctx.prevDetail);
+          qc.setQueryData<TDetail>(keyFactory.detail(def.entity, vars.id), ctx.prevDetail);
         }
       },
 
@@ -96,7 +101,10 @@ export function makeResource<N extends EntityName>(name: N) {
     });
   }
 
-  function useDelete<TResp = unknown>(invalidateTags?: ReadonlyArray<string>) {
+  function useDelete<
+    TResp = unknown,
+    TList extends { id: string | number } = { id: string | number }
+  >(invalidateTags?: ReadonlyArray<string>) {
     const qc = useQueryClient();
     const tags = invalidateTags ?? def.tags;
     return useMutation({
@@ -106,17 +114,17 @@ export function makeResource<N extends EntityName>(name: N) {
       onMutate: async (id) => {
         await qc.cancelQueries({ queryKey: [def.entity] });
 
-        const prevList = qc.getQueriesData<any>({ queryKey: [def.entity] });
-        qc.setQueriesData<any>({ queryKey: [def.entity] }, (old: any) => {
+        const prevList = qc.getQueriesData<TList[]>({ queryKey: [def.entity] });
+        qc.setQueriesData<TList[]>({ queryKey: [def.entity] }, (old) => {
           if (!old) return old;
-          return old.filter((item: any) => item.id !== id);
+          return old.filter((item) => item.id !== id);
         });
 
         return { prevList };
       },
 
       onError: (_err, _id, ctx) => {
-        ctx?.prevList?.forEach(([key, data]) => qc.setQueryData(key, data));
+        ctx?.prevList?.forEach(([key, data]) => qc.setQueryData<TList[]>(key, data));
       },
 
       onSettled: () => {

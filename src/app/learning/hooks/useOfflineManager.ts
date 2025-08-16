@@ -82,11 +82,12 @@ export function useOfflineManager() {
     if (!offlineStatus.isServiceWorkerReady) return null;
 
     try {
-      const response = await sendMessageToServiceWorker({
+      const cacheStatus = await sendMessageToServiceWorker<
+        { type: "GET_CACHE_STATUS" },
+        CacheStatus
+      >({
         type: "GET_CACHE_STATUS",
       });
-
-      const cacheStatus = response as CacheStatus;
       setOfflineStatus((prev) => ({ ...prev, cacheStatus }));
       return cacheStatus;
     } catch (error) {
@@ -126,7 +127,7 @@ export function useOfflineManager() {
           throw new Error("Failed to fetch story data");
         }
 
-        const storyData = await storyResponse.json();
+        const storyData: LearningStory = await storyResponse.json();
 
         // Update progress
         setDownloadQueue((prev) =>
@@ -136,7 +137,10 @@ export function useOfflineManager() {
         );
 
         // Cache the story data
-        await sendMessageToServiceWorker({
+        await sendMessageToServiceWorker<
+          { type: "CACHE_STORY"; data: LearningStory },
+          { success: boolean; error?: string }
+        >({
           type: "CACHE_STORY",
           data: storyData,
         });
@@ -150,7 +154,13 @@ export function useOfflineManager() {
 
         // Download and cache audio if available
         if (storyData.audioUrl) {
-          await sendMessageToServiceWorker({
+          await sendMessageToServiceWorker<
+            {
+              type: "CACHE_AUDIO";
+              data: { url: string; storyId: string };
+            },
+            { success: boolean; error?: string }
+          >({
             type: "CACHE_AUDIO",
             data: { url: storyData.audioUrl, storyId: story.id },
           });
@@ -168,7 +178,13 @@ export function useOfflineManager() {
           for (const vocab of storyData.vocabularies) {
             if (vocab.audioUrl) {
               try {
-                await sendMessageToServiceWorker({
+                await sendMessageToServiceWorker<
+                  {
+                    type: "CACHE_AUDIO";
+                    data: { url: string; word: string };
+                  },
+                  { success: boolean; error?: string }
+                >({
                   type: "CACHE_AUDIO",
                   data: { url: vocab.audioUrl, word: vocab.word },
                 });
@@ -246,7 +262,15 @@ export function useOfflineManager() {
       if (!offlineStatus.isServiceWorkerReady) return false;
 
       try {
-        await sendMessageToServiceWorker({
+        await sendMessageToServiceWorker<
+          {
+            type: "CLEAR_CACHE";
+            data: {
+              cacheType: "stories" | "audio" | "api" | "all";
+            };
+          },
+          { success: boolean }
+        >({
           type: "CLEAR_CACHE",
           data: { cacheType },
         });
@@ -303,19 +327,21 @@ export function useOfflineManager() {
 }
 
 // Helper function to send messages to service worker
-async function sendMessageToServiceWorker(message: any): Promise<any> {
+async function sendMessageToServiceWorker<TRequest, TResponse>(
+  message: TRequest
+): Promise<TResponse> {
   if (!navigator.serviceWorker.controller) {
     throw new Error("No service worker controller available");
   }
 
-  return new Promise((resolve, reject) => {
+  return new Promise<TResponse>((resolve, reject) => {
     const messageChannel = new MessageChannel();
 
     messageChannel.port1.onmessage = (event) => {
-      if (event.data.error) {
-        reject(new Error(event.data.error));
+      if ((event.data as any)?.error) {
+        reject(new Error((event.data as any).error));
       } else {
-        resolve(event.data);
+        resolve(event.data as TResponse);
       }
     };
 
