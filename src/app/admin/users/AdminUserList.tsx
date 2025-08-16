@@ -319,10 +319,7 @@ export default function AdminUserList() {
                 <select
                   value={formData.role}
                   onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      role: e.target.value as UserRole,
-                    })
+                    setFormData({ ...formData, role: e.target.value as UserRole })
                   }
                   style={{
                     width: "100%",
