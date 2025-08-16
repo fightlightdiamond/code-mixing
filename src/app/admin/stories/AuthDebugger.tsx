@@ -10,8 +10,8 @@ interface AuthDebugInfo {
   isAuthenticated: boolean;
   user: {
     id: string;
-    name: string | null;
-    email: string | null;
+    name: string;
+    email: string;
     role: string;
     tenantId: string | null;
   } | null;
