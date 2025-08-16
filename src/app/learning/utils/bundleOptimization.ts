@@ -1,4 +1,15 @@
 import { logger } from '@/lib/logger';
+
+interface WebVitalsMetric {
+  id: string;
+  name: string;
+  value: number;
+  [key: string]: unknown;
+}
+
+interface EventListenerElement {
+  _eventListeners?: Record<string, EventListener[]>;
+}
 /**
  * Bundle optimization utilities for the learning application
  */
@@ -154,7 +165,10 @@ export const performanceMonitoring = {
   },
 
   // Measure API response time
-  measureApiTime: async (apiName: string, apiCall: () => Promise<any>) => {
+  measureApiTime: async <T>(
+    apiName: string,
+    apiCall: () => Promise<T>
+  ): Promise<T> => {
     if (typeof window === "undefined" || !window.performance) {
       return apiCall();
     }
@@ -186,7 +200,7 @@ export const performanceMonitoring = {
   },
 
   // Report Core Web Vitals
-  reportWebVitals: (metric: any) => {
+  reportWebVitals: (metric: WebVitalsMetric) => {
     if (typeof window === "undefined") return;
 
     logger.info(metric);
@@ -209,7 +223,8 @@ export const memoryManagement = {
   // Clean up event listeners
   cleanupEventListeners: (element: HTMLElement, events: string[]) => {
     events.forEach((event) => {
-      const listeners = (element as any)._eventListeners?.[event] || [];
+      const listeners =
+        (element as EventListenerElement)._eventListeners?.[event] || [];
       listeners.forEach((listener: EventListener) => {
         element.removeEventListener(event, listener);
       });
@@ -217,7 +232,7 @@ export const memoryManagement = {
   },
 
   // Debounce function for performance
-  debounce: <T extends (...args: any[]) => any>(
+  debounce: <T extends (...args: unknown[]) => unknown>(
     func: T,
     wait: number,
     immediate?: boolean
@@ -240,7 +255,7 @@ export const memoryManagement = {
   },
 
   // Throttle function for performance
-  throttle: <T extends (...args: any[]) => any>(
+  throttle: <T extends (...args: unknown[]) => unknown>(
     func: T,
     limit: number
   ): ((...args: Parameters<T>) => void) => {
