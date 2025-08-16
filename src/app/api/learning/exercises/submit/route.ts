@@ -4,6 +4,7 @@ import { prisma } from "@/core/prisma";
 import { getUserFromRequest } from "@/core/auth/getUser";
 import logger from "@/lib/logger";
 import { z } from "zod";
+import type { User } from "@/types/api";
 
 // Validation schema for exercise submission
 const exerciseSubmissionSchema = z.object({
@@ -20,8 +21,9 @@ const batchSubmissionSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
+  let user: User | null = null;
   try {
-    const user = await getUserFromRequest(request);
+    user = await getUserFromRequest(request);
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
