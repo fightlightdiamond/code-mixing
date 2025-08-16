@@ -3,6 +3,73 @@ import { caslGuardWithPolicies } from "@/core/auth/casl.guard";
 import { prisma } from "@/core/prisma";
 import { getUserFromRequest } from "@/core/auth/getUser";
 import logger from "@/lib/logger";
+import type { User } from "@/types/api";
+import { LearningSession, ProgressStatus, VocabStatus } from "@prisma/client";
+
+interface LessonProgressItem {
+  id: string;
+  lessonId: string;
+  status: ProgressStatus;
+  lastViewedAt: Date | null;
+  updatedAt: Date;
+  lesson: {
+    id: string;
+    title: string;
+    difficulty: string;
+    estimatedMinutes: number | null;
+    course: {
+      id: string;
+      title: string;
+    };
+  };
+}
+
+interface VocabularyProgressItem {
+  id: string;
+  vocabulary: {
+    id: string;
+    word: string;
+    meaning: string;
+    lesson: {
+      id: string;
+      title: string;
+    };
+  };
+  status: VocabStatus;
+  lastReviewed: Date | null;
+}
+
+interface ProgressStats {
+  totalLessons: number;
+  completedLessons: number;
+  inProgressLessons: number;
+  totalVocabulary: number;
+  masteredVocabulary: number;
+  reviewingVocabulary: number;
+  newVocabulary: number;
+  totalTimeSpent: number;
+  totalInteractions: number;
+  learningStreak: number;
+  averageSessionTime: number;
+}
+
+interface Achievement {
+  type: string;
+  title: string;
+  description: string;
+  earnedAt: Date;
+}
+
+interface UserProgressResponse {
+  userId: string;
+  timeframe: string;
+  stats: ProgressStats;
+  levelProgression: ReturnType<typeof calculateLevelProgression>;
+  recentAchievements: Achievement[];
+  lessonProgress?: LessonProgressItem[];
+  vocabularyProgress?: VocabularyProgressItem[];
+  recentSessions?: LearningSession[];
+}
 
 interface LessonProgressItem {
   id: string;
@@ -78,12 +145,15 @@ interface UserProgressResponse {
 }
 
 // GET /api/learning/progress/user - Get comprehensive user learning progress
+
 export async function GET(
   request: NextRequest
 ): Promise<NextResponse<UserProgressResponse>> {
+  let user: User | null = null;
+
   try {
     // Get user from request
-    const user = await getUserFromRequest(request);
+    user = await getUserFromRequest(request);
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -262,7 +332,7 @@ export async function GET(
     );
 
     // Get recent achievements (simplified)
-    const recentAchievements = getRecentAchievements(
+    const recentAchievements: Achievement[] = getRecentAchievements(
       lessonProgress,
       vocabularyProgress,
       stats
