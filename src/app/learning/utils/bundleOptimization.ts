@@ -269,7 +269,7 @@ export const serviceWorkerUtils = {
       logger.info("Service Worker registered successfully:", registration);
       return registration;
     } catch (error) {
-      logger.error("Service Worker registration failed:", error);
+      logger.error("Service Worker registration failed:", undefined, error);
       return null;
     }
   },
@@ -280,7 +280,7 @@ export const serviceWorkerUtils = {
       await registration.update();
       logger.info("Service Worker updated successfully");
     } catch (error) {
-      logger.error("Service Worker update failed:", error);
+      logger.error("Service Worker update failed:", undefined, error);
     }
   },
 

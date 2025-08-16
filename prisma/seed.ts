@@ -597,6 +597,6 @@ async function main() {
 
 main()
   .catch((e) => {
-    logger.error("❌ Seed failed:", e);
+    logger.error("❌ Seed failed:", undefined, e);
     process.exit(1);
   });

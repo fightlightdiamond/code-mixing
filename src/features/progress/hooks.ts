@@ -33,6 +33,11 @@ export interface ListProgressParams {
   status?: ProgressStatusType;
 }
 
+export type DeleteProgressParams = {
+  id: string;
+  lessonId?: string;
+};
+
 export const buildLessonProgressQuery = (lessonId: string) =>
   queryOptions({
     queryKey: keyFactory.detail("user-progress", lessonId),
@@ -110,17 +115,17 @@ export function useDeleteProgress() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id }: { id: string }) =>
+    mutationFn: ({ id }: DeleteProgressParams) =>
       api(`/api/progress/${id}`, { method: "DELETE" }),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
         queryKey: keyFactory.list("user-progress"),
       });
-      if ((variables as any).lessonId) {
+      if (variables.lessonId) {
         queryClient.invalidateQueries({
           queryKey: keyFactory.detail(
             "user-progress",
-            (variables as any).lessonId as string
+            variables.lessonId
           ),
         });
       }

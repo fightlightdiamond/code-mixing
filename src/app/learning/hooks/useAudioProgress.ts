@@ -94,7 +94,7 @@ export function useAudioProgress({
           // Continue with local data only
         }
       } catch (error) {
-        logger.error("Error loading audio progress:", error);
+        logger.error("Error loading audio progress:", undefined, error);
         setError("Không thể tải tiến độ âm thanh");
       } finally {
         setIsLoading(false);
@@ -135,7 +135,7 @@ export function useAudioProgress({
 
         setError(null);
       } catch (error) {
-        logger.error("Error saving audio progress:", error);
+        logger.error("Error saving audio progress:", undefined, error);
         setError("Không thể lưu tiến độ âm thanh");
       }
     },

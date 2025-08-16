@@ -243,7 +243,7 @@ export function useDataSync(userId: string) {
           result.syncedItems.learningProgress = true;
         }
       } catch (error) {
-        logger.error("Failed to sync learning progress:", error);
+        logger.error("Failed to sync learning progress:", undefined, error);
       }
     }
 
@@ -272,7 +272,7 @@ export function useDataSync(userId: string) {
           result.syncedItems.vocabularyProgress = merged.length;
         }
       } catch (error) {
-        logger.error("Failed to sync vocabulary progress:", error);
+        logger.error("Failed to sync vocabulary progress:", undefined, error);
       }
     }
 
@@ -288,7 +288,7 @@ export function useDataSync(userId: string) {
         await uploadExerciseResults(pendingData.exerciseResults);
         result.syncedItems.exerciseResults = pendingData.exerciseResults.length;
       } catch (error) {
-        logger.error("Failed to sync exercise results:", error);
+        logger.error("Failed to sync exercise results:", undefined, error);
       }
     }
 
@@ -310,7 +310,7 @@ export function useDataSync(userId: string) {
         await uploadLearningStats(mergedStats);
         result.syncedItems.learningStats = true;
       } catch (error) {
-        logger.error("Failed to sync learning stats:", error);
+        logger.error("Failed to sync learning stats:", undefined, error);
       }
     }
 
@@ -325,7 +325,7 @@ export function useDataSync(userId: string) {
       try {
         await uploadLearningSessions(pendingData.sessions);
       } catch (error) {
-        logger.error("Failed to sync learning sessions:", error);
+        logger.error("Failed to sync learning sessions:", undefined, error);
       }
     }
 
