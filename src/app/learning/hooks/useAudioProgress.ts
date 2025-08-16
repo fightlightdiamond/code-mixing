@@ -45,11 +45,11 @@ export function useAudioProgress({
         // First try to load from localStorage for immediate display
         const stored = localStorage.getItem(`audio-progress-${storyId}`);
         if (stored) {
-          const parsedProgress = JSON.parse(stored);
+          const parsedProgress: AudioProgress = JSON.parse(stored);
           setProgress({
             ...parsedProgress,
             lastUpdated: new Date(parsedProgress.lastUpdated),
-            bookmarks: parsedProgress.bookmarks.map((bookmark: any) => ({
+            bookmarks: parsedProgress.bookmarks.map((bookmark: AudioBookmark) => ({
               ...bookmark,
               timestamp: new Date(bookmark.timestamp),
             })),
@@ -62,7 +62,7 @@ export function useAudioProgress({
             `/api/learning/progress/audio?storyId=${storyId}`
           );
           if (response.ok) {
-            const serverProgress = await response.json();
+            const serverProgress: AudioProgress = await response.json();
 
             // Use server data if it's more recent
             const localTimestamp = stored
@@ -75,7 +75,7 @@ export function useAudioProgress({
                 storyId,
                 currentPosition: serverProgress.currentPosition,
                 lastUpdated: serverTimestamp,
-                bookmarks: serverProgress.bookmarks.map((bookmark: any) => ({
+                bookmarks: serverProgress.bookmarks.map((bookmark: AudioBookmark) => ({
                   ...bookmark,
                   timestamp: new Date(bookmark.timestamp),
                 })),
@@ -90,11 +90,13 @@ export function useAudioProgress({
             }
           }
         } catch (serverError) {
-          logger.warn("Failed to load progress from server:", serverError);
+          logger.warn("Failed to load progress from server", {
+            error: String(serverError),
+          });
           // Continue with local data only
         }
       } catch (error) {
-        logger.error("Error loading audio progress:", error);
+        logger.error("Error loading audio progress:", undefined, error as Error);
         setError("Không thể tải tiến độ âm thanh");
       } finally {
         setIsLoading(false);
@@ -128,14 +130,16 @@ export function useAudioProgress({
               }),
             });
           } catch (serverError) {
-            logger.warn("Failed to save progress to server:", serverError);
+            logger.warn("Failed to save progress to server", {
+              error: String(serverError),
+            });
             // Continue with local storage only
           }
         }
 
         setError(null);
       } catch (error) {
-        logger.error("Error saving audio progress:", error);
+        logger.error("Error saving audio progress:", undefined, error as Error);
         setError("Không thể lưu tiến độ âm thanh");
       }
     },
@@ -251,7 +255,9 @@ export function useAudioProgress({
         },
         body: JSON.stringify({ storyId }),
       }).catch((error) => {
-        logger.warn("Failed to clear progress from server:", error);
+        logger.warn("Failed to clear progress from server", {
+          error: String(error),
+        });
       });
     }
   }, [storyId, autoSave]);

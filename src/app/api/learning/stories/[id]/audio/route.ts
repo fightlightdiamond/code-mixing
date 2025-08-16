@@ -3,6 +3,9 @@ import { caslGuardWithPolicies } from "@/core/auth/casl.guard";
 import { prisma } from "@/core/prisma";
 import { getUserFromRequest } from "@/core/auth/getUser";
 import logger from "@/lib/logger";
+import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { Readable } from "stream";
 
 // GET /api/learning/stories/[id]/audio - Get audio file for story
 export async function GET(
@@ -72,22 +75,40 @@ export async function GET(
       );
     }
 
-    // In a real implementation, you would:
-    // 1. Generate a signed URL for the audio file from your storage service (S3, etc.)
-    // 2. Or stream the audio file directly
-    // For now, we'll return the audio metadata and storage key
+    // Build S3 command for the audio file
+    const bucket = process.env.AWS_S3_BUCKET;
+    if (!bucket) {
+      logger.error("AWS_S3_BUCKET is not configured");
+      return NextResponse.json(
+        { error: "Audio storage not configured" },
+        { status: 500 }
+      );
+    }
 
-    // TODO: Implement actual audio file serving
-    // This could be a redirect to a signed URL or streaming the file
-    const audioUrl = `/api/audio/stream/${audio.storageKey}`;
+    const s3 = new S3Client({ region: process.env.AWS_REGION });
+    const command = new GetObjectCommand({
+      Bucket: bucket,
+      Key: audio.storageKey,
+    });
 
-    return NextResponse.json({
-      id: audio.id,
-      url: audioUrl,
-      voiceType: audio.voiceType,
-      durationSec: audio.durationSec,
-      storyId: storyId,
-      storyTitle: story.title,
+    // By default return a redirect to a signed URL
+    const useSignedUrl = process.env.AUDIO_STREAM !== "true";
+
+    if (useSignedUrl) {
+      const signedUrl = await getSignedUrl(s3, command, {
+        expiresIn: 60,
+      });
+      return NextResponse.redirect(signedUrl);
+    }
+
+    // Stream file directly from S3
+    const { Body, ContentType } = await s3.send(command);
+    const body = Body as Readable;
+
+    return new NextResponse(Readable.toWeb(body), {
+      headers: {
+        "Content-Type": ContentType || "audio/mpeg",
+      },
     });
   } catch (error) {
     logger.error("Error fetching story audio", { storyId: params.id }, error);

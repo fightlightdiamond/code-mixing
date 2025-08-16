@@ -73,7 +73,7 @@ export async function PUT(
 
     return NextResponse.json(vocabulary);
   } catch (error) {
-    logger.error("Error updating vocabulary", undefined, error);
+    logger.error("Error updating vocabulary", undefined, error as Error);
     return NextResponse.json(
       { error: "Failed to update vocabulary" },
       { status: 500 }
@@ -114,7 +114,7 @@ export async function DELETE(
 
     return NextResponse.json({ message: "Vocabulary deleted successfully" });
   } catch (error) {
-    logger.error("Error deleting vocabulary", undefined, error);
+    logger.error("Error deleting vocabulary", undefined, error as Error);
     return NextResponse.json(
       { error: "Failed to delete vocabulary" },
       { status: 500 }

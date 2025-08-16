@@ -7,19 +7,15 @@ import { rateLimit } from "@/lib/rate-limit";
 import logger from "@/lib/logger";
 
 const loginSchema = z.object({
-    email: z.string().email(),
-    password: z.string().min(1, "Mật khẩu là bắt buộc"),
+  email: z.string().email(),
+  password: z.string().min(1, "Mật khẩu là bắt buộc"),
 });
 
-const MAX_ATTEMPTS = parseInt(
-  process.env.LOGIN_RATE_LIMIT_MAX || "5",
-  10
-);
+const MAX_ATTEMPTS = parseInt(process.env.LOGIN_RATE_LIMIT_MAX || "5", 10);
 const WINDOW_MS = parseInt(
   process.env.LOGIN_RATE_LIMIT_WINDOW_MS || "60000",
-  10
+  10,
 );
-
 
 export async function POST(request: NextRequest) {
   try {
@@ -31,27 +27,19 @@ export async function POST(request: NextRequest) {
     if (!allowed) {
       return NextResponse.json(
         { message: "Too many login attempts. Please try again later." },
-        { status: 429 }
+        { status: 429 },
       );
     }
 
-      const body = await request.json();
-      const parsed = loginSchema.safeParse(body);
-      if (!parsed.success) {
-          return NextResponse.json(
-              { message: "Dữ liệu không hợp lệ", errors: parsed.error.flatten() },
-              { status: 400 }
-          );
-      }
-      const { email, password } = parsed.data;
-
-    // Validate input
-    if (!email || !password) {
+    const body = await request.json();
+    const parsed = loginSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
         { message: "Dữ liệu không hợp lệ", errors: parsed.error.flatten() },
-        { status: 400 }
+        { status: 400 },
       );
     }
+    const { email, password } = parsed.data;
 
     // Find user by email
     const user = await prisma.user.findUnique({
@@ -61,7 +49,7 @@ export async function POST(request: NextRequest) {
     if (!user) {
       return NextResponse.json(
         { message: "Email hoặc mật khẩu không đúng" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -70,7 +58,7 @@ export async function POST(request: NextRequest) {
     if (!isPasswordValid) {
       return NextResponse.json(
         { message: "Email hoặc mật khẩu không đúng" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -91,7 +79,7 @@ export async function POST(request: NextRequest) {
         tenantId: tenantId,
       },
       secret,
-      { expiresIn: "15m" } // 15 minutes for access token
+      { expiresIn: "15m" }, // 15 minutes for access token
     );
 
     // Generate refresh token (longer expiry)
@@ -101,7 +89,7 @@ export async function POST(request: NextRequest) {
         type: "refresh",
       },
       secret,
-      { expiresIn: "7d" } // 7 days for refresh token
+      { expiresIn: "7d" }, // 7 days for refresh token
     );
 
     // Return user data (without password) and tokens
@@ -124,10 +112,10 @@ export async function POST(request: NextRequest) {
       token: accessToken,
     });
   } catch (error) {
-    logger.error("Login error", undefined, error);
+    logger.error("Login error", undefined, error as Error);
     return NextResponse.json(
       { message: "Lỗi server. Vui lòng thử lại sau." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

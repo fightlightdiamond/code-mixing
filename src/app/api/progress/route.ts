@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(progressRecords);
   } catch (err) {
-    logger.error("Error fetching user progress", undefined, err);
+    logger.error("Error fetching user progress", undefined, err as Error);
     return NextResponse.json({ error: "Failed to fetch progress" }, { status: 500 });
   }
 }
@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(progress, { status: 201 });
   } catch (err) {
-    logger.error("Error updating user progress", undefined, err);
+    logger.error("Error updating user progress", undefined, err as Error);
     return NextResponse.json({ error: "Failed to update progress" }, { status: 500 });
   }
 }
