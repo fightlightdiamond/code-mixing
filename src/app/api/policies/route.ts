@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma, PrismaClient } from "@prisma/client";
 import { prisma } from "@/core/prisma";
 import { caslGuardWithPolicies } from "@/core/auth/casl.guard";
 import { getUserFromRequest } from "@/core/auth/getUser";
+
+type PrismaWithPolicy = PrismaClient & {
+  resourcePolicy?: Prisma.ResourcePolicyDelegate;
+};
 
 // getUserFromRequest imported from core auth
 
@@ -18,10 +23,10 @@ export async function GET(request: NextRequest) {
   const tenantId = searchParams.get("tenantId") || undefined;
 
   // optional repo access to compile even if model not generated yet
-  const repo = (prisma as unknown as { resourcePolicy?: any }).resourcePolicy;
+  const repo = (prisma as PrismaWithPolicy).resourcePolicy;
   if (!repo) return NextResponse.json({ data: [], success: true, meta: { total: 0 } });
 
-  const where: any = {};
+  const where: Prisma.ResourcePolicyWhereInput = {};
   if (resource) where.resource = resource;
   if (tenantId) where.tenantId = tenantId;
 
@@ -49,7 +54,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "name, resource and effect are required" }, { status: 400 });
   }
 
-  const repo = (prisma as unknown as { resourcePolicy?: any }).resourcePolicy;
+  const repo = (prisma as PrismaWithPolicy).resourcePolicy;
   if (!repo) return NextResponse.json({ error: "Policy model not available" }, { status: 500 });
 
   const created = await repo.create({
