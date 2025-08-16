@@ -45,11 +45,11 @@ export function useAudioProgress({
         // First try to load from localStorage for immediate display
         const stored = localStorage.getItem(`audio-progress-${storyId}`);
         if (stored) {
-          const parsedProgress = JSON.parse(stored);
+          const parsedProgress: AudioProgress = JSON.parse(stored);
           setProgress({
             ...parsedProgress,
             lastUpdated: new Date(parsedProgress.lastUpdated),
-            bookmarks: parsedProgress.bookmarks.map((bookmark: any) => ({
+            bookmarks: parsedProgress.bookmarks.map((bookmark: AudioBookmark) => ({
               ...bookmark,
               timestamp: new Date(bookmark.timestamp),
             })),
@@ -62,7 +62,7 @@ export function useAudioProgress({
             `/api/learning/progress/audio?storyId=${storyId}`
           );
           if (response.ok) {
-            const serverProgress = await response.json();
+            const serverProgress: AudioProgress = await response.json();
 
             // Use server data if it's more recent
             const localTimestamp = stored
@@ -75,7 +75,7 @@ export function useAudioProgress({
                 storyId,
                 currentPosition: serverProgress.currentPosition,
                 lastUpdated: serverTimestamp,
-                bookmarks: serverProgress.bookmarks.map((bookmark: any) => ({
+                bookmarks: serverProgress.bookmarks.map((bookmark: AudioBookmark) => ({
                   ...bookmark,
                   timestamp: new Date(bookmark.timestamp),
                 })),
