@@ -19,7 +19,7 @@ export interface LogContext {
   tenantId?: string;
   requestId?: string;
   timestamp?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface LogEntry {

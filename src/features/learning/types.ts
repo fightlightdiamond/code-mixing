@@ -154,3 +154,65 @@ export interface SubmitExerciseData {
   userAnswer: string | string[];
   timeSpent: number;
 }
+
+export interface VocabularyUpdate {
+  word: string;
+  status: "learning" | "mastered";
+  storyId?: string;
+}
+
+export interface ProgressAnalytics {
+  period: string;
+  dateRange: {
+    start: Date;
+    end: Date;
+  };
+  summary: {
+    totalSessions: number;
+    totalTimeSpent: number;
+    totalInteractions: number;
+    activeDays: number;
+    averageSessionTime: number;
+    lessonsCompleted: number;
+    lessonsInProgress: number;
+    vocabularyReviewed: number;
+    vocabularyMastered: number;
+  };
+  timeAnalysis: {
+    hourlyDistribution: number[];
+    dailyDistribution: number[];
+    peakLearningHour: number;
+    peakLearningDay: string;
+    totalTimeByHour: number;
+    averageSessionsPerDay: number;
+  };
+  difficultyAnalysis: Record<
+    DifficultyLevel,
+    { sessions: number; timeSpent: number; completed: number }
+  >;
+  vocabularyAnalysis: {
+    statusDistribution: Record<VocabularyStatus, number>;
+    difficultyDistribution: Record<DifficultyLevel, number>;
+    totalWords: number;
+    masteryRate: number;
+  };
+  learningPatterns: {
+    consistency: number;
+    preferredSessionLength: number;
+    learningVelocity: number;
+  };
+  recommendations: {
+    type: string;
+    title: string;
+    description: string;
+    priority: "low" | "medium" | "high";
+  }[];
+  comparison?: {
+    period: string;
+    dateRange: {
+      start: Date;
+      end: Date;
+    };
+    summary: ProgressAnalytics["summary"];
+  };
+}

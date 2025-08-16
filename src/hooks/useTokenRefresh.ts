@@ -72,7 +72,7 @@ export function useTokenRefresh(options: UseTokenRefreshOptions = {}) {
         throw new Error('Token refresh returned null');
       }
     } catch (error) {
-      logger.error('❌ Token refresh failed:', error);
+      logger.error('❌ Token refresh failed:', undefined, error as Error);
       onRefreshError?.(error as Error);
       
       // If refresh fails, logout the user
