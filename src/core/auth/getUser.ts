@@ -37,18 +37,7 @@ export async function getUserFromRequest(
     }
     if (!token) return null;
 
-    const secret = process.env.JWT_SECRET;
-    if (!secret) {
-      if (process.env.NODE_ENV !== "production") {
-        logger.warn("getUserFromRequest: JWT_SECRET is not set; failing closed.");
-      }
-      return null;
-    }
-
-    const decoded = jwt.verify(token, secret, {
-      algorithms: ["HS256"],
-      ignoreExpiration: false,
-    }) as JWTPayload;
+    const decoded = verifyJwt<JWTPayload>(token);
 
     return {
       sub: decoded.userId,
@@ -57,7 +46,7 @@ export async function getUserFromRequest(
     };
   } catch (err) {
     if (process.env.NODE_ENV !== "production") {
-      logger.warn("getUserFromRequest: token verification failed:", err);
+      logger.warn("getUserFromRequest: token verification failed:", { err });
     }
     return null;
   }
