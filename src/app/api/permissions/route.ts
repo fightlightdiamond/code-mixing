@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/core/prisma";
+import { Prisma } from "@prisma/client";
 import { caslGuardWithPolicies } from "@/core/auth/casl.guard";
 import { getUserFromRequest } from "@/core/auth/getUser";
 
@@ -17,7 +18,7 @@ export async function GET(request: NextRequest) {
   const resource = searchParams.get("resource") || undefined;
   const action = searchParams.get("action") || undefined;
 
-  const where: any = {};
+  const where: Prisma.PermissionWhereInput = {};
   if (q) {
     where.OR = [
       { name: { contains: q, mode: "insensitive" } },
