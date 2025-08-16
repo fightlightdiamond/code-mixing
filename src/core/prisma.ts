@@ -4,9 +4,7 @@ declare global {
     var prisma: PrismaClient | undefined;
 }
 
-const globalForPrisma = globalThis as {
-    prisma?: PrismaClient;
-};
+const globalForPrisma = globalThis as { prisma?: PrismaClient };
 
 export const prisma =
     globalForPrisma.prisma ||
