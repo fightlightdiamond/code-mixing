@@ -45,7 +45,7 @@ function normalizeParams<T extends Record<string, unknown>>(params: T): T {
   const sortedKeys = Object.keys(params).sort() as (keyof T)[];
 
   for (const key of sortedKeys) {
-    const value = params[key];
+    const value = params[key as keyof T];
 
     // Skip undefined values
     if (value === undefined) continue;
@@ -56,7 +56,7 @@ function normalizeParams<T extends Record<string, unknown>>(params: T): T {
     }
     // Normalize objects
     else if (value && typeof value === 'object') {
-      normalized[key as string] = normalizeParams(value as Record<string, unknown>);
+      normalized[key] = normalizeParams(value as Record<string, unknown>);
     }
     // Keep primitives as-is
     else {
