@@ -240,9 +240,16 @@ class ApiClient {
 
       if (!response.ok) {
         type ErrorBody = { message?: string; error?: string; [k: string]: unknown };
-        const obj = (typeof body === "object" && body !== null) ? (body as ErrorBody) : undefined;
+        const obj = (typeof body === "object" && body !== null)
+          ? (body as ErrorBody)
+          : undefined;
         const message = obj?.message || obj?.error || `HTTP ${response.status}`;
-        throw new ApiError(message, response.status, body, `HTTP_${response.status}`);
+        throw new ApiError<ErrorBody | undefined>(
+          message,
+          response.status,
+          obj,
+          `HTTP_${response.status}`
+        );
       }
 
       return (body as T) ?? (await response.text() as unknown as T);
