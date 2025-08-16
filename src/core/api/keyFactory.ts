@@ -4,7 +4,7 @@ export const keyFactory = {
   all: (entity: string) => [entity] as const,
 
   // List operations with normalized params
-  list: (entity: string, params?: Record<string, any>) => {
+  list: (entity: string, params?: Record<string, unknown>) => {
     const normalizedParams = params ? normalizeParams(params) : undefined;
     return [entity, "list", normalizedParams] as const;
   },
@@ -13,39 +13,39 @@ export const keyFactory = {
   detail: (entity: string, id: string | number) => [entity, "detail", { id }] as const,
 
   // Search operations
-  search: (entity: string, query: string, filters?: Record<string, any>) => {
+  search: (entity: string, query: string, filters?: Record<string, unknown>) => {
     const normalizedFilters = filters ? normalizeParams(filters) : undefined;
     return [entity, "search", { query, filters: normalizedFilters }] as const;
   },
 
   // Infinite queries
-  infinite: (entity: string, params?: Record<string, any>) => {
+  infinite: (entity: string, params?: Record<string, unknown>) => {
     const normalizedParams = params ? normalizeParams(params) : undefined;
     return [entity, "infinite", normalizedParams] as const;
   },
 
   // Related data
-  related: (entity: string, id: string | number, relation: string, params?: Record<string, any>) => {
+  related: (entity: string, id: string | number, relation: string, params?: Record<string, unknown>) => {
     const normalizedParams = params ? normalizeParams(params) : undefined;
     return [entity, "detail", { id }, "related", relation, normalizedParams] as const;
   },
 
   // Aggregations
-  aggregation: (entity: string, type: string, params?: Record<string, any>) => {
+  aggregation: (entity: string, type: string, params?: Record<string, unknown>) => {
     const normalizedParams = params ? normalizeParams(params) : undefined;
     return [entity, "aggregation", type, normalizedParams] as const;
   },
 } as const;
 
 // Normalize parameters for consistent cache keys
-function normalizeParams(params: Record<string, any>): Record<string, any> {
-  const normalized: Record<string, any> = {};
+function normalizeParams<T extends Record<string, unknown>>(params: T): T {
+  const normalized: Record<string, unknown> = {};
 
   // Sort keys for consistent ordering
   const sortedKeys = Object.keys(params).sort();
 
   for (const key of sortedKeys) {
-    const value = params[key];
+    const value = params[key as keyof T];
 
     // Skip undefined values
     if (value === undefined) continue;
@@ -56,7 +56,7 @@ function normalizeParams(params: Record<string, any>): Record<string, any> {
     }
     // Normalize objects
     else if (value && typeof value === 'object') {
-      normalized[key] = normalizeParams(value);
+      normalized[key] = normalizeParams(value as Record<string, unknown>);
     }
     // Keep primitives as-is
     else {
@@ -64,7 +64,7 @@ function normalizeParams(params: Record<string, any>): Record<string, any> {
     }
   }
 
-  return normalized;
+  return normalized as T;
 }
 
 // Query key utilities
