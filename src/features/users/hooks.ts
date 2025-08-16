@@ -58,7 +58,7 @@ export const buildUsersListQuery = (params?: { search?: string }, enabled: boole
       const url = `${baseUrl}/api/users${
         params?.search ? `?search=${encodeURIComponent(params.search)}` : ""
       }`;
-      logger.info('🌐 [QUERY] API URL:', {
+      logger.info('🌐 [QUERY] API URL', {
         url,
         context: typeof window !== 'undefined' ? 'client' : 'server',
       });
@@ -68,15 +68,12 @@ export const buildUsersListQuery = (params?: { search?: string }, enabled: boole
       
       // Extract users array from API response for backward compatibility
       if (response.success && response.data) {
-        logger.info('✅ [QUERY] API response successful, extracted users', {
-          count: response.data.length,
+        logger.info('✅ [QUERY] API response successful', {
+          userCount: response.data.length,
         });
         return response.data; // Return just the users array
       } else {
-        logger.error('❌ [QUERY] API response failed:', {
-          success: response.success,
-          message: response.message,
-        });
+        logger.error('❌ [QUERY] API response failed', { response });
         throw new Error(response.message || 'Failed to fetch users');
       }
     },

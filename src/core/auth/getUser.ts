@@ -46,7 +46,9 @@ export async function getUserFromRequest(
     };
   } catch (err) {
     if (process.env.NODE_ENV !== "production") {
-      logger.warn("getUserFromRequest: token verification failed:", { error: err });
+      logger.warn("getUserFromRequest: token verification failed", {
+        error: String(err),
+      });
     }
     return null;
   }

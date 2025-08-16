@@ -139,7 +139,7 @@ export function useOfflineProgress(userId: string) {
         pendingSync: pendingSync === "true",
       });
     } catch (error) {
-      logger.error("Failed to load offline progress data:", undefined, error);
+      logger.error("Failed to load offline progress data:", undefined, error as Error);
     }
   }, []);
 
@@ -170,7 +170,7 @@ export function useOfflineProgress(userId: string) {
         offlineData.pendingSync.toString()
       );
     } catch (error) {
-      logger.error("Failed to save offline progress data:", undefined, error);
+      logger.error("Failed to save offline progress data:", undefined, error as Error);
     }
   }, [offlineData]);
 

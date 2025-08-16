@@ -87,12 +87,13 @@ export function AccessibilityProvider({
         } else {
           logger.warn(
             "Invalid saved accessibility settings, using defaults:",
-            result.error,
           );
           setSettings(defaultSettings);
         }
       } catch (error) {
-        logger.warn("Failed to parse saved accessibility settings:", error);
+          logger.warn("Failed to parse saved accessibility settings", {
+              error: String(error),
+          });
         setSettings(defaultSettings);
       }
     }

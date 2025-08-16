@@ -76,7 +76,7 @@ export default function AdminStoriesManagement() {
       await createMutation.mutateAsync(data);
       setShowCreateModal(false);
     } catch (error) {
-      logger.error("Error creating story:", undefined, error);
+      logger.error("Error creating story:", undefined, error as Error);
     }
   };
 
@@ -86,7 +86,7 @@ export default function AdminStoriesManagement() {
       await updateMutation.mutateAsync({ id: editingStory.id, data });
       setEditingStory(null);
     } catch (error) {
-      logger.error("Error updating story:", undefined, error);
+      logger.error("Error updating story:", undefined, error as Error);
     }
   };
 
@@ -95,7 +95,7 @@ export default function AdminStoriesManagement() {
     try {
       await deleteMutation.mutateAsync(id);
     } catch (error) {
-      logger.error("Error deleting story:", undefined, error);
+      logger.error("Error deleting story:", undefined, error as Error);
     }
   };
 
@@ -106,7 +106,7 @@ export default function AdminStoriesManagement() {
       setSelectedIds([]);
       setShowBulkActions(false);
     } catch (error) {
-      logger.error("Error bulk updating stories:", undefined, error);
+      logger.error("Error bulk updating stories:", undefined, error as Error);
     }
   };
 
@@ -118,7 +118,7 @@ export default function AdminStoriesManagement() {
       setSelectedIds([]);
       setShowBulkActions(false);
     } catch (error) {
-      logger.error("Error bulk deleting stories:", undefined, error);
+      logger.error("Error bulk deleting stories:", undefined, error as Error);
     }
   };
 

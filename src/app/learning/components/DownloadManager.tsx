@@ -61,7 +61,7 @@ export function DownloadManager({ stories, className }: DownloadManagerProps) {
         try {
           await downloadStory(story);
         } catch (error) {
-          logger.error(`Failed to download story ${storyId}:`, undefined, error);
+          logger.error(`Failed to download story ${storyId}:`, undefined, error as Error);
         }
       }
     }

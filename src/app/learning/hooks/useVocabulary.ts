@@ -55,7 +55,7 @@ export function useVocabulary(): UseVocabularyReturn {
 
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     } catch (err) {
-      logger.error("Error fetching vocabulary:", undefined, err);
+      logger.error("Error fetching vocabulary:", undefined, err as Error);
       setError(
         err instanceof Error ? err.message : "Không thể tải định nghĩa từ vựng"
       );

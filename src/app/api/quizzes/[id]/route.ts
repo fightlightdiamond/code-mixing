@@ -47,7 +47,7 @@ export async function GET(
 
     return NextResponse.json(quiz);
   } catch (error) {
-    logger.error("Error fetching quiz", undefined, error);
+    logger.error("Error fetching quiz", undefined, error as Error);
     return NextResponse.json(
       { error: "Failed to fetch quiz" },
       { status: 500 }
@@ -167,7 +167,7 @@ export async function PUT(
 
     return NextResponse.json(quiz);
   } catch (error) {
-    logger.error("Error updating quiz", undefined, error);
+    logger.error("Error updating quiz", undefined, error as Error);
     return NextResponse.json(
       { error: "Failed to update quiz" },
       { status: 500 }
@@ -203,7 +203,7 @@ export async function DELETE(
 
     return NextResponse.json({ message: "Quiz deleted successfully" });
   } catch (error) {
-    logger.error("Error deleting quiz", undefined, error);
+    logger.error("Error deleting quiz", undefined, error as Error);
     return NextResponse.json(
       { error: "Failed to delete quiz" },
       { status: 500 }

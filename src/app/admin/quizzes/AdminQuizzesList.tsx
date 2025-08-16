@@ -44,7 +44,7 @@ export default function AdminQuizzesList() {
       await createMutation.mutateAsync(data);
       setShowCreateModal(false);
     } catch (error) {
-      logger.error("Error creating quiz:", undefined, error);
+      logger.error("Error creating quiz:", undefined, error as Error);
     }
   };
 
@@ -56,7 +56,7 @@ export default function AdminQuizzesList() {
       setShowEditModal(false);
       setSelectedId(null);
     } catch (error) {
-      logger.error("Error updating quiz:", undefined, error);
+      logger.error("Error updating quiz:", undefined, error as Error);
     }
   };
 
@@ -66,7 +66,7 @@ export default function AdminQuizzesList() {
     try {
       await deleteMutation.mutateAsync(id);
     } catch (error) {
-      logger.error("Error deleting quiz:", undefined, error);
+      logger.error("Error deleting quiz:", undefined, error as Error);
     }
   };
 

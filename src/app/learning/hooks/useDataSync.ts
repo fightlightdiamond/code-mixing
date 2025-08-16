@@ -260,7 +260,7 @@ export function useDataSync(userId: string) {
           result.syncedItems.learningProgress = true;
         }
       } catch (error) {
-        logger.error("Failed to sync learning progress:", undefined, error);
+        logger.error("Failed to sync learning progress:", undefined, error as Error);
       }
     }
 
@@ -289,7 +289,7 @@ export function useDataSync(userId: string) {
           result.syncedItems.vocabularyProgress = merged.length;
         }
       } catch (error) {
-        logger.error("Failed to sync vocabulary progress:", undefined, error);
+        logger.error("Failed to sync vocabulary progress:", undefined, error as Error);
       }
     }
 
@@ -305,7 +305,7 @@ export function useDataSync(userId: string) {
         await uploadExerciseResults(pendingData.exerciseResults);
         result.syncedItems.exerciseResults = pendingData.exerciseResults.length;
       } catch (error) {
-        logger.error("Failed to sync exercise results:", undefined, error);
+        logger.error("Failed to sync exercise results:", undefined, error as Error);
       }
     }
 
@@ -327,7 +327,7 @@ export function useDataSync(userId: string) {
         await uploadLearningStats(mergedStats);
         result.syncedItems.learningStats = true;
       } catch (error) {
-        logger.error("Failed to sync learning stats:", undefined, error);
+        logger.error("Failed to sync learning stats:", undefined, error as Error);
       }
     }
 
@@ -342,7 +342,7 @@ export function useDataSync(userId: string) {
       try {
         await uploadLearningSessions(pendingData.sessions);
       } catch (error) {
-        logger.error("Failed to sync learning sessions:", undefined, error);
+        logger.error("Failed to sync learning sessions:", undefined, error as Error);
       }
     }
 
@@ -576,7 +576,7 @@ export function useDataSync(userId: string) {
     data: unknown
   ) => {
     // Implementation depends on conflict type
-    logger.info("Uploading conflict resolution:", conflict, data);
+    logger.info("Uploading conflict resolution", { conflict, data });
   };
 
   const updateLocalData = async <T>(

@@ -1,10 +1,8 @@
 "use client";
 import { logger } from '@/lib/logger';
-
 import { useAuth } from "@/contexts/AuthContext";
 import { useAbility } from "@/core/auth/AbilityProvider";
 import { useEffect, useState } from "react";
-import { logger } from "@/lib/logger";
 
 interface AuthDebugInfo {
   timestamp: string;
@@ -52,7 +50,7 @@ export default function AuthDebugger() {
       },
     };
 
-    logger.info("Auth Debug Info", debug);
+    logger.info("🔍 Auth Debug Info", debug);
     setDebugInfo(debug);
   }, [user, isLoading, isAuthenticated, ability]);
 

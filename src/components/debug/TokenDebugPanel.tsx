@@ -39,7 +39,7 @@ export function TokenDebugPanel() {
         logger.error('Manual refresh failed');
       }
     } catch (error) {
-      logger.error('❌ Manual refresh error:', undefined, error);
+      logger.error('❌ Manual refresh error:', undefined, error as Error);
     }
   };
 

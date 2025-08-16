@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
       token: accessToken,
     });
   } catch (error) {
-    logger.error("Login error", undefined, error);
+    logger.error("Login error", undefined, error as Error);
     return NextResponse.json(
       { message: "Lỗi server. Vui lòng thử lại sau." },
       { status: 500 },
