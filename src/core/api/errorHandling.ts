@@ -1,9 +1,9 @@
 // Enhanced error handling with custom error types
-export class ApiError extends Error {
+export class ApiError<T = unknown> extends Error {
   constructor(
     message: string,
     public status: number,
-    public body?: any,
+    public body?: T,
     public code?: string
   ) {
     super(message);
@@ -18,11 +18,11 @@ export class NetworkError extends Error {
   }
 }
 
-export class ValidationError extends Error {
+export class ValidationError<T = unknown> extends Error {
   constructor(
     message: string,
     public field?: string,
-    public value?: any
+    public value?: T
   ) {
     super(message);
     this.name = 'ValidationError';
@@ -48,7 +48,7 @@ export const retryConfig = {
 // Global error handler
 export const handleApiError = (error: unknown): never => {
   if (error instanceof Response) {
-    throw new ApiError(
+    throw new ApiError<undefined>(
       `HTTP ${error.status}`,
       error.status,
       undefined,
@@ -64,7 +64,7 @@ export const handleApiError = (error: unknown): never => {
     throw error;
   }
   
-  throw new ApiError('Unknown error occurred', 500, error, 'UNKNOWN_ERROR');
+  throw new ApiError<unknown>('Unknown error occurred', 500, error, 'UNKNOWN_ERROR');
 };
 
 // Error boundary helper

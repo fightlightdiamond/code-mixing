@@ -39,7 +39,7 @@ export async function createAuditLog(data: AuditLogData) {
       },
     });
   } catch (error) {
-    logger.error('Failed to create audit log', undefined, error);
+    logger.error('Failed to create audit log', undefined, error as Error);
     // Don't throw - audit logging should not break main functionality
     return null;
   }
@@ -173,7 +173,7 @@ export async function getAuditLogs(
       take: limit,
     });
   } catch (error) {
-    logger.error('Failed to get audit logs', undefined, error);
+    logger.error('Failed to get audit logs', undefined, error as Error);
     return [];
   }
 }
@@ -198,7 +198,7 @@ export async function getUserAuditLogs(
       take: limit,
     });
   } catch (error) {
-    logger.error('Failed to get user audit logs', undefined, error);
+    logger.error('Failed to get user audit logs', undefined, error as Error);
     return [];
   }
 }
@@ -225,7 +225,7 @@ export async function cleanupAuditLogs(
 
     return result.count;
   } catch (error) {
-    logger.error('Failed to cleanup audit logs', undefined, error);
+    logger.error('Failed to cleanup audit logs', undefined, error as Error);
     return 0;
   }
 }

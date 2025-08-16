@@ -102,7 +102,7 @@ LearningPage
 
 - `GET /api/learning/stories` - List stories with filters
 - `GET /api/learning/stories/[id]` - Get story details
-- `GET /api/learning/stories/[id]/audio` - Get story audio
+- `GET /api/learning/stories/[id]/audio` - Redirects to a signed audio URL from storage
 
 ### Vocabulary
 

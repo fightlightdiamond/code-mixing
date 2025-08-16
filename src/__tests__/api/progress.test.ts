@@ -25,7 +25,7 @@ jest.mock("@/core/auth/casl.guard", () => ({
   caslGuardWithPolicies: jest.fn(),
 }));
 
-const mockPrisma = prisma as any;
+const mockPrisma = prisma as jest.Mocked<typeof prisma>;
 const mockGetUser = getUserFromRequest as jest.MockedFunction<
   typeof getUserFromRequest
 >;

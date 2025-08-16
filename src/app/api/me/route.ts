@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
       tenantId: user.tenantId,
     });
   } catch (error) {
-    logger.error("Auth verification error", undefined, error);
+    logger.error("Auth verification error", undefined, error as Error);
     return NextResponse.json(
       { message: "Lỗi server. Vui lòng thử lại sau." },
       { status: 500 }

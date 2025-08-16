@@ -2,6 +2,7 @@
 import { logger } from '@/lib/logger';
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Require } from "@/core/auth/Require";
 import { FadeIn } from "@/components/ui/fade-in";
 import {
@@ -52,6 +53,7 @@ export default function LearningPage() {
 }
 
 function LearningPageContent() {
+  const router = useRouter();
   const [viewMode, setViewMode] = useState<ViewMode>("dashboard");
   const [selectedStory, setSelectedStory] = useState<LearningStory | null>(
     null
@@ -70,6 +72,7 @@ function LearningPageContent() {
   const {
     preferences,
     isLoading: preferencesLoading,
+    isSaving: preferencesSaving,
     savePreferences,
     getStoryFilters,
   } = useUserPreferences();
@@ -151,18 +154,28 @@ function LearningPageContent() {
   const handlePreferencesChange = async (
     newPreferences: typeof preferences
   ) => {
-    await savePreferences(newPreferences);
+    const success = await savePreferences(newPreferences);
+    if (!success) {
+      alert("Không thể lưu cài đặt");
+    }
+    return success;
   };
 
   const handleAcceptDifficultyChange = async (
     newLevel: typeof preferences.difficultyLevel
   ) => {
-    await savePreferences({ ...preferences, difficultyLevel: newLevel });
+    const success = await savePreferences({
+      ...preferences,
+      difficultyLevel: newLevel,
+    });
+    if (!success) {
+      alert("Không thể lưu cài đặt");
+    }
   };
 
   const handleStartVocabularyReview = () => {
-    // TODO: Navigate to vocabulary review page
     logger.info("Starting vocabulary review...");
+    router.push("/learning/vocabulary");
   };
 
   const handleShowDownloadManager = () => {
@@ -570,6 +583,7 @@ function LearningPageContent() {
               preferences={preferences}
               onPreferencesChange={handlePreferencesChange}
               onClose={handleCloseSettings}
+              isSaving={preferencesSaving}
             />
           )}
 

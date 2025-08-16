@@ -12,6 +12,14 @@ import type {
   VocabularyData,
 } from "../types/learning";
 
+interface AccessibilitySettings {
+  highContrast: boolean;
+  reducedMotion: boolean;
+  fontSize: "small" | "medium" | "large" | "extra-large";
+  keyboardNavigation: boolean;
+  screenReaderOptimized: boolean;
+}
+
 // Mock data for testing
 export const mockStory: LearningStory = {
   id: "test-story-1",
@@ -254,6 +262,24 @@ export const mockFetch = (
 };
 
 // Mock audio elements
+
+export interface MockAudio extends Partial<HTMLAudioElement> {
+  play: jest.Mock<Promise<void>, []>;
+  pause: jest.Mock<void, []>;
+  load: jest.Mock<void, []>;
+  addEventListener: jest.Mock;
+  removeEventListener: jest.Mock;
+  currentTime: number;
+  duration: number;
+  paused: boolean;
+  ended: boolean;
+  volume: number;
+  muted: boolean;
+  playbackRate: number;
+  src: string;
+  preload: string;
+}
+
 export const mockAudioElement = (): MockAudio => {
   const mockAudio: MockAudio = {
     play: jest.fn(() => Promise.resolve()),
@@ -272,9 +298,17 @@ export const mockAudioElement = (): MockAudio => {
     preload: "metadata",
   };
 
+
   (global as unknown as { HTMLAudioElement: { new (): HTMLAudioElement } }).HTMLAudioElement = jest.fn(
     () => mockAudio as unknown as HTMLAudioElement
   );
+
+  Object.defineProperty(globalThis, "HTMLAudioElement", {
+    configurable: true,
+    writable: true,
+    value: jest.fn(() => mockAudio),
+  });
+
   return mockAudio;
 };
 
