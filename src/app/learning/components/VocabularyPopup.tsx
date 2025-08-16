@@ -21,45 +21,10 @@ export function VocabularyPopup({
   const [adjustedPosition, setAdjustedPosition] = useState(position);
   const { audioState, playPronunciation, stopPronunciation } =
     useVocabularyAudio();
-  const [currentStatus, setCurrentStatus] = useState<
-    "new" | "reviewing" | "mastered" | null
-  >(vocabularyData?.userProgress?.status ?? null);
-  const [updatingStatus, setUpdatingStatus] = useState<
-    "new" | "reviewing" | "mastered" | null
-  >(null);
-
-  useEffect(() => {
-    setCurrentStatus(vocabularyData?.userProgress?.status ?? null);
-  }, [vocabularyData]);
-
-  const updateVocabularyStatus = async (
-    status: "new" | "reviewing" | "mastered"
-  ) => {
-    setUpdatingStatus(status);
-    try {
-      const response = await fetch("/api/learning/vocabulary/progress", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          vocabularyId: vocabularyData?.id,
-          word,
-          status,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Request failed with status ${response.status}`);
-      }
-
-      setCurrentStatus(status);
-    } catch (error) {
-      logger.error("Failed to update vocabulary status", { word, status }, error);
-    } finally {
-      setUpdatingStatus(null);
-    }
-  };
+  const [status, setStatus] = useState<'reviewing' | 'mastered' | 'new' | null>(
+    null
+  );
+  const [isUpdating, setIsUpdating] = useState(false);
 
   // Adjust popup position to stay within viewport
   useEffect(() => {
@@ -126,6 +91,32 @@ export function VocabularyPopup({
       stopPronunciation();
     } else {
       await playPronunciation(word, vocabularyData?.audioUrl);
+    }
+  };
+
+  const handleVocabularyAction = async (
+    newStatus: 'reviewing' | 'mastered' | 'new'
+  ) => {
+    try {
+      setIsUpdating(true);
+      const res = await fetch('/api/learning/vocabulary/progress', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ word, status: newStatus }),
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to update vocabulary');
+      }
+
+      setStatus(newStatus);
+      logger.info('Updated vocabulary status', { word, status: newStatus });
+    } catch (error) {
+      logger.error('Error updating vocabulary status', error);
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -231,34 +222,22 @@ export function VocabularyPopup({
                 {/* Action buttons */}
                 <div className="flex gap-2 pt-2">
                   <Button
-                    variant="outline"
+                    variant={status === 'reviewing' ? 'default' : 'outline'}
                     size="sm"
                     className="flex-1 text-xs"
-                    onClick={() => {
-                      // TODO: Mark as learning/reviewing
-                      logger.info("Mark as learning", { word });
-                    }}
+                    disabled={isUpdating}
+                    onClick={() => handleVocabularyAction('reviewing')}
                   >
-                    {updatingStatus === "reviewing" ? (
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                    ) : (
-                      "Đang học"
-                    )}
+                    Đang học
                   </Button>
                   <Button
-                    variant="outline"
+                    variant={status === 'mastered' ? 'default' : 'outline'}
                     size="sm"
                     className="flex-1 text-xs"
-                    onClick={() => {
-                      // TODO: Mark as mastered
-                      logger.info("Mark as mastered", { word });
-                    }}
+                    disabled={isUpdating}
+                    onClick={() => handleVocabularyAction('mastered')}
                   >
-                    {updatingStatus === "mastered" ? (
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                    ) : (
-                      "Đã thuộc"
-                    )}
+                    Đã thuộc
                   </Button>
                 </div>
               </div>
@@ -268,20 +247,12 @@ export function VocabularyPopup({
                   Không tìm thấy định nghĩa cho từ "{word}"
                 </p>
                 <Button
-                  variant="outline"
+                  variant={status === 'new' ? 'default' : 'outline'}
                   size="sm"
-                  onClick={() => {
-                    // TODO: Add to vocabulary list for manual definition
-                    logger.info("Add to vocabulary list", { word });
-                  }}
+                  disabled={isUpdating}
+                  onClick={() => handleVocabularyAction('new')}
                 >
-                  {updatingStatus === "new" ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : currentStatus === "new" ? (
-                    "Đã thêm"
-                  ) : (
-                    "Thêm vào danh sách từ vựng"
-                  )}
+                  Thêm vào danh sách từ vựng
                 </Button>
               </div>
             )}
