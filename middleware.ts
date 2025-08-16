@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import jwt from "jsonwebtoken";
+import { verifyJwt } from "@/core/auth/jwt";
+import type { JWTPayload } from "@/types/api";
 
 // Security headers
 const securityHeaders = {
@@ -84,13 +85,8 @@ export function middleware(request: NextRequest) {
     }
 
     try {
-      const secret = process.env.JWT_SECRET;
-      if (!secret) {
-        throw new Error("JWT_SECRET is not configured");
-      }
-
       // Verify token
-      const decoded = jwt.verify(token, secret) as any;
+      const decoded = verifyJwt<JWTPayload>(token);
       const userRole = decoded.role;
       const tenantId = decoded.tenantId;
 
