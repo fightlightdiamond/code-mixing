@@ -12,10 +12,12 @@ import {
 import { useUsersFilters, useUsersFilterActions } from "@/features/users/state";
 import { useState } from "react";
 
+type UserRole = "student" | "coach" | "admin";
+
 interface UserFormData {
   name: string;
   email: string;
-  role: "student" | "coach" | "admin";
+  role: UserRole;
 }
 
 export default function AdminUserList() {
@@ -317,7 +319,7 @@ export default function AdminUserList() {
                 <select
                   value={formData.role}
                   onChange={(e) =>
-                    setFormData({ ...formData, role: e.target.value as any })
+                    setFormData({ ...formData, role: e.target.value as UserRole })
                   }
                   style={{
                     width: "100%",
