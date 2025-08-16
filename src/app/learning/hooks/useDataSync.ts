@@ -30,14 +30,14 @@ interface SyncConflict<T> {
   resolution?: "local" | "server" | "merge";
 }
 
-type AnySyncConflict =
+type Conflict =
   | SyncConflict<LearningProgress>
   | SyncConflict<VocabularyProgress>
   | SyncConflict<unknown>;
 
 interface SyncResult {
   success: boolean;
-  conflicts: AnySyncConflict[];
+  conflicts: Conflict[];
   syncedItems: {
     learningProgress: boolean;
     vocabularyProgress: number;
@@ -45,6 +45,14 @@ interface SyncResult {
     learningStats: boolean;
   };
   error?: string;
+}
+
+interface PendingSyncData {
+  learningProgress: LearningProgress | null;
+  vocabularyProgress: VocabularyProgress[];
+  exerciseResults: ExerciseResult[];
+  learningStats: LearningStats | null;
+  sessions: unknown[];
 }
 
 const SYNC_INTERVAL = 5 * 60 * 1000; // 5 minutes
@@ -71,7 +79,7 @@ export function useDataSync(userId: string) {
     nextAutoSync: null,
   });
 
-  const [conflicts, setConflicts] = useState<AnySyncConflict[]>([]);
+  const [conflicts, setConflicts] = useState<Conflict[]>([]);
   const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const retryCountRef = useRef(0);
 
@@ -152,7 +160,7 @@ export function useDataSync(userId: string) {
       }));
 
       try {
-        const result = await performSync(pendingData);
+        const result = await performSync(pendingData as PendingSyncData);
 
         if (result.success && result.conflicts.length === 0) {
           markAsSynced();
@@ -214,16 +222,8 @@ export function useDataSync(userId: string) {
   );
 
   // Perform the actual sync operations
-  interface PendingSyncData {
-    learningProgress: LearningProgress | null;
-    vocabularyProgress: VocabularyProgress[];
-    exerciseResults: ExerciseResult[];
-    learningStats: LearningStats | null;
-    sessions: unknown[];
-  }
-
   const performSync = async (
-    pendingData: PendingSyncData | null
+    pendingData: PendingSyncData
   ): Promise<SyncResult> => {
     const result: SyncResult = {
       success: true,
@@ -571,15 +571,15 @@ export function useDataSync(userId: string) {
     };
   };
 
-  const uploadConflictResolution = async (
-    conflict: AnySyncConflict,
-    data: unknown
+  const uploadConflictResolution = async <T>(
+    conflict: SyncConflict<T>,
+    data: T
   ) => {
     // Implementation depends on conflict type
     logger.info("Uploading conflict resolution", { conflict, data });
   };
 
-  const updateLocalData = async <T>(
+  const updateLocalData = async <T extends Record<string, unknown>>(
     conflict: SyncConflict<T>,
     data: T
   ) => {
@@ -587,49 +587,46 @@ export function useDataSync(userId: string) {
     switch (conflict.type) {
       case "learning_progress":
         updateLearningProgress({
-          [conflict.field]: (data as LearningProgress)[
-            conflict.field as keyof LearningProgress
-          ],
+          [conflict.field]: data[conflict.field as keyof T],
         } as Partial<LearningProgress>);
         break;
-      case "vocabulary_progress": {
-        const vocab = data as VocabularyProgress;
-        updateVocabularyProgress(vocab.word, {
-          [conflict.field]: vocab[
-            conflict.field as keyof VocabularyProgress
-          ] as unknown,
-        } as Partial<VocabularyProgress>);
+      case "vocabulary_progress":
+        updateVocabularyProgress(
+          conflict.field,
+          data as unknown as VocabularyProgress
+        );
         break;
-      }
       case "learning_stats":
         updateLearningStats({
-          [conflict.field]: (data as LearningStats)[
-            conflict.field as keyof LearningStats
-          ],
+          [conflict.field]: data[conflict.field as keyof T],
         } as Partial<LearningStats>);
         break;
     }
   };
 
-  const mergeConflictData = <T>(conflict: SyncConflict<T>): T => {
+  const mergeConflictData = <T extends Record<string, unknown>>(
+    conflict: SyncConflict<T>
+  ): T => {
     // Intelligent merging based on conflict type and field
     switch (conflict.type) {
-      case "learning_progress": {
-        const field = conflict.field as keyof LearningProgress;
-        if (field === "storiesRead" || field === "vocabularyLearned") {
-          const localValue = (conflict.localData as LearningProgress)[
-            field
-          ] as number;
-          const serverValue = (conflict.serverData as LearningProgress)[
-            field
-          ] as number;
+      case "learning_progress":
+        if (
+          conflict.field === "storiesRead" ||
+          conflict.field === "vocabularyLearned"
+        ) {
+          const localValue = conflict.localData[
+            conflict.field
+          ] as unknown as number;
+          const serverValue = conflict.serverData[
+            conflict.field
+          ] as unknown as number;
+
           return {
-            ...(conflict.localData as LearningProgress),
-            [field]: Math.max(localValue, serverValue),
+            ...conflict.localData,
+            [conflict.field]: Math.max(localValue, serverValue),
           } as T;
         }
         return conflict.localData;
-      }
       default:
         return conflict.localData;
     }
