@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/core/prisma";
 import logger from "@/lib/logger";
+import { z } from "zod";
 
 // GET /api/quizzes/[id] - Lấy chi tiết quiz
 export async function GET(
@@ -46,7 +47,7 @@ export async function GET(
 
     return NextResponse.json(quiz);
   } catch (error) {
-    logger.error("Error fetching quiz", undefined, error);
+    logger.error("Error fetching quiz", undefined, error as Error);
     return NextResponse.json(
       { error: "Failed to fetch quiz" },
       { status: 500 }
@@ -67,7 +68,20 @@ export async function PUT(
       return NextResponse.json({ error: "Invalid quiz ID" }, { status: 400 });
     }
 
-    const { title, description, lessonId } = body;
+    const questionSchema = z.object({
+      id: z.string().optional(),
+      question: z.string(),
+    });
+
+    const updateQuizSchema = z.object({
+      title: z.string().optional(),
+      description: z.string().optional(),
+      lessonId: z.union([z.string(), z.number()]).optional(),
+      questions: z.array(questionSchema).optional(),
+    });
+
+    const { title, description, lessonId, questions } =
+      updateQuizSchema.parse(body);
 
     // Check if quiz exists
     const existingQuiz = await prisma.quiz.findUnique({
@@ -104,7 +118,26 @@ export async function PUT(
         },
       });
 
-      // TODO: Align question updates to Prisma schema if needed
+      if (questions) {
+        const questionIds = questions
+          .filter((q) => q.id)
+          .map((q) => q.id as string);
+
+        await tx.question.deleteMany({
+          where: {
+            quizId,
+            ...(questionIds.length > 0 && { id: { notIn: questionIds } }),
+          },
+        });
+
+        for (const q of questions) {
+          await tx.question.upsert({
+            where: { id: q.id ?? "" },
+            update: { question: q.question },
+            create: { quizId, question: q.question },
+          });
+        }
+      }
 
       return tx.quiz.findUnique({
         where: { id: quizId },
@@ -134,7 +167,7 @@ export async function PUT(
 
     return NextResponse.json(quiz);
   } catch (error) {
-    logger.error("Error updating quiz", undefined, error);
+    logger.error("Error updating quiz", undefined, error as Error);
     return NextResponse.json(
       { error: "Failed to update quiz" },
       { status: 500 }
@@ -170,7 +203,7 @@ export async function DELETE(
 
     return NextResponse.json({ message: "Quiz deleted successfully" });
   } catch (error) {
-    logger.error("Error deleting quiz", undefined, error);
+    logger.error("Error deleting quiz", undefined, error as Error);
     return NextResponse.json(
       { error: "Failed to delete quiz" },
       { status: 500 }
