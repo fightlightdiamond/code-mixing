@@ -111,11 +111,6 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "ids is required" }, { status: 400 });
     }
 
-    const ids: string[] = body?.ids ?? [];
-    if (!Array.isArray(ids) || ids.length === 0) {
-      return NextResponse.json({ error: "ids is required" }, { status: 400 });
-    }
-
     const MAX_BULK_DELETE = 100;
     if (ids.length > MAX_BULK_DELETE) {
       return NextResponse.json(
