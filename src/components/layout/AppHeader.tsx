@@ -1,18 +1,18 @@
 "use client";
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
 
 const isActive = (path: string, currentPath: string) => {
-  if (path === '/') return currentPath === path;
+  if (path === "/") return currentPath === path;
   return currentPath.startsWith(path);
 };
 
 export function AppHeader() {
   const { user, logout } = useAuth();
   const pathname = usePathname();
-  const isAdminPath = pathname.startsWith('/admin');
+  const isAdminPath = pathname.startsWith("/admin");
 
   return (
     <header className="bg-white shadow-sm sticky top-0 z-10">
@@ -20,36 +20,49 @@ export function AppHeader() {
         <div className="flex justify-between h-16">
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
-              <Link 
-                href="/" 
-                className={`text-xl font-bold ${isAdminPath ? 'text-indigo-700' : 'text-gray-900'}`}
+              <Link
+                href="/"
+                className={`text-xl font-bold ${isAdminPath ? "text-indigo-700" : "text-gray-900"}`}
               >
-                {isAdminPath ? '🎓 Edtech Admin' : 'Edtech'}
+                {isAdminPath ? "🎓 Edtech Admin" : "Edtech"}
               </Link>
             </div>
-            
+
             {/* Main Navigation */}
             <nav className="hidden sm:ml-6 sm:flex sm:space-x-8">
-              <Link 
-                href="/stories" 
+              {user && (
+                <Link
+                  href="/learning"
+                  className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                    isActive("/learning", pathname)
+                      ? "border-indigo-500 text-gray-900"
+                      : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                  }`}
+                >
+                  Học tập
+                </Link>
+              )}
+
+              <Link
+                href="/stories"
                 className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
-                  isActive('/stories', pathname)
-                    ? 'border-indigo-500 text-gray-900'
-                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                  isActive("/stories", pathname)
+                    ? "border-indigo-500 text-gray-900"
+                    : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
                 }`}
               >
                 Stories
               </Link>
 
               {/* Admin Navigation */}
-              {user?.role === 'admin' && (
+              {user?.role === "admin" && (
                 <>
                   <Link
                     href="/admin/dashboard"
                     className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
-                      isActive('/admin/dashboard', pathname)
-                        ? 'border-indigo-500 text-gray-900'
-                        : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                      isActive("/admin/dashboard", pathname)
+                        ? "border-indigo-500 text-gray-900"
+                        : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
                     }`}
                   >
                     Dashboard
@@ -57,9 +70,9 @@ export function AppHeader() {
                   <Link
                     href="/admin/stories"
                     className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
-                      isActive('/admin/stories', pathname)
-                        ? 'border-indigo-500 text-gray-900'
-                        : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                      isActive("/admin/stories", pathname)
+                        ? "border-indigo-500 text-gray-900"
+                        : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
                     }`}
                   >
                     Manage Stories
@@ -67,9 +80,9 @@ export function AppHeader() {
                   <Link
                     href="/admin/iam/roles"
                     className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
-                      isActive('/admin/iam', pathname)
-                        ? 'border-indigo-500 text-gray-900'
-                        : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                      isActive("/admin/iam", pathname)
+                        ? "border-indigo-500 text-gray-900"
+                        : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
                     }`}
                   >
                     IAM
@@ -78,15 +91,16 @@ export function AppHeader() {
               )}
             </nav>
           </div>
-          
+
           {/* User Menu */}
           <div className="hidden sm:ml-6 sm:flex sm:items-center">
             {user ? (
               <div className="flex items-center space-x-4">
                 <span className="text-sm text-gray-700">
-                  Welcome, <span className="font-medium">{user.name || user.email}</span>
+                  Welcome,{" "}
+                  <span className="font-medium">{user.name || user.email}</span>
                 </span>
-                {user.role === 'admin' && !isAdminPath && (
+                {user.role === "admin" && !isAdminPath && (
                   <Link
                     href="/admin/dashboard"
                     className="text-indigo-600 hover:text-indigo-800 px-3 py-2 rounded-md text-sm font-medium"

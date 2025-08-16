@@ -1,0 +1,228 @@
+/* High Contrast Mode Styles */
+
+.high-contrast {
+  /* Override default colors with high contrast alternatives */
+  --bg-primary: #000000;
+  --bg-secondary: #ffffff;
+  --text-primary: #ffffff;
+  --text-secondary: #000000;
+  --border-primary: #ffffff;
+  --border-secondary: #000000;
+  --accent-primary: #ffff00;
+  --accent-secondary: #00ffff;
+  --focus-color: #ff0000;
+  --error-color: #ff0000;
+  --success-color: #00ff00;
+  --warning-color: #ffff00;
+}
+
+/* High contrast button styles */
+.high-contrast button {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-secondary) !important;
+  border: 2px solid var(--border-secondary) !important;
+  font-weight: bold !important;
+}
+
+.high-contrast button:hover,
+.high-contrast button:focus {
+  background-color: var(--accent-primary) !important;
+  color: var(--text-secondary) !important;
+  border-color: var(--border-secondary) !important;
+}
+
+.high-contrast button:disabled {
+  background-color: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-primary) !important;
+  opacity: 0.6 !important;
+}
+
+/* High contrast card styles */
+.high-contrast .card,
+.high-contrast [class*="card"] {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-secondary) !important;
+  border: 2px solid var(--border-secondary) !important;
+}
+
+/* High contrast input styles */
+.high-contrast input,
+.high-contrast textarea,
+.high-contrast select {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-secondary) !important;
+  border: 2px solid var(--border-secondary) !important;
+}
+
+.high-contrast input:focus,
+.high-contrast textarea:focus,
+.high-contrast select:focus {
+  outline: 3px solid var(--focus-color) !important;
+  outline-offset: 2px !important;
+}
+
+/* High contrast vocabulary word styles */
+.high-contrast .vocabulary-word {
+  background-color: var(--accent-primary) !important;
+  color: var(--text-secondary) !important;
+  border: 2px solid var(--border-secondary) !important;
+  font-weight: bold !important;
+}
+
+.high-contrast .vocabulary-word:hover,
+.high-contrast .vocabulary-word:focus {
+  background-color: var(--accent-secondary) !important;
+  outline: 3px solid var(--focus-color) !important;
+  outline-offset: 2px !important;
+}
+
+/* High contrast progress indicators */
+.high-contrast .progress-bar {
+  background-color: var(--bg-primary) !important;
+  border: 2px solid var(--border-primary) !important;
+}
+
+.high-contrast .progress-fill {
+  background-color: var(--success-color) !important;
+}
+
+/* High contrast badge styles */
+.high-contrast .badge {
+  background-color: var(--accent-primary) !important;
+  color: var(--text-secondary) !important;
+  border: 1px solid var(--border-secondary) !important;
+  font-weight: bold !important;
+}
+
+/* High contrast link styles */
+.high-contrast a {
+  color: var(--accent-secondary) !important;
+  text-decoration: underline !important;
+  font-weight: bold !important;
+}
+
+.high-contrast a:hover,
+.high-contrast a:focus {
+  color: var(--accent-primary) !important;
+  outline: 3px solid var(--focus-color) !important;
+  outline-offset: 2px !important;
+}
+
+/* High contrast focus indicators */
+.high-contrast *:focus {
+  outline: 3px solid var(--focus-color) !important;
+  outline-offset: 2px !important;
+}
+
+/* High contrast text selection */
+.high-contrast ::selection {
+  background-color: var(--accent-primary) !important;
+  color: var(--text-secondary) !important;
+}
+
+/* High contrast audio player styles */
+.high-contrast .audio-player {
+  background-color: var(--bg-secondary) !important;
+  border: 2px solid var(--border-secondary) !important;
+}
+
+.high-contrast .audio-progress {
+  background-color: var(--bg-primary) !important;
+  border: 1px solid var(--border-primary) !important;
+}
+
+.high-contrast .audio-progress-fill {
+  background-color: var(--accent-primary) !important;
+}
+
+/* High contrast exercise styles */
+.high-contrast .exercise-correct {
+  background-color: var(--success-color) !important;
+  color: var(--text-secondary) !important;
+  border: 2px solid var(--border-secondary) !important;
+}
+
+.high-contrast .exercise-incorrect {
+  background-color: var(--error-color) !important;
+  color: var(--bg-secondary) !important;
+  border: 2px solid var(--border-secondary) !important;
+}
+
+/* High contrast modal/popup styles */
+.high-contrast .modal,
+.high-contrast .popup {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-secondary) !important;
+  border: 3px solid var(--border-secondary) !important;
+}
+
+.high-contrast .modal-overlay {
+  background-color: rgba(0, 0, 0, 0.8) !important;
+}
+
+/* Remove subtle shadows and gradients */
+.high-contrast * {
+  box-shadow: none !important;
+  text-shadow: none !important;
+  background-image: none !important;
+}
+
+/* Ensure sufficient spacing for touch targets */
+.high-contrast button,
+.high-contrast input,
+.high-contrast .clickable {
+  min-height: 44px !important;
+  min-width: 44px !important;
+  padding: 8px 12px !important;
+}
+
+/* High contrast table styles */
+.high-contrast table {
+  border-collapse: collapse !important;
+}
+
+.high-contrast th,
+.high-contrast td {
+  border: 2px solid var(--border-secondary) !important;
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-secondary) !important;
+  padding: 8px !important;
+}
+
+.high-contrast th {
+  background-color: var(--accent-primary) !important;
+  font-weight: bold !important;
+}
+
+/* Skip links */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 6px;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  padding: 8px;
+  text-decoration: none;
+  border: 2px solid var(--border-secondary);
+  border-radius: 4px;
+  font-weight: bold;
+  z-index: 1000;
+}
+
+.skip-link:focus {
+  top: 6px;
+  outline: 3px solid var(--focus-color);
+  outline-offset: 2px;
+}
+
+.high-contrast .skip-link {
+  background: var(--bg-secondary) !important;
+  color: var(--text-secondary) !important;
+  border: 2px solid var(--border-secondary) !important;
+}
+
+.high-contrast .skip-link:focus {
+  outline: 3px solid var(--focus-color) !important;
+  outline-offset: 2px !important;
+}

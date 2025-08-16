@@ -13,6 +13,21 @@ export default function DashboardPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <FadeIn className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-xl font-semibold mb-4">Học tập tương tác</h2>
+            <RoleBasedLink
+              href="/learning"
+              action="read"
+              subject="Story"
+              className="text-blue-600 hover:underline block mb-2"
+            >
+              Học qua truyện chêm
+            </RoleBasedLink>
+            <p className="text-sm text-gray-600">
+              Học tiếng Anh tự nhiên thông qua câu chuyện có chêm từ tiếng Anh
+            </p>
+          </FadeIn>
+
+          <FadeIn className="bg-white rounded-lg shadow p-6" delay={0.05}>
             <h2 className="text-xl font-semibold mb-4">Lessons</h2>
             <RoleBasedLink
               href="/lessons"
@@ -45,7 +60,7 @@ export default function DashboardPage() {
             </RoleBasedButton>
           </FadeIn>
 
-          <FadeIn className="bg-white rounded-lg shadow p-6" delay={0.2}>
+          <FadeIn className="bg-white rounded-lg shadow p-6" delay={0.15}>
             <h2 className="text-xl font-semibold mb-4">Admin</h2>
             <RoleBasedLink
               href="/admin/stories"

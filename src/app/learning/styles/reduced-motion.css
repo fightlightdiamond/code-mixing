@@ -1,0 +1,49 @@
+/* Reduced Motion Styles */
+
+.reduce-motion,
+.reduce-motion *,
+.reduce-motion *:before,
+.reduce-motion *:after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* Respect user's motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *:before,
+  *:after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Keep essential animations for accessibility */
+.reduce-motion .loading-spinner,
+.reduce-motion .progress-indicator {
+  animation: none !important;
+}
+
+.reduce-motion .loading-spinner::after {
+  content: "Đang tải...";
+  display: block;
+  text-align: center;
+  font-size: 14px;
+  color: #666;
+}
+
+/* Focus indicators should remain visible */
+.reduce-motion *:focus {
+  outline: 3px solid #0066cc !important;
+  outline-offset: 2px !important;
+  transition: none !important;
+}
+
+/* Hover effects can be instant */
+.reduce-motion *:hover {
+  transition: none !important;
+}

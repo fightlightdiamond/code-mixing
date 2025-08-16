@@ -68,8 +68,11 @@ export default function HomePage() {
                       </Button>
                     </Link>
                   )}
+                  <Link href="/learning">
+                    <Button className="mr-2">Học tập</Button>
+                  </Link>
                   <Link href="/dashboard">
-                    <Button>Vào học</Button>
+                    <Button variant="outline">Dashboard</Button>
                   </Link>
                 </div>
               ) : (
@@ -107,8 +110,8 @@ export default function HomePage() {
           <FadeIn delay={0.1}>
             <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
               Phương pháp "truyện chêm" độc đáo giúp bạn học tiếng Anh giao tiếp
-              IT một cách tự nhiên và hiệu quả. Tạo phản xạ ngôn ngữ thông qua câu
-              chuyện thực tế.
+              IT một cách tự nhiên và hiệu quả. Tạo phản xạ ngôn ngữ thông qua
+              câu chuyện thực tế.
             </p>
           </FadeIn>
 
@@ -116,10 +119,7 @@ export default function HomePage() {
             {!user && (
               <>
                 <Link href="/register">
-                  <FadeIn
-                    whileHover={{ scale: 1.05 }}
-                    className="inline-block"
-                  >
+                  <FadeIn whileHover={{ scale: 1.05 }} className="inline-block">
                     <Button
                       size="lg"
                       className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
@@ -143,16 +143,29 @@ export default function HomePage() {
             )}
 
             {user && (
-              <Link href="/dashboard">
-                <FadeIn whileHover={{ scale: 1.05 }} className="inline-block">
-                  <Button
-                    size="lg"
-                    className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Link href="/learning">
+                  <FadeIn whileHover={{ scale: 1.05 }} className="inline-block">
+                    <Button
+                      size="lg"
+                      className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                    >
+                      Học qua truyện chêm
+                    </Button>
+                  </FadeIn>
+                </Link>
+                <Link href="/dashboard">
+                  <FadeIn
+                    delay={0.1}
+                    whileHover={{ scale: 1.05 }}
+                    className="inline-block"
                   >
-                    Tiếp tục học tập
-                  </Button>
-                </FadeIn>
-              </Link>
+                    <Button size="lg" variant="outline">
+                      Dashboard
+                    </Button>
+                  </FadeIn>
+                </Link>
+              </div>
             )}
           </div>
         </div>
@@ -212,7 +225,10 @@ export default function HomePage() {
               <CardContent>
                 {!user ? (
                   <Link href="/register">
-                    <FadeIn whileHover={{ scale: 1.05 }} className="inline-block">
+                    <FadeIn
+                      whileHover={{ scale: 1.05 }}
+                      className="inline-block"
+                    >
                       <Button
                         size="lg"
                         variant="secondary"
@@ -223,14 +239,17 @@ export default function HomePage() {
                     </FadeIn>
                   </Link>
                 ) : (
-                  <Link href="/dashboard">
-                    <FadeIn whileHover={{ scale: 1.05 }} className="inline-block">
+                  <Link href="/learning">
+                    <FadeIn
+                      whileHover={{ scale: 1.05 }}
+                      className="inline-block"
+                    >
                       <Button
                         size="lg"
                         variant="secondary"
                         className="bg-white text-blue-600 hover:bg-gray-100"
                       >
-                        Vào học ngay
+                        Học qua truyện chêm
                       </Button>
                     </FadeIn>
                   </Link>

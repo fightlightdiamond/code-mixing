@@ -30,7 +30,13 @@ class AuthErrorBoundary extends Component<
   render() {
     if (this.state.hasError) {
       return (
-        <div style={{ padding: "20px", background: "#fee", border: "1px solid #f00" }}>
+        <div
+          style={{
+            padding: "20px",
+            background: "#fee",
+            border: "1px solid #f00",
+          }}
+        >
           <h3>Auth Error</h3>
           <p>Error: {this.state.error?.message}</p>
           <details>
@@ -46,44 +52,49 @@ class AuthErrorBoundary extends Component<
   }
 }
 
-export default function AuthContextBridge({ children }: AuthContextBridgeProps) {
+export default function AuthContextBridge({
+  children,
+}: AuthContextBridgeProps) {
   // React Hooks must be called at top level, not in try-catch
   const { user, isLoading, isAuthenticated } = useAuth();
 
   // Add useEffect to track auth state changes
   React.useEffect(() => {
-    console.log("🔄 AuthContextBridge: Auth state changed", { 
-      hasUser: !!user, 
+    console.log("🔄 AuthContextBridge: Auth state changed", {
+      hasUser: !!user,
       userRole: user?.role,
       isLoading,
       isAuthenticated,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }, [user, isLoading, isAuthenticated]);
 
   try {
-    console.log("🔗 AuthContextBridge Debug:", { 
-      hasUser: !!user, 
+    console.log("🔗 AuthContextBridge Debug:", {
+      hasUser: !!user,
       userRole: user?.role,
       isLoading,
       isAuthenticated,
-      userObject: user
+      userObject: user,
     });
 
-    // Nếu đang loading, render children without AbilityProvider
-    if (isLoading) {
-      console.log("⏳ AuthContextBridge: Loading, rendering without AbilityProvider");
-      return <AuthErrorBoundary>{children}</AuthErrorBoundary>;
-    }
+    // Always provide AbilityProvider, even during loading
+    // This prevents the "useAbility must be used within an AbilityProvider" error
 
     // Transform user data để match AbilityProvider interface
-    const abilityUser = user ? {
-      id: user.id,
-      roles: user.role ? [user.role] : [],
-      tenantId: user.tenantId
-    } : null;
+    const abilityUser = user
+      ? {
+          id: user.id,
+          roles: user.role ? [user.role] : [],
+          tenantId: user.tenantId,
+        }
+      : null;
 
-    console.log("🎯 AuthContextBridge: Rendering with AbilityProvider", { abilityUser });
+    console.log("🎯 AuthContextBridge: Rendering with AbilityProvider", {
+      abilityUser,
+      isLoading,
+      hasUser: !!user,
+    });
 
     return (
       <AuthErrorBoundary>
@@ -95,7 +106,13 @@ export default function AuthContextBridge({ children }: AuthContextBridgeProps) 
   } catch (error) {
     console.error("🚨 AuthContextBridge Render Error:", error);
     return (
-      <div style={{ padding: "20px", background: "#fee", border: "1px solid #f00" }}>
+      <div
+        style={{
+          padding: "20px",
+          background: "#fee",
+          border: "1px solid #f00",
+        }}
+      >
         <h3>AuthContextBridge Render Error</h3>
         <p>Error: {error instanceof Error ? error.message : String(error)}</p>
         {children}
