@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
-import jwt from "jsonwebtoken";
 import type { JWTPayload } from "@/types/api";
+import { verifyJwt } from "@/core/auth/jwt";
 
 export interface UserContext {
   sub: string;
@@ -36,18 +36,7 @@ export async function getUserFromRequest(
     }
     if (!token) return null;
 
-    const secret = process.env.JWT_SECRET;
-    if (!secret) {
-      if (process.env.NODE_ENV !== "production") {
-        console.warn("getUserFromRequest: JWT_SECRET is not set; failing closed.");
-      }
-      return null;
-    }
-
-    const decoded = jwt.verify(token, secret, {
-      algorithms: ["HS256"],
-      ignoreExpiration: false,
-    }) as JWTPayload;
+    const decoded = verifyJwt<JWTPayload>(token);
     return {
       sub: decoded.userId,
       tenantId: decoded.tenantId,

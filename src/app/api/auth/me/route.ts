@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import jwt from 'jsonwebtoken';
 import { prisma } from "@/core/prisma";
 import { log } from "@/lib/logger";
 import type { JWTPayload, ApiResponse, User } from "@/types/api";
 import { getBearerToken } from "@/core/auth/getUser";
+import { verifyJwt } from "@/core/auth/jwt";
 
 export async function GET(request: NextRequest) {
   const requestStartTime = Date.now();
@@ -23,14 +23,9 @@ export async function GET(request: NextRequest) {
     // Verify token with proper typing
     let decoded: JWTPayload;
     const authStartTime = Date.now();
-    
-    const secret = process.env.JWT_SECRET;
-    if (!secret) {
-      throw new Error('JWT_SECRET is not configured');
-    }
 
     try {
-      decoded = jwt.verify(token, secret) as JWTPayload;
+      decoded = verifyJwt<JWTPayload>(token);
       log.performance('JWT verification completed', Date.now() - authStartTime, {
         endpoint: '/api/auth/me',
         userId: decoded.userId
