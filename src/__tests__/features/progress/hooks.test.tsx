@@ -10,6 +10,7 @@ import {
   useUpsertProgress,
   useUpdateProgress,
   useDeleteProgress,
+  type UserProgress as Progress,
 } from "@/features/progress/hooks";
 import type { UserProgress as Progress } from "@/features/progress/hooks";
 import { api } from "@/core/api/api";
@@ -62,7 +63,7 @@ describe("Progress Hooks", () => {
 
     expect(mockApi).toHaveBeenCalledWith(
       "/api/progress?lessonId=l1",
-      expect.any(Object)
+      expect.any(Object),
     );
     expect(result.current.data).toEqual(mockProgress);
   });
@@ -74,7 +75,7 @@ describe("Progress Hooks", () => {
     const wrapper = createWrapper();
     const { result } = renderHook(
       () => useProgressList({ status: "completed" }),
-      { wrapper }
+      { wrapper },
     );
 
     await waitFor(() => {
@@ -83,7 +84,7 @@ describe("Progress Hooks", () => {
 
     expect(mockApi).toHaveBeenCalledWith(
       "/api/progress?status=completed",
-      expect.any(Object)
+      expect.any(Object),
     );
     expect(result.current.data).toEqual(mockList);
   });
@@ -160,7 +161,8 @@ describe("Progress Hooks", () => {
       expect(result.current.isSuccess).toBe(true);
     });
 
-    expect(mockApi).toHaveBeenCalledWith("/api/progress/p1", { method: "DELETE" });
+    expect(mockApi).toHaveBeenCalledWith("/api/progress/p1", {
+      method: "DELETE",
+    });
   });
 });
-
