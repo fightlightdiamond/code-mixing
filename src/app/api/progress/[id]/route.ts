@@ -33,7 +33,7 @@ export async function GET(
 
     return NextResponse.json(progress);
   } catch (err) {
-    logger.error("Error fetching progress", undefined, err);
+    logger.error("Error fetching progress", undefined, err as Error);
     return NextResponse.json({ error: "Failed to fetch progress" }, { status: 500 });
   }
 }
@@ -80,7 +80,7 @@ export async function PUT(
 
     return NextResponse.json(progress);
   } catch (err) {
-    logger.error("Error updating progress", undefined, err);
+    logger.error("Error updating progress", undefined, err as Error);
     return NextResponse.json({ error: "Failed to update progress" }, { status: 500 });
   }
 }
@@ -114,7 +114,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (err) {
-    logger.error("Error deleting progress", undefined, err);
+    logger.error("Error deleting progress", undefined, err as Error);
     return NextResponse.json({ error: "Failed to delete progress" }, { status: 500 });
   }
 }

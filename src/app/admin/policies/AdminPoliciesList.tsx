@@ -11,6 +11,8 @@ import {
   type UpsertPolicyInput,
 } from "@/features/policies/hooks";
 
+type PolicyEffect = "allow" | "deny";
+
 export default function AdminPoliciesList() {
   const [resourceFilter, setResourceFilter] = useState("");
   const [tenantFilter, setTenantFilter] = useState<string | null>(null);
@@ -173,7 +175,7 @@ function PolicyModal({
   const [form, setForm] = useState<UpsertPolicyInput>({
     resource: initial?.resource || "",
     action: initial?.action || null,
-    effect: (initial?.effect as "allow" | "deny") || "deny",
+    effect: (initial?.effect as PolicyEffect) || "deny",
     conditions: (initial?.conditions as Record<string, unknown>) || null,
     priority: initial?.priority ?? 100,
     tenantId: (initial?.tenantId as string | null) ?? null,
@@ -206,7 +208,13 @@ function PolicyModal({
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Effect *</label>
-                <select className="w-full px-3 py-2 border rounded-md" value={form.effect} onChange={(e) => setForm({ ...form, effect: e.target.value as any })}>
+                <select
+                  className="w-full px-3 py-2 border rounded-md"
+                  value={form.effect}
+                  onChange={(e) =>
+                    setForm({ ...form, effect: e.target.value as PolicyEffect })
+                  }
+                >
                   <option value="allow">allow</option>
                   <option value="deny">deny</option>
                 </select>

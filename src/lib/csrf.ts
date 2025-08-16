@@ -9,6 +9,9 @@ const CSRF_SECRET = process.env.CSRF_SECRET;
 if (!CSRF_SECRET) {
   throw new Error('CSRF_SECRET environment variable is required');
 }
+
+const CSRF_SECRET_VALUE: string = CSRF_SECRET;
+
 const CSRF_TOKEN_HEADER = 'x-csrf-token';
 const CSRF_TOKEN_COOKIE = 'csrf-token';
 
@@ -24,7 +27,7 @@ export function generateCSRFToken(): string {
  */
 export function createCSRFHash(token: string): string {
   return crypto
-    .createHmac('sha256', CSRF_SECRET)
+    .createHmac('sha256', CSRF_SECRET_VALUE)
     .update(token)
     .digest('hex');
 }

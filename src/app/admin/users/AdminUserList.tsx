@@ -12,10 +12,12 @@ import {
 import { useUsersFilters, useUsersFilterActions } from "@/features/users/state";
 import { useState } from "react";
 
+type UserRole = "student" | "coach" | "admin";
+
 interface UserFormData {
   name: string;
   email: string;
-  role: "student" | "coach" | "admin";
+  role: UserRole;
 }
 
 export default function AdminUserList() {
@@ -47,7 +49,7 @@ export default function AdminUserList() {
       setShowCreateForm(false);
       setFormData({ name: "", email: "", role: "student" });
     } catch (error) {
-      logger.error("Error creating user:", error);
+      logger.error("Error creating user:", undefined, error as Error);
     }
   };
 
@@ -63,7 +65,7 @@ export default function AdminUserList() {
       setEditingUser(null);
       setFormData({ name: "", email: "", role: "student" });
     } catch (error) {
-      logger.error("Error updating user:", error);
+      logger.error("Error updating user:", undefined, error as Error);
     }
   };
 
@@ -74,7 +76,7 @@ export default function AdminUserList() {
       try {
         await deleteUser.mutateAsync(user.id);
       } catch (error) {
-        logger.error("Error deleting user:", error);
+        logger.error("Error deleting user:", undefined, error as Error);
       }
     }
   };
@@ -317,7 +319,10 @@ export default function AdminUserList() {
                 <select
                   value={formData.role}
                   onChange={(e) =>
-                    setFormData({ ...formData, role: e.target.value as any })
+                    setFormData({
+                      ...formData,
+                      role: e.target.value as UserRole,
+                    })
                   }
                   style={{
                     width: "100%",
