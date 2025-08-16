@@ -4,6 +4,7 @@ import { prisma } from "@/core/prisma";
 import { getUserFromRequest } from "@/core/auth/getUser";
 import logger from "@/lib/logger";
 import { z } from "zod";
+import type { User } from "@/types/api";
 
 // Validation schemas
 const progressUpdateSchema = z.object({
@@ -27,9 +28,10 @@ const learningSessionSchema = z.object({
 
 // POST /api/learning/progress/update - Update user learning progress
 export async function POST(request: NextRequest) {
+  let user: User | null = null;
   try {
     // Get user from request
-    const user = await getUserFromRequest(request);
+    user = await getUserFromRequest(request);
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

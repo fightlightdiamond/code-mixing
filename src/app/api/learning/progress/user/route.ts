@@ -3,12 +3,14 @@ import { caslGuardWithPolicies } from "@/core/auth/casl.guard";
 import { prisma } from "@/core/prisma";
 import { getUserFromRequest } from "@/core/auth/getUser";
 import logger from "@/lib/logger";
+import type { User } from "@/types/api";
 
 // GET /api/learning/progress/user - Get comprehensive user learning progress
 export async function GET(request: NextRequest) {
+  let user: User | null = null;
   try {
     // Get user from request
-    const user = await getUserFromRequest(request);
+    user = await getUserFromRequest(request);
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
