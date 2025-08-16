@@ -169,13 +169,13 @@ function generateDynamicExercises(story: StoryWithChunks): Exercise[] {
 
   if (chemChunks.length > 0) {
     // Generate fill-in-the-blank exercises from embedded words
-    const fillBlankExercise = {
+    const fillBlankExercise: Exercise = {
       id: `dynamic-fill-blank-${story.id}`,
       type: "fill_blank",
       difficulty: "medium",
       questions: chemChunks
         .slice(0, 5)
-        .map((chunk: StoryChunk, index: number) => {
+        .map((chunk: StoryChunk, index: number): ExerciseQuestion | null => {
           // Extract English words from the chunk (this is a simplified approach)
           const englishWords = extractEnglishWords(chunk.chunkText);
           const targetWord = englishWords[0]; // Use first English word
@@ -193,7 +193,7 @@ function generateDynamicExercises(story: StoryWithChunks): Exercise[] {
           }
           return null;
         })
-        .filter(Boolean),
+        .filter(Boolean) as ExerciseQuestion[],
       source: "dynamic",
     };
 
@@ -202,13 +202,13 @@ function generateDynamicExercises(story: StoryWithChunks): Exercise[] {
     }
 
     // Generate multiple choice exercises
-    const mcqExercise = {
+    const mcqExercise: Exercise = {
       id: `dynamic-mcq-${story.id}`,
       type: "multiple_choice",
       difficulty: "medium",
       questions: chemChunks
         .slice(0, 3)
-        .map((chunk: StoryChunk, index: number) => {
+        .map((chunk: StoryChunk, index: number): ExerciseQuestion | null => {
           const englishWords = extractEnglishWords(chunk.chunkText);
           const targetWord = englishWords[0];
 
@@ -231,7 +231,7 @@ function generateDynamicExercises(story: StoryWithChunks): Exercise[] {
           }
           return null;
         })
-        .filter(Boolean),
+        .filter(Boolean) as ExerciseQuestion[],
       source: "dynamic",
     };
 
