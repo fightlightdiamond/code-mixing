@@ -1,10 +1,11 @@
 "use client";
+import { logger } from '@/lib/logger';
 
 import { useQuery } from "@tanstack/react-query";
 import { buildUsersListQuery, User } from "@/features/users/hooks";
 
 export default function SimpleUserList() {
-  console.log('🔄 [CLIENT] SimpleUserList component rendering...');
+  logger.info('🔄 [CLIENT] SimpleUserList component rendering...');
   
   const startTime = Date.now();
   const q = useQuery(buildUsersListQuery({ search: "" }));
@@ -13,8 +14,8 @@ export default function SimpleUserList() {
   // Query hook now handles API response extraction internally
   const users = q.data || [];
   
-  console.log('⚡ [CLIENT] useQuery hook took:', queryTime, 'ms');
-  console.log('📊 [CLIENT] Query state:', { 
+  logger.info('⚡ [CLIENT] useQuery hook took:', queryTime, 'ms');
+  logger.info('📊 [CLIENT] Query state:', { 
     isLoading: q.isLoading, 
     isFetching: q.isFetching, 
     isError: q.isError,

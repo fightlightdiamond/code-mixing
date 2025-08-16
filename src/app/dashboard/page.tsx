@@ -1,4 +1,5 @@
 "use client";
+import { logger } from '@/lib/logger';
 
 import { RoleBasedLink } from "@/components/auth/RoleBasedLink";
 import { RoleBasedButton } from "@/components/auth/RoleBasedButton";
@@ -54,7 +55,7 @@ export default function DashboardPage() {
               action="create"
               subject="Story"
               className="mt-4 bg-green-600 text-white px-4 py-2 rounded"
-              onClick={() => console.log("Create story")}
+              onClick={() => logger.info("Create story")}
             >
               Create New Story
             </RoleBasedButton>

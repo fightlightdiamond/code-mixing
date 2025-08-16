@@ -1,4 +1,5 @@
 "use client";
+import { logger } from '@/lib/logger';
 
 import React, { createContext, useContext, useMemo } from "react";
 import { AppAbility, buildAbility, ServerRule, type AbilityContext } from "./ability";
@@ -28,13 +29,13 @@ export default function AbilityProvider({
     try {
       // Validate user context
       if (user && (!user.id || !Array.isArray(user.roles))) {
-        console.warn('Invalid user context provided to AbilityProvider');
+        logger.warn('Invalid user context provided to AbilityProvider');
         return buildAbility(undefined, undefined);
       }
 
       // Validate rules if provided
       if (rules && !Array.isArray(rules)) {
-        console.warn('Invalid rules provided to AbilityProvider, expected array');
+        logger.warn('Invalid rules provided to AbilityProvider, expected array');
         return buildAbility(undefined, {
           userId: user?.id,
           roles: user?.roles || [],
@@ -50,7 +51,7 @@ export default function AbilityProvider({
 
       return buildAbility(rules ?? undefined, context);
     } catch (error) {
-      console.error('Error building ability in AbilityProvider:', error);
+      logger.error('Error building ability in AbilityProvider:', error);
       // Return a default ability with no permissions as fallback
       return buildAbility(undefined, undefined);
     }
@@ -79,7 +80,7 @@ export function useSafeAbility(): AppAbility | null {
   try {
     return useAbility();
   } catch (error) {
-    console.error('Error accessing ability context:', error);
+    logger.error('Error accessing ability context:', error);
     return null;
   }
 }

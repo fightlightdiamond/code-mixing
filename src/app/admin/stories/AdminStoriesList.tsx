@@ -1,4 +1,5 @@
 "use client";
+import { logger } from '@/lib/logger';
 
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
@@ -60,7 +61,7 @@ export default function AdminStoriesList() {
       await createMutation.mutateAsync(data);
       setShowCreateModal(false);
     } catch (error) {
-      console.error("Error creating story:", error);
+      logger.error("Error creating story:", error);
     }
   };
 
@@ -72,7 +73,7 @@ export default function AdminStoriesList() {
       setShowEditModal(false);
       setSelectedId(null);
     } catch (error) {
-      console.error("Error updating story:", error);
+      logger.error("Error updating story:", error);
     }
   };
 
@@ -82,7 +83,7 @@ export default function AdminStoriesList() {
     try {
       await deleteMutation.mutateAsync(id);
     } catch (error) {
-      console.error("Error deleting story:", error);
+      logger.error("Error deleting story:", error);
     }
   };
 

@@ -1,4 +1,5 @@
 "use client";
+import { logger } from '@/lib/logger';
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useAbility } from "@/core/auth/AbilityProvider";

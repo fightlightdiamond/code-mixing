@@ -1,4 +1,5 @@
 "use client";
+import { logger } from '@/lib/logger';
 
 import { useState, useCallback, useEffect } from "react";
 
@@ -89,11 +90,11 @@ export function useAudioProgress({
             }
           }
         } catch (serverError) {
-          console.warn("Failed to load progress from server:", serverError);
+          logger.warn("Failed to load progress from server:", serverError);
           // Continue with local data only
         }
       } catch (error) {
-        console.error("Error loading audio progress:", error);
+        logger.error("Error loading audio progress:", error);
         setError("Không thể tải tiến độ âm thanh");
       } finally {
         setIsLoading(false);
@@ -127,14 +128,14 @@ export function useAudioProgress({
               }),
             });
           } catch (serverError) {
-            console.warn("Failed to save progress to server:", serverError);
+            logger.warn("Failed to save progress to server:", serverError);
             // Continue with local storage only
           }
         }
 
         setError(null);
       } catch (error) {
-        console.error("Error saving audio progress:", error);
+        logger.error("Error saving audio progress:", error);
         setError("Không thể lưu tiến độ âm thanh");
       }
     },
@@ -250,7 +251,7 @@ export function useAudioProgress({
         },
         body: JSON.stringify({ storyId }),
       }).catch((error) => {
-        console.warn("Failed to clear progress from server:", error);
+        logger.warn("Failed to clear progress from server:", error);
       });
     }
   }, [storyId, autoSave]);

@@ -1,4 +1,5 @@
 "use client";
+import { logger } from '@/lib/logger';
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
@@ -196,7 +197,7 @@ export const AudioPlayer = React.memo(function AudioPlayer({
       progressActions.updatePosition(audio.currentTime);
     } else {
       audio.play().catch((error) => {
-        console.error("Error playing audio:", error);
+        logger.error("Error playing audio:", error);
         setAudioState((prev) => ({
           ...prev,
           error: "Không thể phát âm thanh",

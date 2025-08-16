@@ -4,6 +4,7 @@ import { prisma } from "@/core/prisma";
 import { getUserFromRequest } from "@/core/auth/getUser";
 import logger from "@/lib/logger";
 import { z } from "zod";
+import type { User } from "@/types/api";
 
 // Validation schema for exercise submission
 const exerciseSubmissionSchema = z.object({
@@ -19,9 +20,19 @@ const batchSubmissionSchema = z.object({
   submissions: z.array(exerciseSubmissionSchema),
 });
 
+interface ExerciseSubmission {
+  storyId: string;
+  exerciseId: string;
+  questionId: string;
+  userAnswer: string | string[];
+  timeSpent?: number;
+  attempts?: number;
+}
+
 export async function POST(request: NextRequest) {
+  let user: User | null = null;
   try {
-    const user = await getUserFromRequest(request);
+    user = await getUserFromRequest(request);
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -42,14 +53,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
 
     // Check if this is a batch submission or single submission
-    let submissions: Array<{
-      storyId: string;
-      exerciseId: string;
-      questionId: string;
-      userAnswer: string | string[];
-      timeSpent?: number;
-      attempts?: number;
-    }>;
+    let submissions: ExerciseSubmission[];
 
     if (body.submissions && Array.isArray(body.submissions)) {
       // Batch submission
@@ -145,14 +149,7 @@ export async function POST(request: NextRequest) {
 }
 
 // Validate exercise answer and calculate score
-async function validateExerciseAnswer(submission: {
-  storyId: string;
-  exerciseId: string;
-  questionId: string;
-  userAnswer: string | string[];
-  timeSpent?: number;
-  attempts?: number;
-}) {
+async function validateExerciseAnswer(submission: ExerciseSubmission) {
   // Check if this is a dynamic exercise or database exercise
   if (submission.exerciseId.startsWith("dynamic-")) {
     return validateDynamicExercise(submission);
@@ -162,7 +159,7 @@ async function validateExerciseAnswer(submission: {
 }
 
 // Validate dynamic exercises generated from story content
-async function validateDynamicExercise(submission: any) {
+async function validateDynamicExercise(submission: ExerciseSubmission) {
   // For dynamic exercises, we need to reconstruct the correct answer
   // This is a simplified implementation
 
@@ -217,7 +214,7 @@ async function validateDynamicExercise(submission: any) {
 }
 
 // Validate database exercises
-async function validateDatabaseExercise(submission: unknown) {
+async function validateDatabaseExercise(submission: ExerciseSubmission) {
   const question = await prisma.question.findUnique({
     where: { id: submission.questionId },
     include: {

@@ -1,4 +1,5 @@
 "use client";
+import { logger } from '@/lib/logger';
 
 import { useState, useCallback } from "react";
 import type { VocabularyData } from "../types/learning";
@@ -54,7 +55,7 @@ export function useVocabulary(): UseVocabularyReturn {
 
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     } catch (err) {
-      console.error("Error fetching vocabulary:", err);
+      logger.error("Error fetching vocabulary:", err);
       setError(
         err instanceof Error ? err.message : "Không thể tải định nghĩa từ vựng"
       );

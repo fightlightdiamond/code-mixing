@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import jwt, { JwtPayload } from 'jsonwebtoken';
+import { verifyJwt } from "@/core/auth/jwt";
 
 import { prisma } from "@/core/prisma";
 import logger from "@/lib/logger";
@@ -22,20 +23,20 @@ export async function POST(request: NextRequest) {
       roles?: string[];
     }
     
-    const secret = process.env.JWT_SECRET;
-    if (!secret) {
-      throw new Error('JWT_SECRET is not configured');
-    }
-
     let decoded: CustomJwtPayload;
     try {
-      decoded = jwt.verify(refreshToken, secret) as CustomJwtPayload;
+      decoded = verifyJwt<CustomJwtPayload>(refreshToken);
     } catch (error) {
+      if (error instanceof Error && error.message === 'JWT secret is not configured') {
+        throw error;
+      }
       return NextResponse.json(
         { message: 'Refresh token không hợp lệ hoặc đã hết hạn' },
         { status: 401 }
       );
     }
+
+    const secret = process.env.JWT_SECRET!;
 
     // Get user from database to ensure they still exist and are active
     const user = await prisma.user.findUnique({

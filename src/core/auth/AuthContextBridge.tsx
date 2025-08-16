@@ -1,4 +1,5 @@
 "use client";
+import { logger } from '@/lib/logger';
 
 import React from "react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -24,7 +25,7 @@ class AuthErrorBoundary extends Component<
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error("🚨 AuthContextBridge Error:", error, errorInfo);
+    logger.error("🚨 AuthContextBridge Error:", error, errorInfo);
   }
 
   render() {
@@ -60,7 +61,7 @@ export default function AuthContextBridge({
 
   // Add useEffect to track auth state changes
   React.useEffect(() => {
-    console.log("🔄 AuthContextBridge: Auth state changed", {
+    logger.info("🔄 AuthContextBridge: Auth state changed", {
       hasUser: !!user,
       userRole: user?.role,
       isLoading,
@@ -70,7 +71,7 @@ export default function AuthContextBridge({
   }, [user, isLoading, isAuthenticated]);
 
   try {
-    console.log("🔗 AuthContextBridge Debug:", {
+    logger.info("🔗 AuthContextBridge Debug:", {
       hasUser: !!user,
       userRole: user?.role,
       isLoading,
@@ -90,7 +91,7 @@ export default function AuthContextBridge({
         }
       : null;
 
-    console.log("🎯 AuthContextBridge: Rendering with AbilityProvider", {
+    logger.info("🎯 AuthContextBridge: Rendering with AbilityProvider", {
       abilityUser,
       isLoading,
       hasUser: !!user,
@@ -104,7 +105,7 @@ export default function AuthContextBridge({
       </AuthErrorBoundary>
     );
   } catch (error) {
-    console.error("🚨 AuthContextBridge Render Error:", error);
+    logger.error("🚨 AuthContextBridge Render Error:", error);
     return (
       <div
         style={{

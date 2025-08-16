@@ -1,6 +1,7 @@
+import { logger } from '@/lib/logger';
 import { NextRequest } from "next/server";
-import jwt from "jsonwebtoken";
 import type { JWTPayload } from "@/types/api";
+import { verifyJwt } from "@/core/auth/jwt";
 
 export interface UserContext {
   sub: string;
@@ -39,7 +40,7 @@ export async function getUserFromRequest(
     const secret = process.env.JWT_SECRET;
     if (!secret) {
       if (process.env.NODE_ENV !== "production") {
-        console.warn("getUserFromRequest: JWT_SECRET is not set; failing closed.");
+        logger.warn("getUserFromRequest: JWT_SECRET is not set; failing closed.");
       }
       return null;
     }
@@ -48,6 +49,7 @@ export async function getUserFromRequest(
       algorithms: ["HS256"],
       ignoreExpiration: false,
     }) as JWTPayload;
+
     return {
       sub: decoded.userId,
       tenantId: decoded.tenantId,
@@ -55,7 +57,7 @@ export async function getUserFromRequest(
     };
   } catch (err) {
     if (process.env.NODE_ENV !== "production") {
-      console.warn("getUserFromRequest: token verification failed:", err);
+      logger.warn("getUserFromRequest: token verification failed:", err);
     }
     return null;
   }

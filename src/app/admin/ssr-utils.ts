@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 /**
  * Common SSR utilities for admin pages
  * Handles authentication context issues during server-side rendering
@@ -18,7 +19,7 @@ export function skipAuthenticatedSSRPrefetch(
   routeName: string, 
   queryClient?: QueryClient
 ): void {
-  console.log(`🔐 [SSR] Skipping prefetch for authenticated route: ${routeName} - will load client-side`);
+  logger.info(`🔐 [SSR] Skipping prefetch for authenticated route: ${routeName} - will load client-side`);
   
   // Note: This prevents the "Unauthorized" error during SSR prefetch
   // Client-side rendering will handle authentication and data fetching properly
@@ -32,7 +33,7 @@ export function skipAuthenticatedSSRPrefetch(
  */
 export function logSSRPerformance(routeName: string, startTime: number): void {
   const duration = Date.now() - startTime;
-  console.log(`⚡ [SSR] ${routeName} rendered in ${duration}ms`);
+  logger.info(`⚡ [SSR] ${routeName} rendered in ${duration}ms`);
 }
 
 /**

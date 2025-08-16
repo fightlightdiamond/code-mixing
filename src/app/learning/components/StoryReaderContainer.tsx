@@ -1,4 +1,5 @@
 "use client";
+import { logger } from '@/lib/logger';
 
 import React, { useState, useCallback } from "react";
 import { StoryReader } from "./StoryReader";
@@ -77,14 +78,14 @@ export function StoryReaderContainer({
       try {
         await submitExerciseResult(result);
       } catch (error) {
-        console.error("Failed to submit exercise result:", error);
+        logger.error("Failed to submit exercise result:", error);
       }
     },
     [submitExerciseResult]
   );
 
   const handleExercisesComplete = useCallback((results: ExerciseResult[]) => {
-    console.log("All exercises completed:", results);
+    logger.info("All exercises completed:", results);
     setStoryCompleted(true);
     // Here you could update user progress, show completion animation, etc.
   }, []);

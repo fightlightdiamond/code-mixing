@@ -1,4 +1,5 @@
 "use client";
+import { logger } from '@/lib/logger';
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import type { StoryChunk } from "../types/learning";
@@ -152,7 +153,7 @@ export function useAudioPlayer({
       await audio.play();
       setState((prev) => ({ ...prev, isPlaying: true }));
     } catch (error) {
-      console.error("Error playing audio:", error);
+      logger.error("Error playing audio:", error);
       setState((prev) => ({
         ...prev,
         error: "Không thể phát âm thanh",

@@ -1,4 +1,5 @@
 "use client";
+import { logger } from '@/lib/logger';
 
 import { useState, useEffect } from 'react';
 import { getTokenStatus, refreshToken, TokenStatus } from '@/core/api/api';

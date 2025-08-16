@@ -1,4 +1,5 @@
 "use client";
+import { logger } from '@/lib/logger';
 
 import React, { useState } from "react";
 import {
@@ -60,7 +61,7 @@ export function DownloadManager({ stories, className }: DownloadManagerProps) {
         try {
           await downloadStory(story);
         } catch (error) {
-          console.error(`Failed to download story ${storyId}:`, error);
+          logger.error(`Failed to download story ${storyId}:`, error);
         }
       }
     }
