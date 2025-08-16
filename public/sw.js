@@ -236,32 +236,32 @@ self.addEventListener("message", (event) => {
     case "CACHE_STORY":
       cacheStory(data)
         .then(() => {
-          event.ports[0].postMessage({ success: true });
+          event.ports[0].postMessage({ data: { success: true } });
         })
         .catch((error) => {
-          event.ports[0].postMessage({ success: false, error: error.message });
+          event.ports[0].postMessage({ error: error.message });
         });
       break;
 
     case "CACHE_AUDIO":
       cacheAudio(data)
         .then(() => {
-          event.ports[0].postMessage({ success: true });
+          event.ports[0].postMessage({ data: { success: true } });
         })
         .catch((error) => {
-          event.ports[0].postMessage({ success: false, error: error.message });
+          event.ports[0].postMessage({ error: error.message });
         });
       break;
 
     case "GET_CACHE_STATUS":
       getCacheStatus().then((status) => {
-        event.ports[0].postMessage(status);
+        event.ports[0].postMessage({ data: status });
       });
       break;
 
     case "CLEAR_CACHE":
       clearCache(data.cacheType).then(() => {
-        event.ports[0].postMessage({ success: true });
+        event.ports[0].postMessage({ data: { success: true } });
       });
       break;
   }
