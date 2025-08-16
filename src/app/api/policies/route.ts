@@ -4,6 +4,9 @@ import { prisma } from "@/core/prisma";
 import { Prisma, PrismaClient } from "@prisma/client";
 import { caslGuardWithPolicies } from "@/core/auth/casl.guard";
 import { getUserFromRequest } from "@/core/auth/getUser";
+import { Prisma, PrismaClient } from "@prisma/client";
+
+type PrismaWithPolicy = PrismaClient & { resourcePolicy?: Prisma.ResourcePolicyDelegate };
 
 // getUserFromRequest imported from core auth
 

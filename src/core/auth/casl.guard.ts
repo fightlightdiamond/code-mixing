@@ -5,6 +5,7 @@ import { subject as caslSubject } from "@casl/ability";
 import { PrismaQuery } from "@casl/prisma";
 import { Prisma, PrismaClient } from "@prisma/client";
 import { prisma } from "../prisma";
+import { Prisma, PrismaClient } from "@prisma/client";
 
 export interface RequiredRule {
   action: string;
