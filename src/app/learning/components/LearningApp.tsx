@@ -129,7 +129,7 @@ export const LearningApp = React.memo(function LearningApp({
           setExercises(data.exercises || []);
         }
       } catch (error) {
-        logger.error("Failed to load exercises:", error);
+        logger.error("Failed to load exercises:", undefined, error);
       }
     };
 
@@ -153,7 +153,7 @@ export const LearningApp = React.memo(function LearningApp({
         setVocabularyPopup((prev) => (prev ? { ...prev, data } : null));
       }
     } catch (error) {
-      logger.error("Failed to load vocabulary data:", error);
+      logger.error("Failed to load vocabulary data:", undefined, error);
     }
   };
 

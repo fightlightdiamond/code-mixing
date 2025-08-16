@@ -25,7 +25,7 @@ class AuthErrorBoundary extends Component<
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    logger.error("🚨 AuthContextBridge Error:", error, errorInfo);
+    logger.error("🚨 AuthContextBridge Error:", { errorInfo }, error);
   }
 
   render() {
@@ -105,7 +105,7 @@ export default function AuthContextBridge({
       </AuthErrorBoundary>
     );
   } catch (error) {
-    logger.error("🚨 AuthContextBridge Render Error:", error);
+    logger.error("🚨 AuthContextBridge Render Error:", undefined, error);
     return (
       <div
         style={{

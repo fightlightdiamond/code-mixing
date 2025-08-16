@@ -40,7 +40,7 @@ export function useUserPreferences() {
         setPreferences({ ...DEFAULT_PREFERENCES, ...parsed });
       }
     } catch (err) {
-      logger.error("Failed to load user preferences:", err);
+      logger.error("Failed to load user preferences:", undefined, err);
       setError("Không thể tải cài đặt người dùng");
     } finally {
       setIsLoading(false);
@@ -90,7 +90,7 @@ export function useUserPreferences() {
 
         return true;
       } catch (err) {
-        logger.error("Failed to save user preferences:", err);
+        logger.error("Failed to save user preferences:", undefined, err);
         setError("Không thể lưu cài đặt");
         return false;
       }
