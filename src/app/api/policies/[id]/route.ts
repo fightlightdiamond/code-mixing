@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/core/prisma";
 import { caslGuardWithPolicies } from "@/core/auth/casl.guard";
 import { getUserFromRequest } from "@/core/auth/getUser";
+import type { Prisma, PrismaClient } from "@prisma/client";
+
+type PrismaWithPolicy = PrismaClient & { resourcePolicy?: Prisma.ResourcePolicyDelegate };
 
 // getUserFromRequest imported from core auth
 
@@ -17,7 +20,7 @@ export async function PUT(_request: NextRequest, context: { params: { id: string
   if (!id) return NextResponse.json({ error: "Invalid id" }, { status: 400 });
 
   const body = await _request.json();
-  const repo = (prisma as unknown as { resourcePolicy?: any }).resourcePolicy;
+  const repo = (prisma as PrismaWithPolicy).resourcePolicy;
   if (!repo) return NextResponse.json({ error: "Policy model not available" }, { status: 500 });
 
   const updated = await repo.update({
@@ -39,7 +42,7 @@ export async function DELETE(_request: NextRequest, context: { params: { id: str
   const id = Number(context.params.id);
   if (!Number.isFinite(id)) return NextResponse.json({ error: "Invalid id" }, { status: 400 });
 
-  const repo = (prisma as unknown as { resourcePolicy?: any }).resourcePolicy;
+  const repo = (prisma as PrismaWithPolicy).resourcePolicy;
   if (!repo) return NextResponse.json({ error: "Policy model not available" }, { status: 500 });
 
   await repo.delete({ where: { id } });

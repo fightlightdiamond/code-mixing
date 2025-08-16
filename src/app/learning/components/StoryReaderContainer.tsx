@@ -78,7 +78,7 @@ export function StoryReaderContainer({
       try {
         await submitExerciseResult(result);
       } catch (error) {
-        logger.error("Failed to submit exercise result:", error);
+        logger.error("Failed to submit exercise result:", undefined, error);
       }
     },
     [submitExerciseResult]

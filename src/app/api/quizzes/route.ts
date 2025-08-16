@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { caslGuard, RequiredRule } from "@/core/auth/casl.guard";
 import { prisma } from "@/core/prisma";
 import { getUserFromRequest } from "@/core/auth/getUser";
@@ -32,7 +33,7 @@ export async function GET(request: NextRequest) {
     const lessonId = searchParams.get("lessonId");
 
     // Build where clause
-    const where: any = {};
+    const where: Prisma.QuizWhereInput = {};
 
     if (search) {
       where.OR = [
