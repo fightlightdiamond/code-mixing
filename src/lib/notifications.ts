@@ -41,7 +41,7 @@ export async function createNotification(data: CreateNotificationData) {
       },
     });
   } catch (error) {
-    logger.error('Failed to create notification', undefined, error);
+    logger.error('Failed to create notification', undefined, error as Error);
     throw error;
   }
 }
@@ -158,7 +158,7 @@ export async function getUnreadNotifications(userId: string, tenantId: string) {
       take: 50,
     });
   } catch (error) {
-    logger.error('Failed to get unread notifications', undefined, error);
+    logger.error('Failed to get unread notifications', undefined, error as Error);
     return [];
   }
 }
@@ -203,7 +203,7 @@ export async function getUserNotifications(
       totalPages: Math.ceil(total / limit),
     };
   } catch (error) {
-    logger.error('Failed to get user notifications', undefined, error);
+    logger.error('Failed to get user notifications', undefined, error as Error);
     return {
       notifications: [],
       total: 0,
@@ -234,7 +234,7 @@ export async function markNotificationAsRead(
       },
     });
   } catch (error) {
-    logger.error('Failed to mark notification as read', undefined, error);
+    logger.error('Failed to mark notification as read', undefined, error as Error);
     throw error;
   }
 }
@@ -255,7 +255,7 @@ export async function markAllNotificationsAsRead(userId: string, tenantId: strin
       },
     });
   } catch (error) {
-    logger.error('Failed to mark all notifications as read', undefined, error);
+    logger.error('Failed to mark all notifications as read', undefined, error as Error);
     throw error;
   }
 }
@@ -283,7 +283,7 @@ export async function deleteOldNotifications(
 
     return result.count;
   } catch (error) {
-    logger.error('Failed to delete old notifications', undefined, error);
+    logger.error('Failed to delete old notifications', undefined, error as Error);
     return 0;
   }
 }
@@ -319,7 +319,7 @@ export async function getNotificationStats(userId: string, tenantId: string) {
       }, {} as Record<string, number>),
     };
   } catch (error) {
-    logger.error('Failed to get notification stats', undefined, error);
+    logger.error('Failed to get notification stats', undefined, error as Error);
     return {
       total: 0,
       unread: 0,

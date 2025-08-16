@@ -3,6 +3,47 @@ import { caslGuardWithPolicies } from "@/core/auth/casl.guard";
 import { prisma } from "@/core/prisma";
 import { getUserFromRequest } from "@/core/auth/getUser";
 import logger from "@/lib/logger";
+import type {
+  DifficultyLevel,
+  ProgressStatus,
+  VocabStatus,
+} from "@prisma/client";
+
+interface LearningSession {
+  timeSpentSec: number | null;
+  interactionCount: number | null;
+  startedAt: Date;
+  lesson?: {
+    id: string;
+    title: string;
+    difficulty: DifficultyLevel;
+  } | null;
+  story?: {
+    id: string;
+    title: string;
+    difficulty: DifficultyLevel;
+  } | null;
+}
+
+interface VocabularyProgress {
+  status: VocabStatus;
+  vocabulary?: {
+    word: string;
+    lesson?: {
+      difficulty: DifficultyLevel;
+    } | null;
+  } | null;
+}
+
+interface LessonProgress {
+  status: ProgressStatus;
+  lesson?: {
+    id: string;
+    title: string;
+    difficulty: DifficultyLevel;
+    estimatedMinutes: number | null;
+  } | null;
+}
 
 interface LearningSession {
   startedAt: Date;
@@ -65,6 +106,7 @@ export async function GET(request: NextRequest) {
     const dateRanges = calculateDateRanges(period, now);
 
     // Get learning sessions data
+
     const currentPeriodSessions: LearningSession[] = await prisma.learningSession.findMany({
       where: {
         userId: user.id,
@@ -400,7 +442,7 @@ function calculateVocabularyAnalysis(
 }
 
 // Calculate learning patterns
-function calculateLearningPatterns(sessions: any[]) {
+function calculateLearningPatterns(sessions: LearningSession[]) {
   if (sessions.length === 0) {
     return {
       consistency: 0,
@@ -440,9 +482,9 @@ function calculateLearningPatterns(sessions: any[]) {
 
 // Generate personalized recommendations
 function generateRecommendations(
-  sessions: any[],
-  vocabularyProgress: any[],
-  lessonProgress: any[]
+  sessions: LearningSession[],
+  vocabularyProgress: VocabularyProgress[],
+  lessonProgress: LessonProgress[]
 ) {
   const recommendations = [];
 

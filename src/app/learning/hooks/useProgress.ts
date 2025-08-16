@@ -65,7 +65,7 @@ export function useProgress({
         setStats(statsData);
       }
     } catch (err) {
-      logger.error("Error loading progress:", err);
+      logger.error("Error loading progress:", undefined, err);
       setError("Không thể tải tiến độ học tập");
 
       // Load from localStorage as fallback
@@ -87,7 +87,7 @@ export function useProgress({
         setStats(data.stats);
       }
     } catch (err) {
-      logger.error("Error loading from localStorage:", err);
+      logger.error("Error loading from localStorage:", undefined, err);
     }
   }, [userId]);
 
@@ -103,7 +103,7 @@ export function useProgress({
       };
       localStorage.setItem(`learning-progress-${userId}`, JSON.stringify(data));
     } catch (err) {
-      logger.error("Error saving to localStorage:", err);
+      logger.error("Error saving to localStorage:", undefined, err);
     }
   }, [userId, progress, vocabularyProgress, levelProgress, stats]);
 
@@ -135,7 +135,7 @@ export function useProgress({
           saveToLocalStorage();
         }
       } catch (err) {
-        logger.error("Error updating story completion:", err);
+        logger.error("Error updating story completion:", undefined, err);
       }
     },
     [userId, saveToLocalStorage]
@@ -145,7 +145,7 @@ export function useProgress({
   const updateVocabularyProgress = useCallback(
     async (word: string, isCorrect: boolean, timeSpent: number) => {
       try {
-        const response = await fetch("/api/learning/progress/vocabulary", {
+        const response = await fetch("/api/learning/vocabulary/progress", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -158,24 +158,26 @@ export function useProgress({
           }),
         });
 
-        if (response.ok) {
-          const updatedVocab = await response.json();
-          setVocabularyProgress((prev) => {
-            const index = prev.findIndex((v) => v.word === word);
-            if (index >= 0) {
-              const newProgress = [...prev];
-              newProgress[index] = updatedVocab;
-              return newProgress;
-            } else {
-              return [...prev, updatedVocab];
-            }
-          });
-
-          // Update overall progress
-          loadProgress();
+        if (!response.ok) {
+          throw new Error("Request failed");
         }
+
+        const updatedVocab = await response.json();
+        setVocabularyProgress((prev) => {
+          const index = prev.findIndex((v) => v.word === word);
+          if (index >= 0) {
+            const newProgress = [...prev];
+            newProgress[index] = updatedVocab;
+            return newProgress;
+          }
+          return [...prev, updatedVocab];
+        });
+
+        // Update overall progress
+        loadProgress();
       } catch (err) {
         logger.error("Error updating vocabulary progress:", err);
+        setError("Không thể cập nhật tiến độ từ vựng");
       }
     },
     [userId, loadProgress]
@@ -262,7 +264,7 @@ export function useProgress({
           loadProgress();
         }
       } catch (err) {
-        logger.error("Error marking vocabulary as mastered:", err);
+        logger.error("Error marking vocabulary as mastered:", undefined, err);
       }
     },
     [userId, loadProgress]
