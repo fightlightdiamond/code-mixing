@@ -8,25 +8,29 @@ describe("updateVocabularyProgress", () => {
 
   it("sends progress data to the server before updating state", async () => {
     let vocabFetchCount = 0;
-    const mockFetch = jest.fn((url: RequestInfo) => {
-      if (typeof url === "string" && url.includes("/api/learning/vocabulary/progress")) {
-        if (url.includes("?")) {
-          vocabFetchCount += 1;
-          const data =
-            vocabFetchCount === 1
-              ? { vocabularyProgress: [] }
-              : { vocabularyProgress: [{ word: "student" }] };
-          return Promise.resolve({ ok: true, json: async () => data }) as any;
+    const mockFetch = jest.fn(
+      async (url: RequestInfo): Promise<Pick<Response, "ok" | "json">> => {
+        if (
+          typeof url === "string" &&
+          url.includes("/api/learning/vocabulary/progress")
+        ) {
+          if (url.includes("?")) {
+            vocabFetchCount += 1;
+            const data =
+              vocabFetchCount === 1
+                ? { vocabularyProgress: [] }
+                : { vocabularyProgress: [{ word: "student" }] };
+            return { ok: true, json: async () => data };
+          }
+          return {
+            ok: true,
+            json: async () => ({ word: "student", status: "learning" }),
+          };
         }
-        return Promise.resolve({
-          ok: true,
-          json: async () => ({ word: "student", status: "learning" }),
-        }) as any;
+        return { ok: true, json: async () => ({}) };
       }
-      return Promise.resolve({ ok: true, json: async () => ({}) }) as any;
-    });
-    // @ts-ignore
-    global.fetch = mockFetch;
+    );
+    global.fetch = mockFetch as jest.MockedFunction<typeof fetch>;
 
     const { result } = renderHook(() =>
       useProgress({ userId: "user1", autoSync: false })
@@ -58,14 +62,18 @@ describe("updateVocabularyProgress", () => {
   });
 
   it("notifies the user when the request fails", async () => {
-    const mockFetch = jest.fn((url: RequestInfo) => {
-      if (typeof url === "string" && url.includes("/api/learning/vocabulary/progress")) {
-        return Promise.resolve({ ok: false }) as any;
+    const mockFetch = jest.fn(
+      async (url: RequestInfo): Promise<Pick<Response, "ok" | "json">> => {
+        if (
+          typeof url === "string" &&
+          url.includes("/api/learning/vocabulary/progress")
+        ) {
+          return { ok: false, json: async () => ({}) };
+        }
+        return { ok: true, json: async () => ({}) };
       }
-      return Promise.resolve({ ok: true, json: async () => ({}) }) as any;
-    });
-    // @ts-ignore
-    global.fetch = mockFetch;
+    );
+    global.fetch = mockFetch as jest.MockedFunction<typeof fetch>;
 
     const { result } = renderHook(() =>
       useProgress({ userId: "user1", autoSync: false })
