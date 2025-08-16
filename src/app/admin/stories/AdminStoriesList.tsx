@@ -61,7 +61,7 @@ export default function AdminStoriesList() {
       await createMutation.mutateAsync(data);
       setShowCreateModal(false);
     } catch (error) {
-      logger.error("Error creating story:", error);
+      logger.error("Error creating story:", undefined, error as Error);
     }
   };
 
@@ -73,7 +73,7 @@ export default function AdminStoriesList() {
       setShowEditModal(false);
       setSelectedId(null);
     } catch (error) {
-      logger.error("Error updating story:", error);
+      logger.error("Error updating story:", undefined, error as Error);
     }
   };
 
@@ -83,7 +83,7 @@ export default function AdminStoriesList() {
     try {
       await deleteMutation.mutateAsync(id);
     } catch (error) {
-      logger.error("Error deleting story:", error);
+      logger.error("Error deleting story:", undefined, error as Error);
     }
   };
 

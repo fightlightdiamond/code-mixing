@@ -3,6 +3,76 @@ import { caslGuardWithPolicies } from "@/core/auth/casl.guard";
 import { prisma } from "@/core/prisma";
 import { getUserFromRequest } from "@/core/auth/getUser";
 import logger from "@/lib/logger";
+import type {
+  DifficultyLevel,
+  ProgressStatus,
+  VocabStatus,
+} from "@prisma/client";
+
+interface LearningSession {
+  timeSpentSec: number | null;
+  interactionCount: number | null;
+  startedAt: Date;
+  lesson?: {
+    id: string;
+    title: string;
+    difficulty: DifficultyLevel;
+  } | null;
+  story?: {
+    id: string;
+    title: string;
+    difficulty: DifficultyLevel;
+  } | null;
+}
+
+interface VocabularyProgress {
+  status: VocabStatus;
+  vocabulary?: {
+    word: string;
+    lesson?: {
+      difficulty: DifficultyLevel;
+    } | null;
+  } | null;
+}
+
+interface LessonProgress {
+  status: ProgressStatus;
+  lesson?: {
+    id: string;
+    title: string;
+    difficulty: DifficultyLevel;
+    estimatedMinutes: number | null;
+  } | null;
+}
+
+interface LearningSession {
+  startedAt: Date;
+  timeSpentSec?: number | null;
+  interactionCount?: number | null;
+  lesson?: {
+    difficulty?: string | null;
+  } | null;
+  story?: {
+    difficulty?: string | null;
+  } | null;
+}
+
+interface VocabularyProgress {
+  status: string;
+  vocabulary?: {
+    lesson?: {
+      difficulty?: string | null;
+    } | null;
+  } | null;
+}
+
+interface LessonProgress {
+  status: string;
+  lesson?: {
+    difficulty?: string | null;
+    estimatedMinutes?: number | null;
+  } | null;
+}
 
 // GET /api/learning/progress/analytics - Get learning analytics and insights
 export async function GET(request: NextRequest) {
@@ -36,7 +106,8 @@ export async function GET(request: NextRequest) {
     const dateRanges = calculateDateRanges(period, now);
 
     // Get learning sessions data
-    const currentPeriodSessions = await prisma.learningSession.findMany({
+
+    const currentPeriodSessions: LearningSession[] = await prisma.learningSession.findMany({
       where: {
         userId: user.id,
         startedAt: {
@@ -63,7 +134,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Get vocabulary progress data
-    const vocabularyProgress = await prisma.userVocabularyProgress.findMany({
+    const vocabularyProgress: VocabularyProgress[] = await prisma.userVocabularyProgress.findMany({
       where: {
         userId: user.id,
         lastReviewed: {
@@ -86,7 +157,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Get lesson progress data
-    const lessonProgress = await prisma.userProgress.findMany({
+    const lessonProgress: LessonProgress[] = await prisma.userProgress.findMany({
       where: {
         userId: user.id,
         updatedAt: {
@@ -131,7 +202,7 @@ export async function GET(request: NextRequest) {
 
     // Add comparison data if requested
     if (includeComparison) {
-      const previousPeriodSessions = await prisma.learningSession.findMany({
+      const previousPeriodSessions: LearningSession[] = await prisma.learningSession.findMany({
         where: {
           userId: user.id,
           startedAt: {
@@ -141,7 +212,7 @@ export async function GET(request: NextRequest) {
         },
       });
 
-      const previousVocabularyProgress =
+      const previousVocabularyProgress: VocabularyProgress[] =
         await prisma.userVocabularyProgress.findMany({
           where: {
             userId: user.id,
@@ -152,7 +223,7 @@ export async function GET(request: NextRequest) {
           },
         });
 
-      const previousLessonProgress = await prisma.userProgress.findMany({
+      const previousLessonProgress: LessonProgress[] = await prisma.userProgress.findMany({
         where: {
           userId: user.id,
           updatedAt: {
@@ -220,9 +291,9 @@ function calculateDateRanges(period: string, now: Date) {
 
 // Calculate summary statistics
 function calculateSummaryStats(
-  sessions: any[],
-  vocabularyProgress: any[],
-  lessonProgress: any[]
+  sessions: LearningSession[],
+  vocabularyProgress: VocabularyProgress[],
+  lessonProgress: LessonProgress[]
 ) {
   const totalTimeSpent = sessions.reduce(
     (sum, session) => sum + (session.timeSpentSec || 0),
@@ -255,7 +326,7 @@ function calculateSummaryStats(
 }
 
 // Calculate time-based analysis
-function calculateTimeAnalysis(sessions: any[]) {
+function calculateTimeAnalysis(sessions: LearningSession[]) {
   const hourlyDistribution = new Array(24).fill(0);
   const dailyDistribution = new Array(7).fill(0);
 
@@ -298,7 +369,10 @@ function calculateTimeAnalysis(sessions: any[]) {
 }
 
 // Calculate difficulty-based analysis
-function calculateDifficultyAnalysis(sessions: any[], lessonProgress: any[]) {
+function calculateDifficultyAnalysis(
+  sessions: LearningSession[],
+  lessonProgress: LessonProgress[]
+) {
   const difficultyStats = {
     beginner: { sessions: 0, timeSpent: 0, completed: 0 },
     elementary: { sessions: 0, timeSpent: 0, completed: 0 },
@@ -328,7 +402,9 @@ function calculateDifficultyAnalysis(sessions: any[], lessonProgress: any[]) {
 }
 
 // Calculate vocabulary analysis
-function calculateVocabularyAnalysis(vocabularyProgress: any[]) {
+function calculateVocabularyAnalysis(
+  vocabularyProgress: VocabularyProgress[]
+) {
   const statusDistribution = {
     new: 0,
     reviewing: 0,
@@ -366,7 +442,7 @@ function calculateVocabularyAnalysis(vocabularyProgress: any[]) {
 }
 
 // Calculate learning patterns
-function calculateLearningPatterns(sessions: any[]) {
+function calculateLearningPatterns(sessions: LearningSession[]) {
   if (sessions.length === 0) {
     return {
       consistency: 0,
@@ -406,9 +482,9 @@ function calculateLearningPatterns(sessions: any[]) {
 
 // Generate personalized recommendations
 function generateRecommendations(
-  sessions: any[],
-  vocabularyProgress: any[],
-  lessonProgress: any[]
+  sessions: LearningSession[],
+  vocabularyProgress: VocabularyProgress[],
+  lessonProgress: LessonProgress[]
 ) {
   const recommendations = [];
 

@@ -238,7 +238,13 @@ REDIS_URL="redis://localhost:6379"
 AWS_ACCESS_KEY_ID="your-aws-key"
 AWS_SECRET_ACCESS_KEY="your-aws-secret"
 AWS_S3_BUCKET="your-bucket-name"
+# Set to "true" to stream files instead of redirecting to a signed URL
+AUDIO_STREAM="false"
 ```
+
+The endpoint `GET /api/learning/stories/[id]/audio` uses these settings to
+either redirect clients to a signed S3 URL or stream the audio file directly
+when `AUDIO_STREAM` is set to `true`.
 
 4. **Set up the database:**
 

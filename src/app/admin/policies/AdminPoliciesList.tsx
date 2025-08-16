@@ -208,7 +208,9 @@ function PolicyModal({
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Effect *</label>
+
                 <select className="w-full px-3 py-2 border rounded-md" value={form.effect} onChange={(e) => setForm({ ...form, effect: e.target.value as PolicyEffect })}>
+
                   <option value="allow">allow</option>
                   <option value="deny">deny</option>
                 </select>

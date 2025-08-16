@@ -64,7 +64,7 @@ export async function GET(
 
     return NextResponse.json(story);
   } catch (error) {
-    logger.error("Error fetching story", undefined, error);
+    logger.error("Error fetching story", undefined, error as Error);
     return NextResponse.json(
       { error: "Failed to fetch story" },
       { status: 500 }
@@ -183,7 +183,7 @@ export async function PUT(
 
     return NextResponse.json(story);
   } catch (error) {
-    logger.error("Error updating story", undefined, error);
+    logger.error("Error updating story", undefined, error as Error);
     return NextResponse.json(
       { error: "Failed to update story" },
       { status: 500 }
@@ -235,7 +235,7 @@ export async function DELETE(
 
     return NextResponse.json({ message: "Story deleted successfully" });
   } catch (error) {
-    logger.error("Error deleting story", undefined, error);
+    logger.error("Error deleting story", undefined, error as Error);
     return NextResponse.json(
       { error: "Failed to delete story" },
       { status: 500 }

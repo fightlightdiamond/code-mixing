@@ -49,7 +49,7 @@ export default function AdminUserList() {
       setShowCreateForm(false);
       setFormData({ name: "", email: "", role: "student" });
     } catch (error) {
-      logger.error("Error creating user:", error);
+      logger.error("Error creating user:", undefined, error as Error);
     }
   };
 
@@ -65,7 +65,7 @@ export default function AdminUserList() {
       setEditingUser(null);
       setFormData({ name: "", email: "", role: "student" });
     } catch (error) {
-      logger.error("Error updating user:", error);
+      logger.error("Error updating user:", undefined, error as Error);
     }
   };
 
@@ -76,7 +76,7 @@ export default function AdminUserList() {
       try {
         await deleteUser.mutateAsync(user.id);
       } catch (error) {
-        logger.error("Error deleting user:", error);
+        logger.error("Error deleting user:", undefined, error as Error);
       }
     }
   };

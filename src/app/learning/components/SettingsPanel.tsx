@@ -101,6 +101,7 @@ export function SettingsPanel({
   onPreferencesChange,
   onClose,
   className = "",
+  isSaving = false,
 }: SettingsPanelProps) {
   const [localPreferences, setLocalPreferences] =
     useState<UserLearningPreferences>(preferences);
@@ -124,9 +125,13 @@ export function SettingsPanel({
     handlePreferenceChange("topicPreferences", newTopics);
   };
 
-  const handleSave = () => {
-    onPreferencesChange(localPreferences);
-    onClose();
+  const handleSave = async () => {
+    const success = await onPreferencesChange(localPreferences);
+    if (success) {
+      onClose();
+    } else {
+      alert("Không thể lưu cài đặt");
+    }
   };
 
   const handleReset = () => {
@@ -502,8 +507,9 @@ export function SettingsPanel({
             <Button
               onClick={handleSave}
               className="bg-blue-600 hover:bg-blue-700"
+              disabled={isSaving}
             >
-              Lưu cài đặt
+              {isSaving ? "Đang lưu..." : "Lưu cài đặt"}
             </Button>
           </div>
         </div>
