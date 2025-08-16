@@ -88,7 +88,8 @@ export async function POST(request: NextRequest) {
         await updateLearningSession(
           user.id,
           submission.storyId,
-          submission.timeSpent || 0
+          submission.timeSpent || 0,
+          user.tenantId
         );
 
         // Update vocabulary progress if applicable
@@ -258,8 +259,13 @@ async function validateDatabaseExercise(submission: ExerciseSubmission) {
 async function updateLearningSession(
   userId: string,
   storyId: string,
-  timeSpent: number
+  timeSpent: number,
+  tenantId?: string
 ) {
+  const sessionTenantId = tenantId || "default";
+  if (!tenantId) {
+    logger.warn("Missing tenantId in updateLearningSession, using 'default'");
+  }
   // Find or create learning session for today
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -294,7 +300,7 @@ async function updateLearningSession(
         endedAt: new Date(),
         timeSpentSec: timeSpent,
         interactionCount: 1,
-        tenantId: "default", // You might want to get this from the user context
+        tenantId: sessionTenantId,
       },
     });
   }
