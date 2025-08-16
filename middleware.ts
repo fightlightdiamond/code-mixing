@@ -2,6 +2,15 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { verifyJwt } from "@/core/auth/jwt";
 import type { JWTPayload } from "@/types/api";
+import jwt from "jsonwebtoken";
+import logger from "@/lib/logger";
+
+interface JwtPayload {
+  userId: string;
+  role: string;
+  email: string;
+  tenantId?: string;
+}
 
 // Security headers
 const securityHeaders = {
@@ -110,7 +119,7 @@ export function middleware(request: NextRequest) {
       return addSecurityHeaders(response);
     } catch (error) {
       // Invalid token, redirect to login
-      console.error("Token verification failed:", error);
+      logger.error("Token verification failed", undefined, error as Error);
       return NextResponse.redirect(new URL("/login", request.url));
     }
   }

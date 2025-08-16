@@ -237,11 +237,7 @@ export function VocabularyPopup({
         {/* Arrow pointing to the word */}
         <div
           className="absolute w-0 h-0 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent border-t-blue-200"
-          style={{
-            left: "50%",
-            top: "-8px",
-            transform: "translateX(-50%)",
-          }}
+          style={{ left: "50%", top: "-8px", transform: "translateX(-50%)" }}
         />
       </div>
     </>
