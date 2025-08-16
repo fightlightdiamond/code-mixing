@@ -44,6 +44,10 @@ export function useVocabularyReview(
     ...config,
   });
 
+  const [progress, setProgress] = useState<VocabularyProgress[]>(
+    vocabularyProgress
+  );
+
   const [reviewSchedule, setReviewSchedule] = useState<ReviewSchedule[]>([]);
   const [todayReviews, setTodayReviews] = useState<ReviewSchedule[]>([]);
   const [upcomingReviews, setUpcomingReviews] = useState<ReviewSchedule[]>([]);
@@ -144,16 +148,17 @@ export function useVocabularyReview(
   );
 
   // Generate personalized review schedule
-  const generateReviewSchedule = useCallback(() => {
-    const now = new Date();
-    const schedule: ReviewSchedule[] = [];
+  const generateReviewSchedule = useCallback(
+    (currentProgress: VocabularyProgress[] = progress) => {
+      const now = new Date();
+      const schedule: ReviewSchedule[] = [];
 
-    vocabularyProgress.forEach((vocab) => {
-      const daysSinceLastReview = Math.floor(
-        (now.getTime() - vocab.lastReviewed.getTime()) / (1000 * 60 * 60 * 24)
-      );
+      currentProgress.forEach((vocab) => {
+        const daysSinceLastReview = Math.floor(
+          (now.getTime() - vocab.lastReviewed.getTime()) / (1000 * 60 * 60 * 24)
+        );
 
-      const reviewItem: ReviewSchedule = {
+        const reviewItem: ReviewSchedule = {
         word: vocab.word,
         nextReviewDate: vocab.nextReview,
         priority: calculateReviewPriority(vocab),
@@ -165,17 +170,19 @@ export function useVocabularyReview(
       schedule.push(reviewItem);
     });
 
-    // Sort by priority and next review date
-    schedule.sort((a, b) => {
-      const priorityOrder = { high: 3, medium: 2, low: 1 };
-      if (priorityOrder[a.priority] !== priorityOrder[b.priority]) {
-        return priorityOrder[b.priority] - priorityOrder[a.priority];
-      }
-      return a.nextReviewDate.getTime() - b.nextReviewDate.getTime();
-    });
+      // Sort by priority and next review date
+      schedule.sort((a, b) => {
+        const priorityOrder = { high: 3, medium: 2, low: 1 };
+        if (priorityOrder[a.priority] !== priorityOrder[b.priority]) {
+          return priorityOrder[b.priority] - priorityOrder[a.priority];
+        }
+        return a.nextReviewDate.getTime() - b.nextReviewDate.getTime();
+      });
 
-    setReviewSchedule(schedule);
-  }, [vocabularyProgress, calculateReviewPriority]);
+      setReviewSchedule(schedule);
+    },
+    [progress, calculateReviewPriority]
+  );
 
   // Filter reviews for today and upcoming
   const categorizeReviews = useCallback(() => {
@@ -258,10 +265,10 @@ export function useVocabularyReview(
   // Update vocabulary progress after review
   const updateVocabularyProgress = useCallback(
     async (word: string, difficulty: "again" | "hard" | "good" | "easy") => {
-      const vocabIndex = vocabularyProgress.findIndex((v) => v.word === word);
+      const vocabIndex = progress.findIndex((v) => v.word === word);
       if (vocabIndex === -1) return;
 
-      const vocab = vocabularyProgress[vocabIndex];
+      const vocab = progress[vocabIndex];
       const nextReviewDate = calculateNextReviewDate(vocab, difficulty);
 
       // Calculate new mastery level
@@ -308,15 +315,12 @@ export function useVocabularyReview(
       // await api.updateVocabularyProgress(updatedVocab);
 
       // Update local state
-      vocabularyProgress[vocabIndex] = updatedVocab;
-      generateReviewSchedule();
+      const updatedProgress = [...progress];
+      updatedProgress[vocabIndex] = updatedVocab;
+      setProgress(updatedProgress);
+      generateReviewSchedule(updatedProgress);
     },
-    [
-      vocabularyProgress,
-      calculateNextReviewDate,
-      generateReviewSchedule,
-      srsConfig.masteryThreshold,
-    ]
+    [progress, calculateNextReviewDate, generateReviewSchedule, srsConfig.masteryThreshold]
   );
 
   // Initialize and update schedule
@@ -329,6 +333,7 @@ export function useVocabularyReview(
   }, [categorizeReviews]);
 
   return {
+    progress,
     reviewSchedule,
     todayReviews,
     upcomingReviews,
