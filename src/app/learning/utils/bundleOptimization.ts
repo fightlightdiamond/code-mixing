@@ -1,5 +1,6 @@
 import { logger } from '@/lib/logger';
 
+
 export interface WebVitalsMetric {
   id: string;
   name: string;
@@ -193,9 +194,7 @@ export const performanceMonitoring = {
     } catch (error) {
       const endTime = performance.now();
       logger.error(
-        `${apiName} API error after ${endTime - startTime}ms:`,
-        error
-      );
+        `${apiName} API error after ${endTime - startTime}ms:`, undefined, error as Error);
       throw error;
     }
   },
@@ -282,10 +281,10 @@ export const serviceWorkerUtils = {
 
     try {
       const registration = await navigator.serviceWorker.register(swUrl);
-      logger.info("Service Worker registered successfully:", registration);
+      logger.info("Service Worker registered successfully", { registration });
       return registration;
     } catch (error) {
-      logger.error("Service Worker registration failed:", error);
+      logger.error("Service Worker registration failed:", undefined, error as Error);
       return null;
     }
   },
@@ -296,7 +295,7 @@ export const serviceWorkerUtils = {
       await registration.update();
       logger.info("Service Worker updated successfully");
     } catch (error) {
-      logger.error("Service Worker update failed:", error);
+      logger.error("Service Worker update failed:", undefined, error as Error);
     }
   },
 
