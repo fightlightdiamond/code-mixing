@@ -1,4 +1,5 @@
 import type { ChunkType, DifficultyLevel, StoryType } from "@prisma/client";
+import type { ReactNode } from "react";
 
 // Story-related types
 export interface LearningStory {
@@ -22,6 +23,7 @@ export interface StoryChunk {
   chunkOrder: number;
   chunkText: string;
   type: ChunkType;
+  processedText?: ReactNode;
 }
 
 // Vocabulary-related types
