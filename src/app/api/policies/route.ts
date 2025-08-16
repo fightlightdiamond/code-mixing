@@ -4,9 +4,6 @@ import { prisma } from "@/core/prisma";
 import { Prisma, PrismaClient } from "@prisma/client";
 import { caslGuardWithPolicies } from "@/core/auth/casl.guard";
 import { getUserFromRequest } from "@/core/auth/getUser";
-import type { Prisma, PrismaClient } from "@prisma/client";
-
-type PrismaWithPolicy = PrismaClient & { resourcePolicy?: Prisma.ResourcePolicyDelegate };
 
 // getUserFromRequest imported from core auth
 
@@ -52,7 +49,15 @@ export async function POST(request: NextRequest) {
   if (!auth.allowed) return NextResponse.json({ error: auth.error || "Forbidden" }, { status: 403 });
 
   const body = await request.json();
-  const { name, resource, effect, conditions, priority = 0, tenantId = null, isActive = true } = body || {};
+  const {
+    name,
+    resource,
+    effect,
+    conditions,
+    priority = 0,
+    tenantId = null,
+    isActive = true,
+  } = body || {};
 
   if (!name || !resource || !effect) {
     return NextResponse.json({ error: "name, resource and effect are required" }, { status: 400 });
