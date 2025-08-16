@@ -3,6 +3,8 @@
  * Replaces scattered console.log statements with structured logging
  */
 
+import LogRocket, { isLogRocketEnabled } from './logrocket';
+
 export enum LogLevel {
   DEBUG = 0,
   INFO = 1,
@@ -74,9 +76,12 @@ class Logger {
         break;
     }
 
-    // In production, you might want to send logs to external service
-    if (!this.isDevelopment && level >= LogLevel.ERROR) {
-      // TODO: Send to external logging service (e.g., Sentry, LogRocket)
+    if (!this.isDevelopment && level >= LogLevel.ERROR && isLogRocketEnabled) {
+      if (error) {
+        LogRocket.captureException(error, { extra: context });
+      } else {
+        LogRocket.captureMessage(formattedMessage, { extra: context });
+      }
     }
   }
 
