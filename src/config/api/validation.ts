@@ -105,12 +105,19 @@ export const USER_VALIDATION_RULES: ValidationRules = {
 export function validateField(value: unknown, rule: ValidationRule): string[] {
   const errors: string[] = [];
 
-  if (rule.required && (value === undefined || value === null || (typeof value === 'string' && value === ''))) {
+  if (
+    rule.required &&
+    (value === undefined || value === null || (typeof value === 'string' && value === ''))
+  ) {
     errors.push('This field is required');
     return errors;
   }
 
-  if (value === undefined || value === null || (typeof value === 'string' && value === '')) {
+  if (
+    value === undefined ||
+    value === null ||
+    (typeof value === 'string' && value === '')
+  ) {
     return errors; // Skip other validations if not required and empty
   }
 
@@ -135,16 +142,18 @@ export function validateField(value: unknown, rule: ValidationRule): string[] {
     }
   }
 
-  if (rule.enum) {
-    if (typeof value !== 'string' || !rule.enum.includes(value)) {
-      errors.push(`Must be one of: ${rule.enum.join(', ')}`);
-    }
+  if (rule.enum && (typeof value !== 'string' || !rule.enum.includes(value))) {
+    errors.push(`Must be one of: ${rule.enum.join(', ')}`);
   }
 
   return errors;
 }
 
-export function validateObject(obj: Record<string, unknown>, rules: ValidationRules): Record<string, string[]> {
+export function validateObject(
+  obj: Record<string, unknown>,
+  rules: ValidationRules
+): Record<string, string[]> {
+
   const errors: Record<string, string[]> = {};
 
   for (const [field, rule] of Object.entries(rules)) {
