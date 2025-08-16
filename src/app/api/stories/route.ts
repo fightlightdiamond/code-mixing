@@ -6,7 +6,7 @@ import { generateStoryChunks, calculateStoryStats } from "@/lib/story-chunker";
 import { getUserFromRequest } from "@/core/auth/getUser";
 import logger from "@/lib/logger";
 import { z } from "zod";
-import { StoryType, DifficultyLevel } from "@prisma/client";
+import { StoryType, DifficultyLevel, Prisma } from "@prisma/client";
 
 const storySchema = z.object({
   title: z.string().min(1),
@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit;
 
     // Build where clause for search
-    const where: any = {};
+    const where: Prisma.StoryWhereInput = {};
 
     if (search) {
       where.OR = [
