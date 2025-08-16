@@ -4,6 +4,7 @@ import { prisma } from "@/core/prisma";
 import { getUserFromRequest } from "@/core/auth/getUser";
 import logger from "@/lib/logger";
 import { z } from "zod";
+import type { User } from "@/types/api";
 
 // Validation schemas
 const progressUpdateSchema = z.object({
@@ -31,9 +32,11 @@ export type LearningSessionInput = z.infer<typeof learningSessionSchema>;
 
 // POST /api/learning/progress/update - Update user learning progress
 export async function POST(request: NextRequest) {
+  let user: User | null = null;
+
   try {
     // Get user from request
-    const user = await getUserFromRequest(request);
+    user = await getUserFromRequest(request);
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -52,8 +55,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body: unknown = await request.json();
-    const updateType = body.type || "lesson_progress"; // lesson_progress, learning_session, batch
+
+    const rawBody = await request.json();
+    if (typeof rawBody !== "object" || rawBody === null) {
+      return NextResponse.json(
+        { error: "Invalid request body" },
+        { status: 400 }
+      );
+    }
+
+    const body = rawBody as Record<string, unknown>;
+    const updateType =
+      typeof body.type === "string" ? body.type : "lesson_progress"; // lesson_progress, learning_session, batch
+
 
     let results: unknown[] = [];
 
@@ -63,6 +77,7 @@ export async function POST(request: NextRequest) {
         if (!validation.success) {
           return NextResponse.json(
             { error: `Invalid lesson progress data: ${validation.error.message}` },
+
             { status: 400 }
           );
         }
@@ -74,6 +89,7 @@ export async function POST(request: NextRequest) {
         break;
       }
       case "learning_session": {
+
         const validation = learningSessionSchema.safeParse(body);
         if (!validation.success) {
           return NextResponse.json(
@@ -89,6 +105,7 @@ export async function POST(request: NextRequest) {
         break;
       }
       case "batch": {
+
         const validation = batchProgressUpdateSchema.safeParse(body);
         if (!validation.success) {
           return NextResponse.json(

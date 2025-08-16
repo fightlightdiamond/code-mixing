@@ -9,6 +9,8 @@ import {
 import { getStatusClasses, LESSON_STATUS_COLORS } from "@/config/ui/status-colors";
 import { buildLessonsListQuery, type Lesson } from "@/features/lessons/hooks";
 
+type LessonStatus = keyof typeof LESSON_STATUS_COLORS;
+
 export default function AdminLessonList() {
   const { search, status } = useLessonsFilters();
   const { setSearch, setStatus, reset } = useLessonsFilterActions();
@@ -106,7 +108,10 @@ export default function AdminLessonList() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
-                      className={getStatusClasses(LESSON_STATUS_COLORS, lesson.status as any)}
+                      className={getStatusClasses(
+                        LESSON_STATUS_COLORS,
+                        lesson.status as LessonStatus
+                      )}
                     >
                       {lesson.status}
                     </span>
