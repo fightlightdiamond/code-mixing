@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/core/prisma";
 import { Prisma } from "@prisma/client";
 import { caslGuardWithPolicies } from "@/core/auth/casl.guard";
