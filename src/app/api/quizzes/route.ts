@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { caslGuard, RequiredRule } from "@/core/auth/casl.guard";
 import { prisma } from "@/core/prisma";
 import { getUserFromRequest } from "@/core/auth/getUser";
 import logger from "@/lib/logger";
+import { Prisma } from "@prisma/client";
 
 // GET /api/quizzes - Lấy danh sách quizzes
 export async function GET(request: NextRequest) {
@@ -32,7 +34,7 @@ export async function GET(request: NextRequest) {
     const lessonId = searchParams.get("lessonId");
 
     // Build where clause
-    const where: any = {};
+    const where: Prisma.QuizWhereInput = {};
 
     if (search) {
       where.OR = [
@@ -67,7 +69,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(quizzes);
   } catch (error) {
-    logger.error("Error fetching quizzes", undefined, error);
+    logger.error("Error fetching quizzes", undefined, error as Error);
     return NextResponse.json(
       { error: "Failed to fetch quizzes" },
       { status: 500 }
@@ -137,7 +139,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(quiz, { status: 201 });
   } catch (error) {
-    logger.error("Error creating quiz", undefined, error);
+    logger.error("Error creating quiz", undefined, error as Error);
     return NextResponse.json(
       { error: "Failed to create quiz" },
       { status: 500 }
