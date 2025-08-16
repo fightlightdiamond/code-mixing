@@ -65,6 +65,7 @@ import type {
   VocabularyData,
   ExerciseResult,
 } from "../types/learning";
+import { useUserPreferences } from "../hooks/useUserPreferences";
 
 interface LearningAppProps {
   story: LearningStory;
@@ -125,6 +126,7 @@ export const LearningApp = React.memo(function LearningApp({
   } | null>(null);
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [isStoryComplete, setIsStoryComplete] = useState(false);
+  const { preferences, savePreferences, isSaving } = useUserPreferences();
 
   // Load exercises when story changes
   useEffect(() => {
@@ -238,7 +240,14 @@ export const LearningApp = React.memo(function LearningApp({
         return <ProgressTracker userId="current-user" storyId={story.id} />;
 
       case "settings":
-        return <SettingsPanel onClose={() => setActivePanel("story")} />;
+        return (
+          <SettingsPanel
+            preferences={preferences}
+            onPreferencesChange={savePreferences}
+            onClose={() => setActivePanel("story")}
+            isSaving={isSaving}
+          />
+        );
 
       case "accessibility":
         return <AccessibilityPanel onClose={() => setActivePanel("story")} />;
