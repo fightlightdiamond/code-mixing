@@ -30,6 +30,7 @@ export function useUserPreferences() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Load preferences from localStorage on mount
   useEffect(() => {
@@ -78,7 +79,7 @@ export function useUserPreferences() {
     }
   }, [preferences.theme]);
 
-  // Save preferences to localStorage
+  // Save preferences to localStorage and server
   const savePreferences = useCallback(
     async (newPreferences: UserLearningPreferences) => {
       setIsSaving(true);
@@ -97,6 +98,16 @@ export function useUserPreferences() {
 
         localStorage.setItem(STORAGE_KEY, JSON.stringify(newPreferences));
         setPreferences(newPreferences);
+
+        const response = await fetch("/api/user/preferences", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(newPreferences),
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
 
         return true;
       } catch (err) {

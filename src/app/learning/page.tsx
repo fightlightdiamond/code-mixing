@@ -74,6 +74,7 @@ function LearningPageContent() {
     isLoading: preferencesLoading,
     isSaving: preferencesSaving,
     savePreferences,
+    isSaving,
     getStoryFilters,
   } = useUserPreferences();
 
