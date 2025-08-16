@@ -132,7 +132,7 @@ const response = await api<User[]>('/api/users');
 
 ### 2. Manual Token Refresh
 ```typescript
-import { refreshToken } from '@/core/api/api';
+import { refreshToken } from '@/core/api/tokenManager';
 
 try {
   const newToken = await refreshToken();

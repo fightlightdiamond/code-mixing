@@ -8,7 +8,6 @@ import { Suspense, useEffect, useState } from "react";
 import AuthContextBridge from "@/core/auth/AuthContextBridge";
 import { TokenRefreshProvider } from "@/components/auth/TokenRefreshProvider";
 import { TokenDebugPanel } from "@/components/debug/TokenDebugPanel";
-import { tokenManager } from "@/core/api/api";
 
 function DevPanel() {
     if (process.env.NODE_ENV !== "development") return null;

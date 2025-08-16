@@ -1,7 +1,7 @@
 import { logger } from '@/lib/logger';
 import { useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { isTokenExpiringSoon, refreshToken } from '@/core/api/api';
+import { isTokenExpiringSoon, refreshToken } from '@/core/api/tokenManager';
 
 interface UseTokenRefreshOptions {
   /**
