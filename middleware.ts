@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import jwt from "jsonwebtoken";
@@ -114,7 +115,7 @@ export function middleware(request: NextRequest) {
       return addSecurityHeaders(response);
     } catch (error) {
       // Invalid token, redirect to login
-      console.error("Token verification failed:", error);
+      logger.error("Token verification failed:", error);
       return NextResponse.redirect(new URL("/login", request.url));
     }
   }

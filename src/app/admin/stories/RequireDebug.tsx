@@ -1,4 +1,5 @@
 "use client";
+import { logger } from '@/lib/logger';
 
 import { useAbility } from "@/core/auth/AbilityProvider";
 import { useRouter } from "next/navigation";
@@ -45,29 +46,29 @@ export function RequireDebug({ action, subject, children }: RequireDebugProps) {
       timestamp: new Date().toISOString()
     };
 
-    console.log("🔍 RequireDebug Info:", debug);
+    logger.info("🔍 RequireDebug Info:", debug);
 
     // Chỉ check khi đã load xong auth
     if (isLoading) {
-      console.log("⏳ Still loading auth state...");
+      logger.info("⏳ Still loading auth state...");
       return;
     }
 
     // Nếu chưa có user hoặc rules, coi như chưa xác thực
     if (!user || !ability) {
-      console.log("❌ No user or ability:", { user: !!user, ability: !!ability });
+      logger.info("❌ No user or ability:", { user: !!user, ability: !!ability });
       router.push("/login");
       return;
     }
 
     const allowed = ability.can(action, subject);
-    console.log(`🔐 Permission check: ${action} on ${subject} = ${allowed}`);
+    logger.info(`🔐 Permission check: ${action} on ${subject} = ${allowed}`);
 
     if (!allowed) {
-      console.log("🚫 Access denied, redirecting to /unauthorized");
+      logger.info("🚫 Access denied, redirecting to /unauthorized");
       router.push("/unauthorized");
     } else {
-      console.log("✅ Access granted!");
+      logger.info("✅ Access granted!");
       setChecked(true);
     }
   }, [ability, action, subject, router, user, isLoading, debugInfo]);

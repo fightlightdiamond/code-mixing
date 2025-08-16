@@ -1,4 +1,5 @@
 "use client";
+import { logger } from '@/lib/logger';
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useAbility } from "@/core/auth/AbilityProvider";
@@ -30,7 +31,7 @@ export default function AuthDebugger() {
       }
     };
 
-    console.log("🔍 Auth Debug Info:", debug);
+    logger.info("🔍 Auth Debug Info:", debug);
     setDebugInfo(debug);
   }, [user, isLoading, isAuthenticated, ability]);
 

@@ -1,4 +1,5 @@
 "use client";
+import { logger } from '@/lib/logger';
 
 import { useState, useCallback, useRef } from "react";
 
@@ -130,7 +131,7 @@ export function useVocabularyAudio(options: UseVocabularyAudioOptions = {}) {
           audio.removeEventListener("loadstart", handleLoadStart);
         }, 1000);
       } catch (error) {
-        console.error("Error playing pronunciation:", error);
+        logger.error("Error playing pronunciation:", error);
 
         // Try fallback to text-to-speech
         if ("speechSynthesis" in window && audioUrl) {
@@ -201,7 +202,7 @@ export function useVocabularyAudio(options: UseVocabularyAudioOptions = {}) {
 
         audioCache.current.set(word, audio);
       } catch (error) {
-        console.error("Error preloading audio:", error);
+        logger.error("Error preloading audio:", error);
       }
     },
     [cacheSize]

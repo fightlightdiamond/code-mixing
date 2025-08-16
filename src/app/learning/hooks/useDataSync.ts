@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useOfflineProgress } from "./useOfflineProgress";
 import { useOfflineManager } from "./useOfflineManager";
@@ -242,7 +243,7 @@ export function useDataSync(userId: string) {
           result.syncedItems.learningProgress = true;
         }
       } catch (error) {
-        console.error("Failed to sync learning progress:", error);
+        logger.error("Failed to sync learning progress:", error);
       }
     }
 
@@ -271,7 +272,7 @@ export function useDataSync(userId: string) {
           result.syncedItems.vocabularyProgress = merged.length;
         }
       } catch (error) {
-        console.error("Failed to sync vocabulary progress:", error);
+        logger.error("Failed to sync vocabulary progress:", error);
       }
     }
 
@@ -287,7 +288,7 @@ export function useDataSync(userId: string) {
         await uploadExerciseResults(pendingData.exerciseResults);
         result.syncedItems.exerciseResults = pendingData.exerciseResults.length;
       } catch (error) {
-        console.error("Failed to sync exercise results:", error);
+        logger.error("Failed to sync exercise results:", error);
       }
     }
 
@@ -309,7 +310,7 @@ export function useDataSync(userId: string) {
         await uploadLearningStats(mergedStats);
         result.syncedItems.learningStats = true;
       } catch (error) {
-        console.error("Failed to sync learning stats:", error);
+        logger.error("Failed to sync learning stats:", error);
       }
     }
 
@@ -324,7 +325,7 @@ export function useDataSync(userId: string) {
       try {
         await uploadLearningSessions(pendingData.sessions);
       } catch (error) {
-        console.error("Failed to sync learning sessions:", error);
+        logger.error("Failed to sync learning sessions:", error);
       }
     }
 
@@ -558,7 +559,7 @@ export function useDataSync(userId: string) {
     data: any
   ) => {
     // Implementation depends on conflict type
-    console.log("Uploading conflict resolution:", conflict, data);
+    logger.info("Uploading conflict resolution:", conflict, data);
   };
 
   const updateLocalData = async (conflict: SyncConflict, data: any) => {

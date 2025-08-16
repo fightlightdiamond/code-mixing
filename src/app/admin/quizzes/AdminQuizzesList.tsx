@@ -1,4 +1,5 @@
 "use client";
+import { logger } from '@/lib/logger';
 
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
@@ -43,7 +44,7 @@ export default function AdminQuizzesList() {
       await createMutation.mutateAsync(data);
       setShowCreateModal(false);
     } catch (error) {
-      console.error("Error creating quiz:", error);
+      logger.error("Error creating quiz:", error);
     }
   };
 
@@ -55,7 +56,7 @@ export default function AdminQuizzesList() {
       setShowEditModal(false);
       setSelectedId(null);
     } catch (error) {
-      console.error("Error updating quiz:", error);
+      logger.error("Error updating quiz:", error);
     }
   };
 
@@ -65,7 +66,7 @@ export default function AdminQuizzesList() {
     try {
       await deleteMutation.mutateAsync(id);
     } catch (error) {
-      console.error("Error deleting quiz:", error);
+      logger.error("Error deleting quiz:", error);
     }
   };
 

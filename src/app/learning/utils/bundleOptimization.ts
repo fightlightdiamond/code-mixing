@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 /**
  * Bundle optimization utilities for the learning application
  */
@@ -141,7 +142,7 @@ export const performanceMonitoring = {
     renderFn();
     const endTime = performance.now();
 
-    console.log(`${componentName} render time: ${endTime - startTime}ms`);
+    logger.info(`${componentName} render time: ${endTime - startTime}ms`);
 
     // Send to analytics if needed
     if (window.gtag) {
@@ -163,7 +164,7 @@ export const performanceMonitoring = {
       const result = await apiCall();
       const endTime = performance.now();
 
-      console.log(`${apiName} API time: ${endTime - startTime}ms`);
+      logger.info(`${apiName} API time: ${endTime - startTime}ms`);
 
       // Send to analytics if needed
       if (window.gtag) {
@@ -176,7 +177,7 @@ export const performanceMonitoring = {
       return result;
     } catch (error) {
       const endTime = performance.now();
-      console.error(
+      logger.error(
         `${apiName} API error after ${endTime - startTime}ms:`,
         error
       );
@@ -188,7 +189,7 @@ export const performanceMonitoring = {
   reportWebVitals: (metric: any) => {
     if (typeof window === "undefined") return;
 
-    console.log(metric);
+    logger.info(metric);
 
     // Send to analytics
     if (window.gtag) {
@@ -265,10 +266,10 @@ export const serviceWorkerUtils = {
 
     try {
       const registration = await navigator.serviceWorker.register(swUrl);
-      console.log("Service Worker registered successfully:", registration);
+      logger.info("Service Worker registered successfully:", registration);
       return registration;
     } catch (error) {
-      console.error("Service Worker registration failed:", error);
+      logger.error("Service Worker registration failed:", error);
       return null;
     }
   },
@@ -277,9 +278,9 @@ export const serviceWorkerUtils = {
   update: async (registration: ServiceWorkerRegistration) => {
     try {
       await registration.update();
-      console.log("Service Worker updated successfully");
+      logger.info("Service Worker updated successfully");
     } catch (error) {
-      console.error("Service Worker update failed:", error);
+      logger.error("Service Worker update failed:", error);
     }
   },
 

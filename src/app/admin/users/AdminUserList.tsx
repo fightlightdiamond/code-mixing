@@ -1,4 +1,5 @@
 "use client";
+import { logger } from '@/lib/logger';
 
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -46,7 +47,7 @@ export default function AdminUserList() {
       setShowCreateForm(false);
       setFormData({ name: "", email: "", role: "student" });
     } catch (error) {
-      console.error("Error creating user:", error);
+      logger.error("Error creating user:", error);
     }
   };
 
@@ -62,7 +63,7 @@ export default function AdminUserList() {
       setEditingUser(null);
       setFormData({ name: "", email: "", role: "student" });
     } catch (error) {
-      console.error("Error updating user:", error);
+      logger.error("Error updating user:", error);
     }
   };
 
@@ -73,7 +74,7 @@ export default function AdminUserList() {
       try {
         await deleteUser.mutateAsync(user.id);
       } catch (error) {
-        console.error("Error deleting user:", error);
+        logger.error("Error deleting user:", error);
       }
     }
   };

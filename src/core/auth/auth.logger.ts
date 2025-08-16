@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 // Simple logger for authorization events
 export class AuthLogger {
   static logUnauthorizedAccess(
@@ -7,7 +8,7 @@ export class AuthLogger {
     subject: string,
     metadata?: Record<string, unknown>
   ) {
-    console.warn(`[AUTH] Unauthorized access attempt:`, {
+    logger.warn(`[AUTH] Unauthorized access attempt:`, {
       userId,
       tenantId,
       action,
@@ -25,7 +26,7 @@ export class AuthLogger {
     reason: string,
     metadata?: Record<string, unknown>
   ) {
-    console.warn(`[AUTH] Forbidden access:`, {
+    logger.warn(`[AUTH] Forbidden access:`, {
       userId,
       tenantId,
       action,

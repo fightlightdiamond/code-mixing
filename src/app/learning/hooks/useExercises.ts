@@ -1,4 +1,5 @@
 "use client";
+import { logger } from '@/lib/logger';
 
 import { useState, useEffect } from "react";
 import type { Exercise, ExerciseResult } from "../types/learning";
@@ -32,7 +33,7 @@ export function useExercises(storyId: string): UseExercisesReturn {
       const data = await response.json();
       setExercises(data.exercises || []);
     } catch (err) {
-      console.error("Error fetching exercises:", err);
+      logger.error("Error fetching exercises:", err);
       setError(err instanceof Error ? err.message : "Failed to load exercises");
 
       // Fallback to mock exercises for development
@@ -64,9 +65,9 @@ export function useExercises(storyId: string): UseExercisesReturn {
       }
 
       const data = await response.json();
-      console.log("Exercise result submitted:", data);
+      logger.info("Exercise result submitted:", data);
     } catch (err) {
-      console.error("Error submitting exercise result:", err);
+      logger.error("Error submitting exercise result:", err);
       // Don't throw error to avoid breaking user experience
       // Results will be cached locally and can be synced later
     }

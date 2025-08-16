@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 // Performance monitoring and analytics for React Query
 interface QueryMetrics {
   queryKey: readonly unknown[];
@@ -130,7 +131,7 @@ class QueryMonitor {
   private sendToAnalytics(type: 'query' | 'mutation', metrics: QueryMetrics | MutationMetrics) {
     // Implement your analytics service integration here
     // Example: send to DataDog, New Relic, custom analytics, etc.
-    console.log(`Analytics: ${type}`, metrics);
+    logger.info(`Analytics: ${type}`, metrics);
   }
 
   // Clear metrics (useful for testing)

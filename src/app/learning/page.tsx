@@ -1,4 +1,5 @@
 "use client";
+import { logger } from '@/lib/logger';
 
 import React, { useState } from "react";
 import { Require } from "@/core/auth/Require";
@@ -161,7 +162,7 @@ function LearningPageContent() {
 
   const handleStartVocabularyReview = () => {
     // TODO: Navigate to vocabulary review page
-    console.log("Starting vocabulary review...");
+    logger.info("Starting vocabulary review...");
   };
 
   const handleShowDownloadManager = () => {

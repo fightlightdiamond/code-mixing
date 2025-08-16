@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 /**
  * @fileoverview Enterprise-grade React Query API layer
  * 
@@ -180,11 +181,11 @@ export function configureApi(config: {
 }) {
   // Apply global configuration
   if (config.enableMonitoring && process.env.NODE_ENV === 'development') {
-    console.log('🔍 API monitoring enabled');
+    logger.info('🔍 API monitoring enabled');
   }
   
   if (config.enableAnalytics && process.env.NODE_ENV === 'production') {
-    console.log('📊 API analytics enabled');
+    logger.info('📊 API analytics enabled');
   }
   
   // Store config for use by other modules
