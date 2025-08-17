@@ -153,7 +153,7 @@ export function useAudioPlayer({
       await audio.play();
       setState((prev) => ({ ...prev, isPlaying: true }));
     } catch (error) {
-      logger.error("Error playing audio:", error);
+      logger.error("Error playing audio:", undefined, error as Error);
       setState((prev) => ({
         ...prev,
         error: "Không thể phát âm thanh",

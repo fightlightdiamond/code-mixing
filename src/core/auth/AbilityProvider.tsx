@@ -51,7 +51,7 @@ export default function AbilityProvider({
 
       return buildAbility(rules ?? undefined, context);
     } catch (error) {
-      logger.error('Error building ability in AbilityProvider:', error);
+      logger.error('Error building ability in AbilityProvider:', undefined, error as Error);
       // Return a default ability with no permissions as fallback
       return buildAbility(undefined, undefined);
     }
@@ -80,7 +80,7 @@ export function useSafeAbility(): AppAbility | null {
   try {
     return useAbility();
   } catch (error) {
-    logger.error('Error accessing ability context:', error);
+    logger.error('Error accessing ability context:', undefined, error as Error);
     return null;
   }
 }
