@@ -10,6 +10,7 @@ import React, {
   ReactNode,
 } from "react";
 import { HighContrastManager, AriaLiveAnnouncer } from "../utils/accessibility";
+import { z } from "zod";
 
 const accessibilitySettingsSchema = z.object({
   highContrast: z.boolean(),
@@ -86,15 +87,22 @@ export function AccessibilityProvider({
           setSettings((prev) => ({ ...prev, ...result.data }));
         } else {
           logger.warn(
-            "Invalid saved accessibility settings, using defaults:",
+            "Invalid saved accessibility settings:",
+            result.error
           );
-          setSettings(defaultSettings);
+          setSettings((prev) => ({
+            ...defaultSettings,
+            highContrast: prev.highContrast,
+            reducedMotion: prev.reducedMotion,
+          }));
         }
       } catch (error) {
-          logger.warn("Failed to parse saved accessibility settings", {
-              error: String(error),
-          });
-        setSettings(defaultSettings);
+        logger.warn("Failed to parse saved accessibility settings:", error);
+        setSettings((prev) => ({
+          ...defaultSettings,
+          highContrast: prev.highContrast,
+          reducedMotion: prev.reducedMotion,
+        }));
       }
     }
 
