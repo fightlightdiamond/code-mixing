@@ -147,6 +147,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  // Check if user is logged in on mount
+  useEffect(() => {
+    void checkAuth();
+  }, [checkAuth]);
+
   const refreshUserToken = useCallback(async (): Promise<boolean> => {
     try {
       const newToken = await refreshToken();
