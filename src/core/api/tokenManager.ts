@@ -1,4 +1,8 @@
-import type { TokenData, RefreshTokenResponse } from "./types";
+import type {
+  TokenData,
+  RefreshTokenResponse,
+  TokenStatus,
+} from "./types";
 
 /* ======================================
  * Utils
@@ -204,4 +208,19 @@ const performRefresh = async (
 export const refreshToken = (): Promise<string | null> =>
   tokenManager.refresh(performRefresh);
 
+export const getTokenStatus = (): TokenStatus => {
+  const access = tokenManager.getAccessTokenSync();
+  const refresh = tokenManager.getRefreshTokenSync();
+
+  return {
+    hasAccessToken: !!access,
+    accessTokenLength: access?.length ?? 0,
+    hasRefreshToken: !!refresh,
+    refreshTokenLength: refresh?.length ?? 0,
+    isExpiringSoon: tokenManager.isExpiringSoon(),
+  };
+};
+
 export const clearAuthToken = (): void => tokenManager.clear();
+
+export type { TokenStatus } from "./types";

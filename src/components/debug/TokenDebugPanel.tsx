@@ -2,9 +2,12 @@
 import { logger } from '@/lib/logger';
 
 import { useState, useEffect } from 'react';
-import { getTokenStatus, refreshToken, TokenStatus } from '@/core/api/api';
+import {
+  getTokenStatus,
+  refreshToken,
+  type TokenStatus,
+} from '@/core/api/tokenManager';
 import { useAuth } from '@/contexts/AuthContext';
-import { logger } from '@/lib/logger';
 
 export function TokenDebugPanel() {
   const [tokenStatus, setTokenStatus] = useState<TokenStatus | null>(null);
