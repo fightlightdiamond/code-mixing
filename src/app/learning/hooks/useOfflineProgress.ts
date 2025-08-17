@@ -49,7 +49,8 @@ const STORAGE_KEYS = {
   PENDING_SYNC: "pending_sync_offline",
 };
 
-const isStoredSession = (session: any): session is StoredSession => {
+const isValidStoredSession = (session: any): session is StoredSession => {
+
   return (
     session &&
     typeof session.id === "string" &&
@@ -63,18 +64,19 @@ const isStoredSession = (session: any): session is StoredSession => {
   );
 };
 
-const parseStoredSessions = (): StoredSession[] => {
+const getStoredSessions = (): StoredSession[] => {
+
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.LEARNING_SESSIONS);
     if (!raw) return [];
     const parsed = JSON.parse(raw) as unknown;
     if (!Array.isArray(parsed)) return [];
-    return parsed.filter(isStoredSession);
-  } catch (error) {
-    logger.error("Failed to parse stored sessions:", error);
+    return parsed.filter(isValidStoredSession);
+  } catch {
     return [];
   }
 };
+
 
 const toStoredSession = (session: LearningSession): StoredSession => ({
   id: session.id,
@@ -86,6 +88,7 @@ const toStoredSession = (session: LearningSession): StoredSession => ({
   exercisesCompleted: session.exercisesCompleted,
   completed: session.completed,
 });
+
 
 export function useOfflineProgress(userId: string) {
   const [offlineData, setOfflineData] = useState<OfflineProgressData>({
@@ -199,14 +202,21 @@ export function useOfflineProgress(userId: string) {
       setCurrentSession(updatedSession);
 
       // Save session to localStorage
-      const sessions = parseStoredSessions();
-      const stored = toStoredSession(updatedSession);
-      const sessionIndex = sessions.findIndex((s) => s.id === stored.id);
+      const sessions = getStoredSessions();
+      const sessionIndex = sessions.findIndex(
+        (s) => s.id === updatedSession.id
+      );
+
+      const storedSession: StoredSession = {
+        ...updatedSession,
+        startTime: updatedSession.startTime.toISOString(),
+        endTime: updatedSession.endTime?.toISOString(),
+      };
 
       if (sessionIndex >= 0) {
-        sessions[sessionIndex] = stored;
+        sessions[sessionIndex] = storedSession;
       } else {
-        sessions.push(stored);
+        sessions.push(storedSession);
       }
 
       localStorage.setItem(
@@ -419,7 +429,7 @@ export function useOfflineProgress(userId: string) {
       vocabularyProgress: offlineData.vocabularyProgress,
       exerciseResults: offlineData.exerciseResults,
       learningStats: offlineData.learningStats,
-      sessions: parseStoredSessions(),
+      sessions: getStoredSessions(),
     };
   }, [offlineData]);
 
@@ -463,7 +473,7 @@ export function useOfflineProgress(userId: string) {
 
   // Calculate learning streak
   const calculateStreak = useCallback(() => {
-    const sessions = parseStoredSessions();
+    const sessions = getStoredSessions();
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
