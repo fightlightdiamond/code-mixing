@@ -96,6 +96,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, [logout]);
 
+  // Check if user is logged in on mount
+  useEffect(() => {
+    void checkAuth();
+  }, [checkAuth]);
+
   const checkAuth = useCallback(async () => {
     logger.debug("AuthContext: checkAuth started");
     try {

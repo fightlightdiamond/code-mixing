@@ -3,6 +3,7 @@ import { buildAbility } from "./ability";
 import { AuthLogger } from "./auth.logger";
 import { subject as caslSubject } from "@casl/ability";
 import { PrismaQuery } from "@casl/prisma";
+import { Prisma, PrismaClient } from "@prisma/client";
 import { prisma } from "../prisma";
 
 export interface RequiredRule {
@@ -13,6 +14,8 @@ export interface RequiredRule {
 }
 
 type UserCtx = { sub: string; tenantId?: string; roles: string[] };
+
+type PrismaWithPolicy = PrismaClient & { resourcePolicy?: Prisma.ResourcePolicyDelegate };
 
 export function checkAbilities(
   rules: RequiredRule[],
@@ -50,7 +53,7 @@ export function checkAbilities(
           failedRules.push(rule);
         }
       } catch (ruleError) {
-        logger.error(`Error checking rule ${rule.action}:${rule.subject}:`, ruleError);
+        logger.error(`Error checking rule ${rule.action}:${rule.subject}`, undefined, ruleError as Error);
         failedRules.push(rule);
       }
     }
@@ -60,7 +63,7 @@ export function checkAbilities(
       failedRules
     };
   } catch (error) {
-    logger.error('Error in checkAbilities:', error);
+    logger.error('Error in checkAbilities:', undefined, error as Error);
     return {
       allowed: false,
       failedRules: rules
@@ -117,7 +120,7 @@ export async function caslGuardWithPolicies(
 
     const subjects = Array.from(new Set(rules.map((r) => r.subject)));
     for (const subject of subjects) {
-      const repo = (prisma as unknown as { resourcePolicy?: { findMany: (args: unknown) => Promise<Array<{ effect: string; conditions: unknown }>> } }).resourcePolicy;
+      const repo = (prisma as PrismaWithPolicy).resourcePolicy;
       if (!repo) {
         // Client not generated for ResourcePolicy yet; skip ABAC and allow RBAC result
         break;
@@ -148,7 +151,10 @@ export async function caslGuardWithPolicies(
     return { allowed: true };
   } catch (policyErr) {
     if (process.env.NODE_ENV === "development") {
-      logger.warn("ABAC policy evaluation failed, continuing with RBAC only:", policyErr);
+      logger.warn(
+        "ABAC policy evaluation failed, continuing with RBAC only",
+        { error: String(policyErr) }
+      );
     }
     return { allowed: true };
   }
@@ -223,7 +229,7 @@ export function caslGuard(
       : { allowed: false, error: "Insufficient permissions", failedRules };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    logger.error("Authorization check failed:", errorMessage);
+    logger.error("Authorization check failed", { errorMessage });
     
     // Log the error for debugging
     if (user?.sub) {

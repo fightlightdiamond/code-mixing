@@ -2,6 +2,21 @@ import { logger } from '@/lib/logger';
 import { NextRequest, NextResponse } from "next/server";
 import { getUser } from "@/core/auth/getUser";
 import { prisma } from "@/core/prisma";
+import { z } from "zod";
+
+const audioProgressSchema = z.object({
+  storyId: z.string(),
+  position: z.number().nonnegative(),
+  bookmarks: z
+    .array(
+      z.object({
+        id: z.string(),
+        position: z.number().nonnegative(),
+        note: z.string().optional(),
+      })
+    )
+    .optional(),
+});
 
 // GET /api/learning/progress/audio?storyId=xxx
 export async function GET(request: NextRequest) {
@@ -45,7 +60,7 @@ export async function GET(request: NextRequest) {
         ? JSON.parse(progress.metadata as string).bookmarks || []
         : [];
     } catch (error) {
-      logger.error("Error parsing bookmarks:", error);
+      logger.error("Error parsing bookmarks:", undefined, error as Error);
     }
 
     return NextResponse.json({
@@ -55,7 +70,7 @@ export async function GET(request: NextRequest) {
       lastUpdated: progress.updatedAt,
     });
   } catch (error) {
-    logger.error("Error fetching audio progress:", error);
+    logger.error("Error fetching audio progress:", undefined, error as Error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -72,14 +87,14 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { storyId, position, bookmarks } = body;
-
-    if (!storyId || typeof position !== "number") {
+    const parsed = audioProgressSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: "Story ID and position are required" },
+        { error: "Invalid request data", details: parsed.error.errors },
         { status: 400 }
       );
     }
+    const { storyId, position, bookmarks } = parsed.data;
 
     // Prepare metadata with bookmarks
     const metadata = {
@@ -120,7 +135,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    logger.error("Error saving audio progress:", error);
+    logger.error("Error saving audio progress:", undefined, error as Error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -156,7 +171,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    logger.error("Error clearing audio progress:", error);
+    logger.error("Error clearing audio progress:", undefined, error as Error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

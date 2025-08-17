@@ -1,6 +1,6 @@
 "use client";
 
-import { create } from "zustand";
+import { create, type StateCreator } from "zustand";
 import {
   devtools,
   persist,
@@ -48,7 +48,7 @@ interface StoreOptions<T> {
  * ```
  */
 export function makeStore<T>(
-  initializer: (set: any, get: any, api: any) => T,
+  initializer: StateCreator<T, [], []>,
   options: StoreOptions<T> = {}
 ) {
   const {
@@ -58,24 +58,23 @@ export function makeStore<T>(
     partialize,
   } = options;
 
+  const baseInitializer = (shouldPersist
+    ? persist(initializer, {
+        name: persistKey || name || "zustand-store",
+        storage: createJSONStorage(() => sessionStorage),
+        partialize,
+      })
+    : initializer) as unknown as StateCreator<T, [], []>;
+
   const store = create<T>()(
     subscribeWithSelector(
-      devtools(
-        shouldPersist
-          ? persist(initializer, {
-              name: persistKey || name || "zustand-store",
-              storage: createJSONStorage(() => sessionStorage),
-              partialize,
-            })
-          : initializer,
-        {
-          name:
-            process.env.NODE_ENV === "development"
-              ? `ui-${name || "store"}`
-              : undefined,
-          enabled: process.env.NODE_ENV === "development",
-        }
-      )
+      devtools(baseInitializer, {
+        name:
+          process.env.NODE_ENV === "development"
+            ? `ui-${name || "store"}`
+            : undefined,
+        enabled: process.env.NODE_ENV === "development",
+      })
     )
   );
 
