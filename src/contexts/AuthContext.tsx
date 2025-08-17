@@ -98,9 +98,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Check if user is logged in on mount
   useEffect(() => {
-    checkAuth();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    void checkAuth();
+  }, [checkAuth]);
 
   const checkAuth = useCallback(async () => {
     logger.debug("AuthContext: checkAuth started");
@@ -147,6 +146,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(false);
     }
   }, []);
+
+  // Check if user is logged in on mount
+  useEffect(() => {
+    void checkAuth();
+  }, [checkAuth]);
 
   const refreshUserToken = useCallback(async (): Promise<boolean> => {
     try {

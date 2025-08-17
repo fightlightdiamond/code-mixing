@@ -1,4 +1,5 @@
 import { logger } from '@/lib/logger';
+import type { Query } from '@tanstack/react-query';
 // Performance monitoring and analytics for React Query
 interface QueryMetrics {
   queryKey: readonly unknown[];
@@ -146,12 +147,12 @@ export const queryMonitor = new QueryMonitor();
 
 // React Query plugin for automatic monitoring
 export const createMonitoringPlugin = () => ({
-  onQueryStart: (query: any) => {
-    query._startTime = performance.now();
+  onQueryStart: (query: Query) => {
+    (query as Query & { _startTime?: number })._startTime = performance.now();
   },
-  
-  onQuerySuccess: (query: any) => {
-    const duration = performance.now() - (query._startTime || 0);
+
+  onQuerySuccess: (query: Query) => {
+    const duration = performance.now() - ((query as Query & { _startTime?: number })._startTime || 0);
     queryMonitor.trackQuery({
       queryKey: query.queryKey,
       duration,
@@ -160,9 +161,9 @@ export const createMonitoringPlugin = () => ({
       timestamp: Date.now(),
     });
   },
-  
-  onQueryError: (query: any, error: Error) => {
-    const duration = performance.now() - (query._startTime || 0);
+
+  onQueryError: (query: Query, error: Error) => {
+    const duration = performance.now() - ((query as Query & { _startTime?: number })._startTime || 0);
     queryMonitor.trackQuery({
       queryKey: query.queryKey,
       duration,

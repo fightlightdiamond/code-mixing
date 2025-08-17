@@ -3,12 +3,157 @@ import { caslGuardWithPolicies } from "@/core/auth/casl.guard";
 import { prisma } from "@/core/prisma";
 import { getUserFromRequest } from "@/core/auth/getUser";
 import logger from "@/lib/logger";
+import type { User } from "@/types/api";
+import { LearningSession, ProgressStatus, VocabStatus } from "@prisma/client";
+
+interface LessonProgressItem {
+  id: string;
+  lessonId: string;
+  status: ProgressStatus;
+  lastViewedAt: Date | null;
+  updatedAt: Date;
+  lesson: {
+    id: string;
+    title: string;
+    difficulty: string;
+    estimatedMinutes: number | null;
+    course: {
+      id: string;
+      title: string;
+    };
+  };
+}
+
+interface VocabularyProgressItem {
+  id: string;
+  vocabulary: {
+    id: string;
+    word: string;
+    meaning: string;
+    lesson: {
+      id: string;
+      title: string;
+    };
+  };
+  status: VocabStatus;
+  lastReviewed: Date | null;
+}
+
+interface ProgressStats {
+  totalLessons: number;
+  completedLessons: number;
+  inProgressLessons: number;
+  totalVocabulary: number;
+  masteredVocabulary: number;
+  reviewingVocabulary: number;
+  newVocabulary: number;
+  totalTimeSpent: number;
+  totalInteractions: number;
+  learningStreak: number;
+  averageSessionTime: number;
+}
+
+interface Achievement {
+  type: string;
+  title: string;
+  description: string;
+  earnedAt: Date;
+}
+
+interface UserProgressResponse {
+  userId: string;
+  timeframe: string;
+  stats: ProgressStats;
+  levelProgression: ReturnType<typeof calculateLevelProgression>;
+  recentAchievements: Achievement[];
+  lessonProgress?: LessonProgressItem[];
+  vocabularyProgress?: VocabularyProgressItem[];
+  recentSessions?: LearningSession[];
+}
+
+interface LessonProgressItem {
+  id: string;
+  lessonId: string;
+  lesson: {
+    id: string;
+    title: string;
+    difficulty: string;
+    estimatedMinutes: number | null;
+    course: {
+      id: string;
+      title: string;
+    };
+  };
+  status: "not_started" | "in_progress" | "completed" | "paused";
+  lastViewedAt: Date | null;
+  updatedAt: Date;
+}
+
+interface VocabularyProgressItem {
+  id: string;
+  vocabulary: {
+    id: string;
+    word: string;
+    meaning: string;
+    lesson: {
+      id: string;
+      title: string;
+    };
+  };
+  status: "new" | "reviewing" | "mastered";
+  lastReviewed: Date | null;
+}
+
+interface ProgressStats {
+  totalLessons: number;
+  completedLessons: number;
+  inProgressLessons: number;
+  totalVocabulary: number;
+  masteredVocabulary: number;
+  reviewingVocabulary: number;
+  newVocabulary: number;
+  totalTimeSpent: number;
+  totalInteractions: number;
+  learningStreak: number;
+  averageSessionTime: number;
+}
+
+interface Achievement {
+  type: string;
+  title: string;
+  description: string;
+  earnedAt: Date;
+}
+
+interface LevelProgression {
+  currentLevel: number;
+  totalPoints: number;
+  pointsToNextLevel: number;
+  completedLessons: number;
+  masteredVocabulary: number;
+}
+
+interface UserProgressResponse {
+  userId: string;
+  timeframe: string;
+  stats: ProgressStats;
+  levelProgression: LevelProgression;
+  recentAchievements: Achievement[];
+  lessonProgress?: LessonProgressItem[];
+  vocabularyProgress?: VocabularyProgressItem[];
+  recentSessions?: unknown[];
+}
 
 // GET /api/learning/progress/user - Get comprehensive user learning progress
-export async function GET(request: NextRequest) {
+
+export async function GET(
+  request: NextRequest
+): Promise<NextResponse<UserProgressResponse>> {
+  let user: User | null = null;
+
   try {
     // Get user from request
-    const user = await getUserFromRequest(request);
+    user = await getUserFromRequest(request);
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -35,7 +180,7 @@ export async function GET(request: NextRequest) {
     let dateFilter = {};
     if (timeframe !== "all") {
       const now = new Date();
-      let startDate = new Date();
+      const startDate = new Date();
 
       switch (timeframe) {
         case "week":
@@ -57,7 +202,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Get lesson progress
-    const lessonProgress = await prisma.userProgress.findMany({
+    const lessonProgress: LessonProgressItem[] =
+      await prisma.userProgress.findMany({
       where: {
         userId: user.id,
         ...dateFilter,
@@ -84,7 +230,8 @@ export async function GET(request: NextRequest) {
     });
 
     // Get vocabulary progress
-    const vocabularyProgress = await prisma.userVocabularyProgress.findMany({
+    const vocabularyProgress: VocabularyProgressItem[] =
+      await prisma.userVocabularyProgress.findMany({
       where: {
         userId: user.id,
         ...(timeframe !== "all" && {
@@ -142,7 +289,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Calculate summary statistics
-    const stats = {
+    const stats: ProgressStats = {
       totalLessons: lessonProgress.length,
       completedLessons: lessonProgress.filter((p) => p.status === "completed")
         .length,
@@ -185,13 +332,13 @@ export async function GET(request: NextRequest) {
     );
 
     // Get recent achievements (simplified)
-    const recentAchievements = getRecentAchievements(
+    const recentAchievements: Achievement[] = getRecentAchievements(
       lessonProgress,
       vocabularyProgress,
       stats
     );
 
-    const response = {
+    const response: UserProgressResponse = {
       userId: user.id,
       timeframe,
       stats,
@@ -216,7 +363,7 @@ export async function GET(request: NextRequest) {
       }),
     };
 
-    return NextResponse.json(response);
+    return NextResponse.json<UserProgressResponse>(response);
   } catch (error) {
     logger.error("Error fetching user progress", { userId: user?.id }, error);
     return NextResponse.json(
@@ -243,7 +390,7 @@ async function calculateLearningStreak(userId: string): Promise<number> {
   if (sessions.length === 0) return 0;
 
   let streak = 0;
-  let currentDate = new Date();
+  const currentDate = new Date();
   currentDate.setHours(0, 0, 0, 0);
 
   // Group sessions by date
@@ -266,9 +413,9 @@ async function calculateLearningStreak(userId: string): Promise<number> {
 
 // Calculate level progression based on completed lessons and vocabulary
 function calculateLevelProgression(
-  lessonProgress: any[],
-  vocabularyProgress: any[]
-) {
+  lessonProgress: LessonProgressItem[],
+  vocabularyProgress: VocabularyProgressItem[]
+): LevelProgression {
   const completedLessons = lessonProgress.filter(
     (p) => p.status === "completed"
   ).length;
@@ -292,11 +439,11 @@ function calculateLevelProgression(
 
 // Get recent achievements
 function getRecentAchievements(
-  lessonProgress: any[],
-  vocabularyProgress: any[],
-  stats: any
-) {
-  const achievements = [];
+  lessonProgress: LessonProgressItem[],
+  vocabularyProgress: VocabularyProgressItem[],
+  stats: ProgressStats
+): Achievement[] {
+  const achievements: Achievement[] = [];
 
   // Check for milestone achievements
   if (stats.completedLessons >= 10 && stats.completedLessons % 10 === 0) {

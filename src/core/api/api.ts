@@ -215,15 +215,13 @@ class ApiClient {
     return url; // prefer relative path on client
   }
 
+
   async request<T = unknown>(input: RequestInfo, init?: ApiRequestConfig): Promise<T> {
     try {
       let config: ApiRequestConfig & { url: string } = {
         ...init,
         url: this.resolveURL(input),
-        headers: {
-          "Content-Type": "application/json",
-          ...(init?.headers || {}),
-        },
+        headers,
         signal: init?.signal,
         timeout: init?.timeout,
         retries: init?.retries,
@@ -392,9 +390,12 @@ apiClient.addErrorInterceptor(async (error) => {
 /* ======================================
  * Public API (giữ tên export để không vỡ import cũ)
  * ====================================== */
-// Note: Use <T,> to avoid JSX parsing issues in environments that parse TS as TSX
-export const api = <T = unknown,>(input: RequestInfo, init?: RequestInit): Promise<T> =>
-    apiClient.request<T>(input, init);
+// Note: Use overloads to default text responses to string
+export function api(input: RequestInfo, init?: RequestInit): Promise<string>;
+export function api<T>(input: RequestInfo, init?: RequestInit): Promise<T>;
+export function api<T>(input: RequestInfo, init?: RequestInit): Promise<T> {
+    return apiClient.request<T>(input, init);
+}
 
 export const setAuthToken = (
     token: string | null,
@@ -411,20 +412,24 @@ export const isTokenExpiringSoon = (): boolean => tokenManager.isExpiringSoon();
 
 export const refreshToken = (): Promise<string | null> => tokenManager.refresh(performRefresh);
 
-export const getTokenStatus = (): {
-  hasToken: boolean;
+export interface TokenStatus {
+  hasAccessToken: boolean;
+  accessTokenLength: number;
+  hasRefreshToken: boolean;
+  refreshTokenLength: number;
   isExpiringSoon: boolean;
-  expiresAt: number | null;
-  refreshInFlight: boolean;
-} => {
+}
+
+export const getTokenStatus = (): TokenStatus => {
   const access = tokenManager.getAccessTokenSync();
   const refresh = tokenManager.getRefreshTokenSync();
-  const expiring = tokenManager.isExpiringSoon();
+
   return {
-    hasToken: !!access || !!refresh,
-    isExpiringSoon: expiring,
-    expiresAt: tokenManager.getExpiresAtSync(),
-    refreshInFlight: tokenManager.getRefreshInFlight() !== null,
+    hasAccessToken: !!access,
+    accessTokenLength: access?.length ?? 0,
+    hasRefreshToken: !!refresh,
+    refreshTokenLength: refresh?.length ?? 0,
+    isExpiringSoon: tokenManager.isExpiringSoon(),
   };
 };
 

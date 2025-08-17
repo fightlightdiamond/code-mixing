@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(tags);
   } catch (err) {
-    logger.error("Error fetching tags", undefined, err);
+    logger.error("Error fetching tags", undefined, err as Error);
     return NextResponse.json(
       { error: "Failed to fetch tags" },
       { status: 500 }

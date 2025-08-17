@@ -14,7 +14,7 @@ export default function SimpleUserList() {
   // Query hook now handles API response extraction internally
   const users = q.data || [];
   
-  logger.info('⚡ [CLIENT] useQuery hook took:', queryTime, 'ms');
+  logger.info('⚡ [CLIENT] useQuery hook took', { queryTimeMs: queryTime });
   logger.info('📊 [CLIENT] Query state:', { 
     isLoading: q.isLoading, 
     isFetching: q.isFetching, 

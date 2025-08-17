@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(vocabularies);
   } catch (error) {
-    logger.error("Error fetching vocabularies", undefined, error);
+    logger.error("Error fetching vocabularies", undefined, error as Error);
     return NextResponse.json(
       { error: "Failed to fetch vocabularies" },
       { status: 500 }

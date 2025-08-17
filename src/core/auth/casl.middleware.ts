@@ -1,5 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkAbilities, RequiredRule } from "./casl.guard";
+import { z } from "zod";
+
+const UserSchema = z.object({
+  id: z.string(),
+  tenantId: z.string().optional(),
+  roles: z.array(z.string()),
+});
+type UserPayload = z.infer<typeof UserSchema>;
 
 export function createCaslMiddleware(rules: RequiredRule[]) {
   return async (request: NextRequest) => {
@@ -11,10 +19,18 @@ export function createCaslMiddleware(rules: RequiredRule[]) {
     }
 
     try {
-      const userData = JSON.parse(user);
+      const parsed = UserSchema.safeParse(JSON.parse(user));
+      if (!parsed.success) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+      const userData: UserPayload = parsed.data;
 
       // Check if user has required abilities
-      const isAllowed = checkAbilities(rules, userData);
+      const isAllowed = checkAbilities(rules, {
+        sub: userData.id,
+        tenantId: userData.tenantId,
+        roles: userData.roles,
+      });
 
       if (!isAllowed) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
