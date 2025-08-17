@@ -867,6 +867,18 @@ This project is **proprietary software** designed for educational purposes.
 - Contributions welcome under CLA
 - Open source components remain under their respective licenses
 
+## API Client Usage
+
+The API helper now supports request timeouts and automatic retries for transient errors:
+
+```ts
+import { api } from "@/core/api/api";
+
+await api("/endpoint", { timeout: 5000, retries: 3 });
+```
+
+`timeout` is in milliseconds and aborts the request when exceeded. `retries` specifies how many times to retry on network errors or 5xx responses.
+
 ---
 
 ## 🌟 Acknowledgments
