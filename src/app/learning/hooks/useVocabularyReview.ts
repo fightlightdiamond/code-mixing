@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import logger from "@/lib/logger";
 import type {
   UserLearningPreferences,
   VocabularyProgress,
@@ -332,7 +333,7 @@ export function useVocabularyReview(
         generateReviewSchedule(updatedProgress);
         setError(null);
       } catch (err) {
-        console.error("Error updating vocabulary progress:", err);
+        logger.error("Error updating vocabulary progress", { err });
         setError("Không thể cập nhật tiến độ từ vựng");
       }
     },
