@@ -1,0 +1,362 @@
+/* Enhanced AudioPlayer Styles */
+
+.audio-player-container {
+  position: relative;
+  width: 100%;
+}
+
+/* Progress bar enhancements */
+.audio-progress {
+  position: relative;
+}
+
+.audio-progress .w-full {
+  transition: all 0.2s ease;
+}
+
+.audio-progress .w-full:hover {
+  height: 16px;
+}
+
+.audio-progress .w-full:hover .absolute {
+  opacity: 1;
+}
+
+/* Progress handle */
+.audio-progress .absolute.w-4 {
+  opacity: 0;
+  transition: all 0.2s ease;
+}
+
+.audio-progress:hover .absolute.w-4 {
+  opacity: 1;
+}
+
+/* Controls styling */
+.audio-controls {
+  gap: 0.5rem;
+}
+
+.audio-controls button {
+  transition: all 0.2s ease;
+}
+
+.audio-controls button:hover {
+  transform: scale(1.05);
+}
+
+.audio-controls button:active {
+  transform: scale(0.95);
+}
+
+/* Play/pause button special styling */
+.audio-controls button[aria-label*="Phát"],
+.audio-controls button[aria-label*="Tạm dừng"] {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  border: none;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+}
+
+.audio-controls button[aria-label*="Phát"]:hover,
+.audio-controls button[aria-label*="Tạm dừng"]:hover {
+  background: linear-gradient(135deg, #2563eb, #1e40af);
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.4);
+}
+
+/* Volume slider styling */
+.audio-volume-slider {
+  width: 100px;
+  transition: width 0.3s ease;
+}
+
+.audio-volume-slider:hover {
+  width: 120px;
+}
+
+/* Bookmark indicators */
+.audio-progress .bookmark-indicator {
+  position: absolute;
+  top: -2px;
+  width: 2px;
+  height: calc(100% + 4px);
+  background: #f59e0b;
+  border-radius: 1px;
+  z-index: 10;
+}
+
+.audio-progress .bookmark-indicator::before {
+  content: "";
+  position: absolute;
+  top: -4px;
+  left: -2px;
+  width: 6px;
+  height: 6px;
+  background: #f59e0b;
+  border-radius: 50%;
+}
+
+/* Buffering animation */
+@keyframes buffering {
+  0% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 0.3;
+  }
+}
+
+.audio-progress .bg-gray-300 {
+  animation: buffering 1.5s ease-in-out infinite;
+}
+
+/* Error state styling */
+.audio-player-error {
+  border: 2px dashed #ef4444;
+  background: #fef2f2;
+}
+
+.audio-player-error .text-red-600 {
+  color: #dc2626;
+}
+
+/* Advanced features panel */
+.audio-player-advanced {
+  border: 1px solid #e5e7eb;
+  background: linear-gradient(135deg, #f9fafb, #f3f4f6);
+}
+
+/* Waveform placeholder */
+.audio-waveform {
+  background: linear-gradient(90deg, #e5e7eb 0%, #d1d5db 50%, #e5e7eb 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .audio-controls {
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+
+  .audio-controls > div {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .audio-controls button {
+    min-width: 40px;
+    min-height: 40px;
+  }
+
+  .audio-volume-slider {
+    width: 80px;
+  }
+
+  .audio-progress .w-full {
+    height: 20px;
+  }
+
+  .audio-progress .absolute.w-4 {
+    opacity: 1;
+    width: 20px;
+    height: 20px;
+  }
+}
+
+/* Large screen optimizations */
+@media (min-width: 1024px) {
+  .audio-controls {
+    gap: 1rem;
+  }
+
+  .audio-volume-slider {
+    width: 120px;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .audio-progress .bg-blue-600 {
+    background: #000 !important;
+  }
+
+  .audio-progress .bg-gray-300 {
+    background: #666 !important;
+  }
+
+  .audio-controls button {
+    border: 2px solid #000;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .audio-progress .w-full,
+  .audio-progress .absolute,
+  .audio-controls button,
+  .audio-volume-slider,
+  .audio-waveform {
+    transition: none;
+    animation: none;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .audio-player-advanced {
+    background: linear-gradient(135deg, #1f2937, #111827);
+    border-color: #374151;
+  }
+
+  .audio-waveform {
+    background: linear-gradient(90deg, #374151 0%, #4b5563 50%, #374151 100%);
+  }
+
+  .audio-progress .bg-gray-200 {
+    background: #374151 !important;
+  }
+
+  .audio-progress .bg-gray-300 {
+    background: #4b5563 !important;
+  }
+}
+
+/* Focus indicators for accessibility */
+.audio-controls button:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+.audio-progress .w-full:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Loading states */
+.audio-player-loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.audio-player-loading .audio-controls button {
+  cursor: not-allowed;
+}
+
+/* Chunk highlighting */
+.audio-chunk-highlight {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  background: rgba(251, 191, 36, 0.3);
+  border-left: 2px solid #f59e0b;
+  border-right: 2px solid #f59e0b;
+  pointer-events: none;
+  transition: all 0.3s ease;
+}
+
+/* Playback rate indicator */
+.audio-playback-rate {
+  position: relative;
+}
+
+.audio-playback-rate::after {
+  content: attr(data-rate);
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1f2937;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.audio-playback-rate:hover::after {
+  opacity: 1;
+}
+
+/* Bookmark panel integration */
+.audio-player-container .bookmark-panel {
+  margin-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+  padding-top: 1rem;
+}
+
+/* Print styles */
+@media print {
+  .audio-player-container {
+    display: none;
+  }
+}
+
+/* Animation for state changes */
+.audio-state-transition {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Compound component spacing */
+.audio-player-compound > * + * {
+  margin-top: 1rem;
+}
+
+/* Advanced controls panel */
+.audio-advanced-controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.audio-advanced-controls .control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.audio-advanced-controls .control-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Accessibility improvements */
+.audio-player-container [role="progressbar"] {
+  cursor: pointer;
+}
+
+.audio-player-container [role="progressbar"]:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Smooth transitions for all interactive elements */
+.audio-player-container * {
+  transition-property:
+    color, background-color, border-color, text-decoration-color, fill, stroke,
+    opacity, box-shadow, transform, filter, backdrop-filter;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
