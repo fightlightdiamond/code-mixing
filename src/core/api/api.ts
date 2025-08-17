@@ -8,7 +8,9 @@ import { getCSRFToken } from "./csrf";
 // Enhanced request configuration interface
 export interface ApiRequestConfig extends RequestInit {
     url: string;
+    /** Aborts the request after the specified milliseconds */
     timeout?: number;
+    /** Number of retry attempts for transient failures */
     retries?: number;
 }
 
@@ -213,39 +215,75 @@ class ApiClient {
     return url; // prefer relative path on client
   }
 
-  async request<T = unknown>(input: RequestInfo, init?: RequestInit): Promise<T> {
+
+  async request<T = unknown>(input: RequestInfo, init?: ApiRequestConfig): Promise<T> {
     try {
-      let config: RequestInit & { url: string } = {
+      let config: ApiRequestConfig & { url: string } = {
         ...init,
         url: this.resolveURL(input),
-        headers: {
-          "Content-Type": "application/json",
-          ...(init?.headers || {}),
-        },
+        headers,
         signal: init?.signal,
+        timeout: init?.timeout,
+        retries: init?.retries,
       };
 
       for (const i of this.requestInterceptors) {
         config = await i(config);
       }
 
-      let response = await fetch(config.url, config);
+      const retries = config.retries ?? 0;
+      let attempt = 0;
+      const { url, timeout, signal, retries: _r, ...rest } = config;
 
-      for (const i of this.responseInterceptors) {
-        response = await i(response);
+      while (true) {
+        const controller = new AbortController();
+        if (signal) {
+          const s = signal as AbortSignal;
+          if (s.aborted) controller.abort();
+          else s.addEventListener("abort", () => controller.abort(), { once: true });
+        }
+        const timeoutId =
+          typeof timeout === "number"
+            ? setTimeout(() => controller.abort(), timeout)
+            : undefined;
+
+        try {
+          let response = await fetch(url, { ...rest, signal: controller.signal });
+
+          if (timeoutId) clearTimeout(timeoutId);
+
+          for (const i of this.responseInterceptors) {
+            response = await i(response);
+          }
+
+          const isJson = response.headers.get("content-type")?.includes("application/json");
+          const body: unknown = isJson ? await response.json().catch(() => undefined) : undefined;
+
+          if (!response.ok) {
+            const shouldRetry =
+              attempt < retries && response.status >= 500 && response.status < 600;
+            if (shouldRetry) {
+              attempt++;
+              continue;
+            }
+            type ErrorBody = { message?: string; error?: string; [k: string]: unknown };
+            const obj = (typeof body === "object" && body !== null) ? (body as ErrorBody) : undefined;
+            const message = obj?.message || obj?.error || `HTTP ${response.status}`;
+            throw new ApiError(message, response.status, body, `HTTP_${response.status}`);
+          }
+
+          return (body as T) ?? (await response.text() as unknown as T);
+        } catch (err) {
+          if (timeoutId) clearTimeout(timeoutId);
+          const e = err as Error;
+          const isTransient = e.name === "AbortError" || e instanceof TypeError;
+          if (attempt < retries && isTransient) {
+            attempt++;
+            continue;
+          }
+          throw e;
+        }
       }
-
-      const isJson = response.headers.get("content-type")?.includes("application/json");
-      const body: unknown = isJson ? await response.json().catch(() => undefined) : undefined;
-
-      if (!response.ok) {
-        type ErrorBody = { message?: string; error?: string; [k: string]: unknown };
-        const obj = (typeof body === "object" && body !== null) ? (body as ErrorBody) : undefined;
-        const message = obj?.message || obj?.error || `HTTP ${response.status}`;
-        throw new ApiError(message, response.status, body, `HTTP_${response.status}`);
-      }
-
-      return (body as T) ?? (await response.text() as unknown as T);
     } catch (err) {
       let e = err as Error;
       for (const i of this.errorInterceptors) {
@@ -352,9 +390,12 @@ apiClient.addErrorInterceptor(async (error) => {
 /* ======================================
  * Public API (giữ tên export để không vỡ import cũ)
  * ====================================== */
-// Note: Use <T,> to avoid JSX parsing issues in environments that parse TS as TSX
-export const api = <T = unknown,>(input: RequestInfo, init?: RequestInit): Promise<T> =>
-    apiClient.request<T>(input, init);
+// Note: Use overloads to default text responses to string
+export function api(input: RequestInfo, init?: RequestInit): Promise<string>;
+export function api<T>(input: RequestInfo, init?: RequestInit): Promise<T>;
+export function api<T>(input: RequestInfo, init?: RequestInit): Promise<T> {
+    return apiClient.request<T>(input, init);
+}
 
 export const setAuthToken = (
     token: string | null,
@@ -371,20 +412,24 @@ export const isTokenExpiringSoon = (): boolean => tokenManager.isExpiringSoon();
 
 export const refreshToken = (): Promise<string | null> => tokenManager.refresh(performRefresh);
 
-export const getTokenStatus = (): {
-  hasToken: boolean;
+export interface TokenStatus {
+  hasAccessToken: boolean;
+  accessTokenLength: number;
+  hasRefreshToken: boolean;
+  refreshTokenLength: number;
   isExpiringSoon: boolean;
-  expiresAt: number | null;
-  refreshInFlight: boolean;
-} => {
+}
+
+export const getTokenStatus = (): TokenStatus => {
   const access = tokenManager.getAccessTokenSync();
   const refresh = tokenManager.getRefreshTokenSync();
-  const expiring = tokenManager.isExpiringSoon();
+
   return {
-    hasToken: !!access || !!refresh,
-    isExpiringSoon: expiring,
-    expiresAt: tokenManager.getExpiresAtSync(),
-    refreshInFlight: tokenManager.getRefreshInFlight() !== null,
+    hasAccessToken: !!access,
+    accessTokenLength: access?.length ?? 0,
+    hasRefreshToken: !!refresh,
+    refreshTokenLength: refresh?.length ?? 0,
+    isExpiringSoon: tokenManager.isExpiringSoon(),
   };
 };
 

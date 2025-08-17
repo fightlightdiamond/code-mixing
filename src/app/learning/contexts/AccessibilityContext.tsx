@@ -1,5 +1,6 @@
 "use client";
 import { logger } from '@/lib/logger';
+import { z } from "zod";
 
 import React, {
   createContext,
@@ -9,14 +10,17 @@ import React, {
   ReactNode,
 } from "react";
 import { HighContrastManager, AriaLiveAnnouncer } from "../utils/accessibility";
+import { z } from "zod";
 
-interface AccessibilitySettings {
-  highContrast: boolean;
-  reducedMotion: boolean;
-  fontSize: "small" | "medium" | "large" | "extra-large";
-  keyboardNavigation: boolean;
-  screenReaderOptimized: boolean;
-}
+const accessibilitySettingsSchema = z.object({
+  highContrast: z.boolean(),
+  reducedMotion: z.boolean(),
+  fontSize: z.enum(["small", "medium", "large", "extra-large"]),
+  keyboardNavigation: z.boolean(),
+  screenReaderOptimized: z.boolean(),
+});
+
+type AccessibilitySettings = z.infer<typeof accessibilitySettingsSchema>;
 
 interface AccessibilityContextType {
   settings: AccessibilitySettings;
@@ -78,9 +82,27 @@ export function AccessibilityProvider({
     if (savedSettings) {
       try {
         const parsed = JSON.parse(savedSettings);
-        setSettings((prev) => ({ ...prev, ...parsed }));
+        const result = accessibilitySettingsSchema.safeParse(parsed);
+        if (result.success) {
+          setSettings((prev) => ({ ...prev, ...result.data }));
+        } else {
+          logger.warn(
+            "Invalid saved accessibility settings:",
+            result.error
+          );
+          setSettings((prev) => ({
+            ...defaultSettings,
+            highContrast: prev.highContrast,
+            reducedMotion: prev.reducedMotion,
+          }));
+        }
       } catch (error) {
         logger.warn("Failed to parse saved accessibility settings:", error);
+        setSettings((prev) => ({
+          ...defaultSettings,
+          highContrast: prev.highContrast,
+          reducedMotion: prev.reducedMotion,
+        }));
       }
     }
 

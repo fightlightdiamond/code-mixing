@@ -1,7 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-
+import { randomUUID } from "crypto";
+import { z } from "zod";
 import { prisma } from "@/core/prisma";
 import logger from "@/lib/logger";
+
+// Zod schema for question updates
+const questionSchema = z.object({
+  id: z.string().uuid().optional(),
+  question: z.string().min(1),
+  delete: z.boolean().optional(),
+});
 
 // GET /api/quizzes/[id] - Lấy chi tiết quiz
 export async function GET(
@@ -46,7 +54,7 @@ export async function GET(
 
     return NextResponse.json(quiz);
   } catch (error) {
-    logger.error("Error fetching quiz", undefined, error);
+    logger.error("Error fetching quiz", undefined, error as Error);
     return NextResponse.json(
       { error: "Failed to fetch quiz" },
       { status: 500 }
@@ -67,7 +75,40 @@ export async function PUT(
       return NextResponse.json({ error: "Invalid quiz ID" }, { status: 400 });
     }
 
-    const { title, description, lessonId } = body;
+    const {
+      title,
+      description,
+      lessonId,
+      questions: questionsInput,
+    } = body;
+
+    // Validate question data if provided
+    const parsedQuestions = questionsInput
+      ? z.array(questionSchema).safeParse(questionsInput)
+      : { success: true, data: [] };
+
+    if (!parsedQuestions.success) {
+      return NextResponse.json(
+        { error: "Invalid question data", details: parsedQuestions.error.errors },
+        { status: 400 }
+      );
+    }
+
+    const questions = parsedQuestions.data;
+    const questionSchema = z.object({
+      id: z.string().optional(),
+      question: z.string(),
+    });
+
+    const updateQuizSchema = z.object({
+      title: z.string().optional(),
+      description: z.string().optional(),
+      lessonId: z.union([z.string(), z.number()]).optional(),
+      questions: z.array(questionSchema).optional(),
+    });
+
+    const { title, description, lessonId, questions } =
+      updateQuizSchema.parse(body);
 
     // Check if quiz exists
     const existingQuiz = await prisma.quiz.findUnique({
@@ -104,7 +145,47 @@ export async function PUT(
         },
       });
 
-      // TODO: Align question updates to Prisma schema if needed
+      // Handle questions: upsert or delete based on input
+      if (questions.length > 0) {
+        const deleteIds = questions
+          .filter((q) => q.id && q.delete)
+          .map((q) => q.id as string);
+
+        if (deleteIds.length > 0) {
+          await tx.question.deleteMany({
+            where: { id: { in: deleteIds }, quizId },
+          });
+        }
+
+        for (const q of questions.filter((q) => !q.delete)) {
+          const id = q.id || randomUUID();
+          await tx.question.upsert({
+            where: { id },
+            update: { question: q.question },
+            create: { id, quizId, question: q.question },
+          });
+        }
+      }
+      if (questions) {
+        const questionIds = questions
+          .filter((q) => q.id)
+          .map((q) => q.id as string);
+
+        await tx.question.deleteMany({
+          where: {
+            quizId,
+            ...(questionIds.length > 0 && { id: { notIn: questionIds } }),
+          },
+        });
+
+        for (const q of questions) {
+          await tx.question.upsert({
+            where: { id: q.id ?? "" },
+            update: { question: q.question },
+            create: { quizId, question: q.question },
+          });
+        }
+      }
 
       return tx.quiz.findUnique({
         where: { id: quizId },
@@ -134,7 +215,7 @@ export async function PUT(
 
     return NextResponse.json(quiz);
   } catch (error) {
-    logger.error("Error updating quiz", undefined, error);
+    logger.error("Error updating quiz", undefined, error as Error);
     return NextResponse.json(
       { error: "Failed to update quiz" },
       { status: 500 }
@@ -170,7 +251,7 @@ export async function DELETE(
 
     return NextResponse.json({ message: "Quiz deleted successfully" });
   } catch (error) {
-    logger.error("Error deleting quiz", undefined, error);
+    logger.error("Error deleting quiz", undefined, error as Error);
     return NextResponse.json(
       { error: "Failed to delete quiz" },
       { status: 500 }

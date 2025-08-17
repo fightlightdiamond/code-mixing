@@ -27,6 +27,7 @@ interface LearningSession {
   completed: boolean;
 }
 
+// Stored representation of a learning session in localStorage
 interface StoredSession {
   id: string;
   storyId: string;
@@ -49,6 +50,7 @@ const STORAGE_KEYS = {
 };
 
 const isValidStoredSession = (session: any): session is StoredSession => {
+
   return (
     session &&
     typeof session.id === "string" &&
@@ -63,6 +65,7 @@ const isValidStoredSession = (session: any): session is StoredSession => {
 };
 
 const getStoredSessions = (): StoredSession[] => {
+
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.LEARNING_SESSIONS);
     if (!raw) return [];
@@ -73,6 +76,19 @@ const getStoredSessions = (): StoredSession[] => {
     return [];
   }
 };
+
+
+const toStoredSession = (session: LearningSession): StoredSession => ({
+  id: session.id,
+  storyId: session.storyId,
+  startTime: session.startTime.toISOString(),
+  endTime: session.endTime?.toISOString(),
+  timeSpent: session.timeSpent,
+  wordsEncountered: session.wordsEncountered,
+  exercisesCompleted: session.exercisesCompleted,
+  completed: session.completed,
+});
+
 
 export function useOfflineProgress(userId: string) {
   const [offlineData, setOfflineData] = useState<OfflineProgressData>({
@@ -126,7 +142,7 @@ export function useOfflineProgress(userId: string) {
         pendingSync: pendingSync === "true",
       });
     } catch (error) {
-      logger.error("Failed to load offline progress data:", error);
+      logger.error("Failed to load offline progress data:", undefined, error as Error);
     }
   }, []);
 
@@ -157,14 +173,14 @@ export function useOfflineProgress(userId: string) {
         offlineData.pendingSync.toString()
       );
     } catch (error) {
-      logger.error("Failed to save offline progress data:", error);
+      logger.error("Failed to save offline progress data:", undefined, error as Error);
     }
   }, [offlineData]);
 
   // Start a new learning session
   const startLearningSession = useCallback((storyId: string) => {
     const session: LearningSession = {
-      id: `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: `session_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`,
       storyId,
       startTime: new Date(),
       timeSpent: 0,

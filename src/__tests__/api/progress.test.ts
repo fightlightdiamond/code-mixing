@@ -25,7 +25,7 @@ jest.mock("@/core/auth/casl.guard", () => ({
   caslGuardWithPolicies: jest.fn(),
 }));
 
-const mockPrisma = prisma as any;
+const mockPrisma = prisma as jest.Mocked<typeof prisma>;
 const mockGetUser = getUserFromRequest as jest.MockedFunction<
   typeof getUserFromRequest
 >;
@@ -41,13 +41,12 @@ describe("/api/progress/[id] DELETE", () => {
   it("deletes progress record", async () => {
     mockGetUser.mockResolvedValue({ sub: "u1", tenantId: "t1" });
     mockCasl.mockResolvedValue({ allowed: true, error: null });
-    mockPrisma.userProgress.findFirst.mockResolvedValue({ id: "p1" });
-    mockPrisma.userProgress.delete.mockResolvedValue({});
+    mockPrisma.userProgress.findFirst.mockResolvedValue({ id: "p1" } as any);
+    mockPrisma.userProgress.delete.mockResolvedValue({} as any);
 
-    const request = new NextRequest(
-      "http://localhost:3000/api/progress/p1",
-      { method: "DELETE" }
-    );
+    const request = new NextRequest("http://localhost:3000/api/progress/p1", {
+      method: "DELETE",
+    });
 
     const res = await DELETE(request, { params: { id: "p1" } });
 
@@ -62,14 +61,12 @@ describe("/api/progress/[id] DELETE", () => {
     mockCasl.mockResolvedValue({ allowed: true, error: null });
     mockPrisma.userProgress.findFirst.mockResolvedValue(null);
 
-    const request = new NextRequest(
-      "http://localhost:3000/api/progress/p1",
-      { method: "DELETE" }
-    );
+    const request = new NextRequest("http://localhost:3000/api/progress/p1", {
+      method: "DELETE",
+    });
 
     const res = await DELETE(request, { params: { id: "p1" } });
 
     expect(res.status).toBe(404);
   });
 });
-

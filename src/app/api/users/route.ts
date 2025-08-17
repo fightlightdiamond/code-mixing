@@ -106,7 +106,7 @@ export async function GET(request: NextRequest) {
     
     return NextResponse.json(response);
   } catch (error) {
-    logger.error("Error fetching users", undefined, error);
+    logger.error("Error fetching users", undefined, error as Error);
     return NextResponse.json(
       { error: "Failed to fetch users" },
       { status: 500 }
@@ -181,7 +181,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(userRecord, { status: 201 });
   } catch (error) {
-    logger.error("Error creating user", undefined, error);
+    logger.error("Error creating user", undefined, error as Error);
     return NextResponse.json(
       { error: "Failed to create user" },
       { status: 500 }

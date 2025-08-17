@@ -55,7 +55,7 @@ export async function startLearningSession(data: StartLearningSessionData) {
       },
     });
   } catch (error) {
-    logger.error('Failed to start learning session', undefined, error);
+    logger.error('Failed to start learning session', undefined, error as Error);
     throw error;
   }
 }
@@ -77,7 +77,7 @@ export async function updateLearningSession(
       },
     });
   } catch (error) {
-    logger.error('Failed to update learning session', undefined, error);
+    logger.error('Failed to update learning session', undefined, error as Error);
     throw error;
   }
 }
@@ -110,7 +110,7 @@ export async function endLearningSession(
       interactionCount,
     });
   } catch (error) {
-    logger.error('Failed to end learning session', undefined, error);
+    logger.error('Failed to end learning session', undefined, error as Error);
     throw error;
   }
 }
@@ -151,7 +151,7 @@ export async function getUserLearningSessions(
       skip: offset,
     });
   } catch (error) {
-    logger.error('Failed to get user learning sessions', undefined, error);
+    logger.error('Failed to get user learning sessions', undefined, error as Error);
     return [];
   }
 }
@@ -203,7 +203,7 @@ export async function getUserLearningAnalytics(userId: string, tenantId: string)
       recentSessions,
     };
   } catch (error) {
-    logger.error('Failed to get user learning analytics', undefined, error);
+    logger.error('Failed to get user learning analytics', undefined, error as Error);
     return {
       totalSessions: 0,
       completedSessions: 0,
@@ -250,7 +250,7 @@ export async function getCourseLearningAnalytics(courseId: string, tenantId: str
       completionRate: totalSessions > 0 ? (completedSessions / totalSessions) * 100 : 0,
     };
   } catch (error) {
-    logger.error('Failed to get course learning analytics', undefined, error);
+    logger.error('Failed to get course learning analytics', undefined, error as Error);
     return {
       totalSessions: 0,
       uniqueUsers: 0,
@@ -330,7 +330,7 @@ export async function getTenantLearningAnalytics(tenantId: string) {
       })),
     };
   } catch (error) {
-    logger.error('Failed to get tenant learning analytics', undefined, error);
+    logger.error('Failed to get tenant learning analytics', undefined, error as Error);
     return {
       totalSessions: 0,
       activeUsers: 0,
@@ -421,7 +421,7 @@ export async function getUserLearningStreak(userId: string, tenantId: string) {
       lastActivity: sessions[0].startedAt,
     };
   } catch (error) {
-    logger.error('Failed to get user learning streak', undefined, error);
+    logger.error('Failed to get user learning streak', undefined, error as Error);
     return { currentStreak: 0, longestStreak: 0, lastActivity: null };
   }
 }
