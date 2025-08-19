@@ -18,22 +18,24 @@ interface SyncStatus {
   nextAutoSync: Date | null;
 }
 
-interface SyncConflict<T> {
-  type:
-    | "learning_progress"
-    | "vocabulary_progress"
-    | "exercise_results"
-    | "learning_stats";
-  localData: T;
-  serverData: T;
+type ConflictDataMap = {
+  learning_progress: LearningProgress;
+  vocabulary_progress: VocabularyProgress;
+  exercise_results: ExerciseResult;
+  learning_stats: LearningStats;
+};
+
+interface SyncConflict<K extends keyof ConflictDataMap> {
+  type: K;
+  localData: ConflictDataMap[K];
+  serverData: ConflictDataMap[K];
   field: string;
   resolution?: "local" | "server" | "merge";
 }
 
-type Conflict =
-  | SyncConflict<LearningProgress>
-  | SyncConflict<VocabularyProgress>
-  | SyncConflict<unknown>;
+type Conflict = {
+  [K in keyof ConflictDataMap]: SyncConflict<K>;
+}[keyof ConflictDataMap];
 
 interface SyncResult {
   success: boolean;
@@ -465,10 +467,10 @@ export function useDataSync(userId: string) {
   const detectLearningProgressConflicts = (
     local: LearningProgress,
     server: LearningProgress | null
-  ): SyncConflict<LearningProgress>[] => {
+  ): SyncConflict<'learning_progress'>[] => {
     if (!server) return [];
 
-    const conflicts: SyncConflict<LearningProgress>[] = [];
+    const conflicts: SyncConflict<'learning_progress'>[] = [];
 
     // Check for conflicts in key fields
     if (local.storiesRead !== server.storiesRead) {
@@ -495,8 +497,11 @@ export function useDataSync(userId: string) {
   const mergeVocabularyProgress = (
     local: VocabularyProgress[],
     server: VocabularyProgress[]
-  ) => {
-    const conflicts: SyncConflict<VocabularyProgress>[] = [];
+  ): {
+    conflicts: SyncConflict<'vocabulary_progress'>[];
+    merged: VocabularyProgress[];
+  } => {
+    const conflicts: SyncConflict<'vocabulary_progress'>[] = [];
     const merged: VocabularyProgress[] = [];
     const serverMap = new Map(server.map((v) => [v.word, v]));
 
@@ -571,65 +576,63 @@ export function useDataSync(userId: string) {
     };
   };
 
-  const uploadConflictResolution = async <T>(
-    conflict: SyncConflict<T>,
-    data: T
+  const uploadConflictResolution = async <K extends keyof ConflictDataMap>(
+    conflict: SyncConflict<K>,
+    data: ConflictDataMap[K]
   ) => {
     // Implementation depends on conflict type
     logger.info("Uploading conflict resolution", { conflict, data });
   };
 
-  const updateLocalData = async <T extends Record<string, unknown>>(
-    conflict: SyncConflict<T>,
-    data: T
+  const updateLocalData = async <K extends keyof ConflictDataMap>(
+    conflict: SyncConflict<K>,
+    data: ConflictDataMap[K]
   ) => {
     // Update local data based on conflict type
-    switch (conflict.type) {
-      case "learning_progress":
-        updateLearningProgress({
-          [conflict.field]: data[conflict.field as keyof T],
-        } as Partial<LearningProgress>);
-        break;
-      case "vocabulary_progress":
-        updateVocabularyProgress(
-          conflict.field,
-          data as unknown as VocabularyProgress
-        );
-        break;
-      case "learning_stats":
-        updateLearningStats({
-          [conflict.field]: data[conflict.field as keyof T],
-        } as Partial<LearningStats>);
-        break;
+    if (conflict.type === "learning_progress") {
+      updateLearningProgress({
+        [conflict.field]: data[
+          conflict.field as keyof LearningProgress
+        ],
+      } as Partial<LearningProgress>);
+    } else if (conflict.type === "vocabulary_progress") {
+      updateVocabularyProgress(conflict.field, data);
+    } else if (conflict.type === "learning_stats") {
+      updateLearningStats({
+        [conflict.field]: data[
+          conflict.field as keyof LearningStats
+        ],
+      } as Partial<LearningStats>);
     }
   };
 
-  const mergeConflictData = <T extends Record<string, unknown>>(
-    conflict: SyncConflict<T>
-  ): T => {
+  const mergeConflictData = <K extends keyof ConflictDataMap>(
+    conflict: SyncConflict<K>
+  ): ConflictDataMap[K] => {
     // Intelligent merging based on conflict type and field
-    switch (conflict.type) {
-      case "learning_progress":
-        if (
-          conflict.field === "storiesRead" ||
-          conflict.field === "vocabularyLearned"
-        ) {
-          const localValue = conflict.localData[
-            conflict.field
-          ] as unknown as number;
-          const serverValue = conflict.serverData[
-            conflict.field
-          ] as unknown as number;
+    if (
+      conflict.type === "learning_progress" &&
+      (conflict.field === "storiesRead" ||
+        conflict.field === "vocabularyLearned")
+    ) {
+      const localValue = conflict.localData[
+        conflict.field as keyof LearningProgress
+      ];
+      const serverValue = conflict.serverData[
+        conflict.field as keyof LearningProgress
+      ];
 
-          return {
-            ...conflict.localData,
-            [conflict.field]: Math.max(localValue, serverValue),
-          } as T;
-        }
-        return conflict.localData;
-      default:
-        return conflict.localData;
+      if (
+        typeof localValue === "number" &&
+        typeof serverValue === "number"
+      ) {
+        return {
+          ...conflict.localData,
+          [conflict.field]: Math.max(localValue, serverValue),
+        } as ConflictDataMap[K];
+      }
     }
+    return conflict.localData;
   };
 
   return {
