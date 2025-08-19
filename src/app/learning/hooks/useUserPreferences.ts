@@ -2,17 +2,14 @@
 import { logger } from '@/lib/logger';
 
 import { useState, useEffect, useCallback } from "react";
-import type {
-  UserLearningPreferences,
-  ThemePreference,
-} from "../types/learning";
+import type { UserLearningPreferences } from "../types/learning";
 import { DifficultyLevel, StoryType } from "@prisma/client";
 
 // Default preferences
-const DEFAULT_PREFERENCES: UserLearningPreferences = {
+const DEFAULT_PREFERENCES = {
   embeddingRatio: 20,
   difficultyLevel: "beginner",
-  theme: "light" as ThemePreference,
+  theme: "light",
   topicPreferences: ["original", "chemdanhtu"],
   audioEnabled: true,
   autoPlayAudio: false,
@@ -20,7 +17,7 @@ const DEFAULT_PREFERENCES: UserLearningPreferences = {
   vocabularyReviewFrequency: "daily",
   dailyGoal: 20,
   notificationsEnabled: true,
-};
+} satisfies UserLearningPreferences;
 
 const STORAGE_KEY = "learning-preferences";
 
